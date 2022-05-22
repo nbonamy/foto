@@ -1,0 +1,41 @@
+---
+name: foto
+description: A new Flutter project.
+publish_to: 'none'  # Remove this line if you wish to publish to pub.dev
+version: 1.0.0+1
+
+platforms:
+  macos:
+
+environment:
+  sdk: ">=2.17.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  flutter_treeview: ^1.0.7+1
+  macos_ui: ^1.4.1+1
+  provider: ^6.0.2
+  window_manager: ^0.2.3
+  shared_preferences: ^2.0.15
+  path: ^1.8.1
+  native_context_menu:
+    git:
+      url: https://github.com/jmatth/native_context_menu.git
+      ref: flutter-3
+  image_size_getter: ^2.1.1
+  filesize: ^2.0.1
+  exif: ^3.1.1
+  intl: ^0.17.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/img/
+  #  - assets/i18n/
