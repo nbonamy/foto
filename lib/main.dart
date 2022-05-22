@@ -15,7 +15,7 @@ void main(List<String> args) async {
   WindowOptions windowOptions = WindowOptions(
     //size: rc.size,
     //center: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: Colors.black,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
   );
@@ -69,15 +69,16 @@ class FotoApp extends StatelessWidget {
       builder: (context, _) {
         final appTheme = context.watch<AppTheme>();
         return MacosApp(
-          title: 'macos_ui Widget Gallery',
+          title: 'foto',
           theme: MacosThemeData.dark(),
           darkTheme: MacosThemeData.dark(),
           themeMode: appTheme.mode,
           debugShowCheckedModeBanner: false,
+          color: Colors.black,
           home: PlatformMenuBar(
             menus: const [
               PlatformMenu(
-                label: 'macos_ui Widget Gallery',
+                label: 'foto',
                 menus: [
                   PlatformProvidedMenuItem(
                     type: PlatformProvidedMenuItemType.about,
