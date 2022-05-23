@@ -11,10 +11,10 @@ Currently only developed and tested for MacOS.
 - [ ] Black background
 - File operations:
   - [x] delete
-  - [ ]
+  - [ ] rename
   - [ ] move
 - Folder operations
-  - [ ]delete
+  - [ ] delete
   - [ ] rename
   - [ ] move
 - [ ] Selection info palette
