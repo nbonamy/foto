@@ -8,7 +8,7 @@ Currently only developed and tested for MacOS.
 
 - [ ] Black background
 - [ ] Get folder icons from NSWorkspace
-- [ ] Favorites ordering
+- [X] Favorites ordering
 - [ ] File operations (delete, rename, move)
 - [ ] Folder operations (delete, rename, move)
 - [ ] Selection info palette

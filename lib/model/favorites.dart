@@ -34,6 +34,15 @@ class FavoritesModel extends ChangeNotifier {
     }
   }
 
+  void move(int oldIndex, int newIndex) {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    _favorites.insert(newIndex, _favorites.removeAt(oldIndex));
+    notifyListeners();
+    _save();
+  }
+
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     var favorites =
