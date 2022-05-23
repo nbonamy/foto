@@ -50,7 +50,7 @@ class _ImageViewerState extends State<ImageViewer> {
           children: [
             Positioned.fill(
               child: GestureDetector(
-                onDoubleTap: _exit,
+                onDoubleTap: () => _exit(false),
                 child: Image.file(
                   File(widget.images[_index]),
                 ),
@@ -79,16 +79,22 @@ class _ImageViewerState extends State<ImageViewer> {
     } else if (PlatformKeyboard.isDelete(event)) {
       _confirmDelete();
       return true;
-    } else if (PlatformKeyboard.isExit(event)) {
-      _exit();
+    } else if (PlatformKeyboard.isEnter(event)) {
+      _exit(false);
+      return true;
+    } else if (PlatformKeyboard.isEscape(event)) {
+      _exit(true);
       return true;
     } else {
       return false;
     }
   }
 
-  void _exit() {
-    widget.exit(current: widget.images.isEmpty ? null : widget.images[_index]);
+  void _exit(bool quit) {
+    widget.exit(
+      quit: quit,
+      current: widget.images.isEmpty ? null : widget.images[_index],
+    );
   }
 
   void _previous() {
@@ -118,7 +124,7 @@ class _ImageViewerState extends State<ImageViewer> {
         // remove
         widget.images.removeAt(_index);
         if (widget.images.isEmpty) {
-          _exit();
+          _exit(false);
         } else {
           if (_index == widget.images.length) {
             setState(() {

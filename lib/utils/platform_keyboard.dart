@@ -22,8 +22,11 @@ class PlatformKeyboard {
     }
   }
 
-  static bool isExit(RawKeyEvent event) {
-    return event.physicalKey == PhysicalKeyboardKey.escape ||
-        event.physicalKey == PhysicalKeyboardKey.enter;
+  static bool isEscape(RawKeyEvent event) {
+    return event.physicalKey == PhysicalKeyboardKey.escape;
+  }
+
+  static bool isEnter(RawKeyEvent event) {
+    return event.physicalKey == PhysicalKeyboardKey.enter;
   }
 }

@@ -1,11 +1,15 @@
 import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:foto/model/history.dart';
 import 'package:foto/utils/file_handler.dart';
 import 'package:foto/utils/media.dart';
 import 'package:foto/utils/preferences.dart';
+import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/browser/browser.dart';
 import 'package:foto/viewer/viewer.dart';
+import 'package:path/path.dart' as p;
 
 class Home extends StatefulWidget {
   final List<String> args;
@@ -16,6 +20,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with WindowListener {
+  bool _startedFromFinder = false;
   List<String>? _images;
   int? _startIndex;
 
@@ -43,6 +48,7 @@ class _HomeState extends State<Home> with WindowListener {
 
       // view
       if (initialFile != null) {
+        _startedFromFinder = true;
         viewImage(initialFile);
       }
     } catch (e) {}
@@ -79,11 +85,21 @@ class _HomeState extends State<Home> with WindowListener {
     windowManager.setFullScreen(true);
   }
 
-  void closeViewer({String? current}) {
+  void closeViewer({String? current, bool? quit = false}) {
+    windowManager.setFullScreen(false);
+    if (quit == true && _startedFromFinder == true) {
+      SystemNavigator.pop();
+      return;
+    }
     setState(() {
       _images = null;
+      _startedFromFinder = false;
     });
-    windowManager.setFullScreen(false);
+    if (current != null) {
+      var history = Provider.of<HistoryModel>(context, listen: false);
+      var dirname = p.dirname(current);
+      history.push(dirname);
+    }
   }
 
   @override

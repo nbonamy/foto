@@ -89,8 +89,8 @@ class _SidebarState extends State<BrowserSidebar> {
 
   void _setActiveRoot(context) {
     // get data
-    var history = Provider.of<HistoryModel>(context);
-    var favorites = Provider.of<FavoritesModel>(context).get;
+    var history = Provider.of<HistoryModel>(context, listen: false);
+    var favorites = Provider.of<FavoritesModel>(context, listen: false).get;
 
     // default active root
     _activeRoot = null;
@@ -205,10 +205,8 @@ class _SidebarState extends State<BrowserSidebar> {
         BrowserTree(
           title: device.title,
           root: device.path,
-          selectedPath:
-              device.path == _activeRoot ? historyModel.top : null,
-          assetName:
-              SystemPath.getFolderNamedAsset(device.path, isDrive: true),
+          selectedPath: device.path == _activeRoot ? historyModel.top : null,
+          assetName: SystemPath.getFolderNamedAsset(device.path, isDrive: true),
           onUpdate: onPathUpdated,
         ),
       );
