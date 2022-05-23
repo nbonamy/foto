@@ -6,9 +6,9 @@ Currently only developed and tested for MacOS.
 
 ## TODO
 
+- [x] Favorites ordering
 - [ ] Black background
 - [ ] Get folder icons from NSWorkspace
-- [x] Favorites ordering
 - [ ] File operations (delete, rename, move)
 - [ ] Folder operations (delete, rename, move)
 - [ ] Selection info palette
