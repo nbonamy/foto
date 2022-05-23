@@ -88,6 +88,13 @@ class FotoApp extends StatelessWidget {
                   ),
                 ],
               ),
+              /*PlatformMenu(
+                label: 'Edit',
+                menus: [
+                  PlatformMenuItem(label: 'Copy'),
+                  PlatformMenuItem(label: 'Paste'),
+                ],
+              ),*/
               PlatformMenu(
                 label: 'View',
                 menus: [

@@ -1,7 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:macos_ui/macos_ui.dart';
+import 'package:foto/utils/dialogs.dart';
+import 'package:path/path.dart' as p;
 
 class FileUtils {
   static Future confirmDelete(BuildContext context, List<String> files) {
@@ -9,42 +10,17 @@ class FileUtils {
         ? 'Are you sure you want to delete this image? This cannot be undone.'
         : 'Are you sure you want to delete these images? This cannot be undone.';
 
-    return showMacosAlertDialog(
+    return FotoDialog.confirm(
       context: context,
-      builder: (_) => MacosAlertDialog(
-        appIcon: Image.asset(
-          'assets/img/foto.png',
-          width: 56,
-          height: 56,
-        ),
-        title: Text(
-          'foto',
-          style: MacosTheme.of(context).typography.title3,
-        ),
-        message: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: MacosTheme.of(context).typography.body,
-        ),
-        primaryButton: PushButton(
-          buttonSize: ButtonSize.small,
-          color: Colors.red,
-          onPressed: () {
-            delete(files).then((value) {
-              Navigator.of(context).pop(true);
-            }).onError((error, stackTrace) {
-              Navigator.of(context).pop();
-            });
-          },
-          child: const Text('Yes'),
-        ),
-        secondaryButton: PushButton(
-          isSecondary: true,
-          buttonSize: ButtonSize.small,
-          onPressed: Navigator.of(context).pop,
-          child: const Text('Cancel'),
-        ),
-      ),
+      text: text,
+      onConfirmed: () {
+        delete(files).then((value) {
+          Navigator.of(context).pop(true);
+        }).onError((error, stackTrace) {
+          Navigator.of(context).pop();
+        });
+      },
+      isDanger: true,
     );
   }
 
@@ -53,6 +29,43 @@ class FileUtils {
     for (var file in files) {
       futures.add(File(file).delete());
     }
+    return Future.wait(futures);
+  }
+
+  static Future tryCopy(
+      BuildContext context, List<String> files, String destination) {
+    bool conflicts = false;
+    Map<String, String> operations = {};
+    for (var file in files) {
+      var target = destination;
+      target = p.join(target, p.basename(file));
+      operations[file] = target;
+      if (File(target).existsSync()) {
+        conflicts = true;
+      }
+    }
+
+    if (conflicts) {
+      return FotoDialog.confirm(
+        context: context,
+        text:
+            'Destination file(s) already exists. Do you want to overwrite them?',
+        onConfirmed: () {
+          Navigator.of(context).pop();
+          copy(operations);
+        },
+        isDanger: true,
+      );
+    } else {
+      return copy(operations);
+    }
+  }
+
+  static Future copy(Map<String, String> operations) {
+    List<Future> futures = [];
+    operations.forEach((src, dst) {
+      futures.add(File(src).copy(dst));
+    });
     return Future.wait(futures);
   }
 }

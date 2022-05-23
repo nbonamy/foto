@@ -28,6 +28,7 @@ dependencies:
   filesize: ^2.0.1
   exif: ^3.1.1
   intl: ^0.17.0
+  pasteboard: ^0.0.3
 
 dev_dependencies:
   flutter_test:

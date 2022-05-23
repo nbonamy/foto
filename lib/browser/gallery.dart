@@ -7,6 +7,7 @@ import 'package:foto/model/history.dart';
 import 'package:foto/utils/file.dart';
 import 'package:foto/utils/media.dart';
 import 'package:foto/utils/platform_keyboard.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:provider/provider.dart';
 
 class ImageGallery extends StatefulWidget {
@@ -72,6 +73,12 @@ class _ImageGalleryState extends State<ImageGallery> {
         if (PlatformKeyboard.isDelete(event)) {
           FileUtils.confirmDelete(context, _selection);
           return KeyEventResult.handled;
+        } else if (PlatformKeyboard.isCopy(event)) {
+          _copyToClipboard();
+          return KeyEventResult.handled;
+        } else if (PlatformKeyboard.isPaste(event)) {
+          _pasteFromClipboard();
+          return KeyEventResult.handled;
         }
 
         // default
@@ -119,5 +126,18 @@ class _ImageGalleryState extends State<ImageGallery> {
         ),
       ),
     );
+  }
+
+  void _copyToClipboard() {
+    Pasteboard.writeFiles(_selection);
+  }
+
+  void _pasteFromClipboard() {
+    var history = Provider.of<HistoryModel>(context, listen: false);
+    if (history.top != null) {
+      Pasteboard.files().then((files) {
+        FileUtils.tryCopy(context, files, history.top!);
+      });
+    }
   }
 }
