@@ -37,6 +37,7 @@ class _ImageViewerState extends State<ImageViewer> {
   @override
   Widget build(BuildContext context) {
     return Focus(
+      autofocus: true,
       onKey: (_, event) {
         if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft) ||
             event.isKeyPressed(LogicalKeyboardKey.arrowUp)) {

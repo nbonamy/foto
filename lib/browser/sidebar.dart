@@ -81,6 +81,9 @@ class _SidebarState extends State<BrowserSidebar> {
     if (_devices.indexWhere((element) => element.getPath() == '/') == -1) {
       _devices.add(RootNode('Macintosh HD', '/'));
     }
+
+    // now sort devices by path
+    _devices.sort((a, b) => a.getPath().compareTo(b.getPath()));
   }
 
   void _setActiveRoot(context) {

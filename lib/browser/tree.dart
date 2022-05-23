@@ -163,39 +163,42 @@ class _BrowserTreeState extends State<BrowserTree> {
     bool isSelected =
         controller.selectedKey != null && controller.selectedKey == node.key;
     final icon = _buildNodeIcon(controller, node, theme);
-    return Container(
-      padding: EdgeInsets.symmetric(
-        vertical: theme.verticalSpacing ?? (theme.dense ? 10 : 15),
-        horizontal: node.isParent ? 0 : 2,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          icon,
-          Expanded(
-            child: Text(
-              node.label,
-              softWrap: node.isParent
-                  ? theme.parentLabelOverflow == null
-                  : theme.labelOverflow == null,
-              overflow: node.isParent
-                  ? theme.parentLabelOverflow
-                  : theme.labelOverflow,
-              style: node.isParent
-                  ? theme.parentLabelStyle.copyWith(
-                      fontWeight: theme.parentLabelStyle.fontWeight,
-                      color: isSelected
-                          ? theme.colorScheme.onPrimary
-                          : theme.parentLabelStyle.color,
-                    )
-                  : theme.labelStyle.copyWith(
-                      fontWeight: theme.labelStyle.fontWeight,
-                      color: isSelected ? theme.colorScheme.onPrimary : null,
-                    ),
+    return MouseRegion(
+      cursor: SystemMouseCursors.basic,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          vertical: theme.verticalSpacing ?? (theme.dense ? 10 : 15),
+          horizontal: node.isParent ? 0 : 2,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            icon,
+            Expanded(
+              child: Text(
+                node.label,
+                softWrap: node.isParent
+                    ? theme.parentLabelOverflow == null
+                    : theme.labelOverflow == null,
+                overflow: node.isParent
+                    ? theme.parentLabelOverflow
+                    : theme.labelOverflow,
+                style: node.isParent
+                    ? theme.parentLabelStyle.copyWith(
+                        fontWeight: theme.parentLabelStyle.fontWeight,
+                        color: isSelected
+                            ? theme.colorScheme.onPrimary
+                            : theme.parentLabelStyle.color,
+                      )
+                    : theme.labelStyle.copyWith(
+                        fontWeight: theme.labelStyle.fontWeight,
+                        color: isSelected ? theme.colorScheme.onPrimary : null,
+                      ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
