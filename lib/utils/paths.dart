@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:foto/utils/utils.dart';
 import 'package:path/path.dart' as p;
 
 class SystemPath {
@@ -27,5 +28,15 @@ class SystemPath {
     String? home = SystemPath.home();
     if (home == null) return null;
     return p.join(home, 'Desktop');
+  }
+
+  static String getFolderNamedAsset(String? dirpath, {bool isDrive = false}) {
+    if (isDrive) {
+      return 'assets/img/drive.png';
+    } else if (Utils.pathTitle(dirpath) == 'Pictures') {
+      return 'assets/img/pictures.png';
+    } else {
+      return 'assets/img/folder.png';
+    }
   }
 }

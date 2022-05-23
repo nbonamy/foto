@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
 import 'package:foto/utils/media.dart';
+import 'package:foto/utils/paths.dart';
 import 'package:foto/utils/utils.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:flutter_treeview/flutter_treeview.dart';
@@ -152,7 +153,7 @@ class _BrowserTreeState extends State<BrowserTree> {
       width:
           true /*node.hasIcon*/ ? theme.iconTheme.size! + theme.iconPadding : 0,
       child: Image.asset(
-        node.data ?? 'assets/img/folder.png',
+        node.data ?? SystemPath.getFolderNamedAsset(null),
         width: theme.iconTheme.size,
       ),
     );

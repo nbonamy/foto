@@ -1,5 +1,30 @@
 import Cocoa
+import CommonCrypto
 import FlutterMacOS
+
+extension NSBitmapImageRep {
+    var png: Data? { representation(using: .png, properties: [:]) }
+}
+extension Data {
+    var bitmap: NSBitmapImageRep? { NSBitmapImageRep(data: self) }
+}
+extension NSImage {
+    var png: Data? { tiffRepresentation?.bitmap?.png }
+}
+
+extension Data {
+    var md5 : String {
+        var digest = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
+        _ =  self.withUnsafeBytes { bytes in
+            CC_MD5(bytes, CC_LONG(self.count), &digest)
+        }
+        var digestHex = ""
+        for index in 0..<Int(CC_MD5_DIGEST_LENGTH) {
+            digestHex += String(format: "%02x", digest[index])
+        }
+        return digestHex
+    }
+}
 
 @NSApplicationMain
 class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
@@ -7,6 +32,7 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 	var _eventSink:FlutterEventSink?;
 	var _initialFile:String?;
 	var _latestFile:String?;
+	var _cachedIcons:[String] = [];
 	
 	override func applicationDidFinishLaunching(_ notification: Notification) {
 		let rootController : NSViewController? = mainFlutterWindow?.contentViewController
@@ -15,13 +41,18 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 
 				let flutterController = controller as! FlutterViewController
 				
-				// method
-				let channel = FlutterMethodChannel(name: "foto_file_handler/messages", binaryMessenger: flutterController.engine.binaryMessenger)
-				channel.setMethodCallHandler(_methodHandler);
+				// file handler method
+				let fileMethodChannel = FlutterMethodChannel(name: "foto_file_handler/messages", binaryMessenger: flutterController.engine.binaryMessenger)
+				fileMethodChannel.setMethodCallHandler(_methodHandler);
 				
-				// event
-				let chargingChannel = FlutterEventChannel(name: "foto_file_handler/events", binaryMessenger: flutterController.engine.binaryMessenger)
-				chargingChannel.setStreamHandler(self);
+				// file handler event
+				let fileEventChannel = FlutterEventChannel(name: "foto_file_handler/events", binaryMessenger: flutterController.engine.binaryMessenger)
+				fileEventChannel.setStreamHandler(self);
+
+				// platform icon method
+				let iconMethodChannel = FlutterMethodChannel(name: "foto_platform_utils/messages", binaryMessenger: flutterController.engine.binaryMessenger)
+				iconMethodChannel.setMethodCallHandler(_methodHandler);
+				
 			}
 		}
 	}
@@ -67,6 +98,20 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 	func _methodHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
 		if ("getInitialFile" == call.method) {
 			result(self._initialFile);
+		} else if ("getPlatformIcon" == call.method) {
+			let filepath = call.arguments as! String;
+			let image = NSWorkspace.shared.icon(forFile: filepath);
+			let hash = image.name() ?? image.tiffRepresentation?.md5 ?? filepath;
+			if (self._cachedIcons.contains(hash)) {
+				result(hash);
+			} else {
+				let png = image.png;
+				self._cachedIcons.append(hash);
+				result([
+					"key": hash,
+					"png": FlutterStandardTypedData.init(bytes: png!)
+				]);
+			}
 		}
 	}
 	

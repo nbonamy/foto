@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:foto/browser/tree.dart';
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
+import 'package:foto/utils/paths.dart';
 import 'package:foto/utils/utils.dart';
 import 'package:provider/provider.dart';
 
@@ -16,11 +17,11 @@ class RootNode {
 
   RootNode(this._title, this._path);
 
-  String getTitle() {
+  String get title {
     return _title ?? Utils.pathTitle(_path) ?? '';
   }
 
-  String getPath() {
+  String get path {
     return _path;
   }
 }
@@ -78,12 +79,12 @@ class _SidebarState extends State<BrowserSidebar> {
     }
 
     // we need root
-    if (_devices.indexWhere((element) => element.getPath() == '/') == -1) {
+    if (_devices.indexWhere((element) => element.path == '/') == -1) {
       _devices.add(RootNode('Macintosh HD', '/'));
     }
 
     // now sort devices by path
-    _devices.sort((a, b) => a.getPath().compareTo(b.getPath()));
+    _devices.sort((a, b) => a.path.compareTo(b.path));
   }
 
   void _setActiveRoot(context) {
@@ -101,8 +102,8 @@ class _SidebarState extends State<BrowserSidebar> {
     }
     if (_activeRoot == null) {
       for (var device in _devices) {
-        if (history.top?.startsWith(device.getPath()) == true) {
-          _activeRoot = device.getPath();
+        if (history.top?.startsWith(device.path) == true) {
+          _activeRoot = device.path;
           break;
         }
       }
@@ -166,10 +167,7 @@ class _SidebarState extends State<BrowserSidebar> {
                 BrowserTree(
                   root: favorite,
                   title: Utils.pathTitle(favorite),
-                  assetName:
-                      Utils.pathTitle(favorite)?.contains('Pictures') == true
-                          ? 'assets/img/pictures.png'
-                          : null,
+                  assetName: SystemPath.getFolderNamedAsset(favorite),
                   selectedPath:
                       favorite == _activeRoot ? historyModel.top : null,
                   onUpdate: onPathUpdated,
@@ -205,11 +203,12 @@ class _SidebarState extends State<BrowserSidebar> {
     for (var device in _devices) {
       sidebarContent.add(
         BrowserTree(
-          title: device.getTitle(),
-          root: device.getPath(),
+          title: device.title,
+          root: device.path,
           selectedPath:
-              device.getPath() == _activeRoot ? historyModel.top : null,
-          assetName: 'assets/img/drive.png',
+              device.path == _activeRoot ? historyModel.top : null,
+          assetName:
+              SystemPath.getFolderNamedAsset(device.path, isDrive: true),
           onUpdate: onPathUpdated,
         ),
       );

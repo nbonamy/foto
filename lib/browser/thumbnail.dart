@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:foto/utils/paths.dart';
+import 'package:foto/utils/platform_utils.dart';
 import 'package:foto/utils/utils.dart';
 
 class Thumbnail extends StatelessWidget {
@@ -47,9 +49,7 @@ class Thumbnail extends StatelessWidget {
               child: folder
                   ? Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Image.asset(
-                        'assets/img/folder.png',
-                      ),
+                      child: Image.asset(SystemPath.getFolderNamedAsset(path)),
                     )
                   : Image.file(
                       File(path),
