@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:foto/utils/file.dart';
+import 'package:foto/utils/platform_keyboard.dart';
 import 'package:foto/utils/preferences.dart';
 import 'package:foto/viewer/overlay.dart';
 
@@ -28,9 +30,11 @@ class _ImageViewerState extends State<ImageViewer> {
   @override
   void initState() {
     _index = max(0, widget.start);
-    Preferences.getOverlayLevel().then((value) => setState(() {
-          _overlayLevel = value;
-        }));
+    Preferences.getOverlayLevel().then(
+      (value) => setState(() {
+        _overlayLevel = value;
+      }),
+    );
     super.initState();
   }
 
@@ -38,37 +42,18 @@ class _ImageViewerState extends State<ImageViewer> {
   Widget build(BuildContext context) {
     return Focus(
       autofocus: true,
-      onKey: (_, event) {
-        if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft) ||
-            event.isKeyPressed(LogicalKeyboardKey.arrowUp)) {
-          setState(() {
-            _index = _index == 0 ? widget.images.length - 1 : _index - 1;
-          });
-        } else if (event.isKeyPressed(LogicalKeyboardKey.arrowRight) ||
-            event.isKeyPressed(LogicalKeyboardKey.arrowDown)) {
-          setState(() {
-            _index = _index == widget.images.length - 1 ? 0 : _index + 1;
-          });
-        } else if (event.isKeyPressed(LogicalKeyboardKey.keyI)) {
-          var index = _overlayLevel.index;
-          index = (index + 1) % OverlayLevel.values.length;
-          setState(() {
-            _overlayLevel = OverlayLevel.values[index];
-            Preferences.saveOverlayLevel(_overlayLevel);
-          });
-        } else if (event.physicalKey == PhysicalKeyboardKey.escape ||
-            event.physicalKey == PhysicalKeyboardKey.enter) {
-          widget.exit(current: widget.images[_index]);
-        }
-        return KeyEventResult.handled;
-      },
+      onKey: (_, event) =>
+          _onKey(event) ? KeyEventResult.handled : KeyEventResult.ignored,
       child: Container(
         color: Colors.black,
         child: Stack(
           children: [
             Positioned.fill(
-              child: Image.file(
-                File(widget.images[_index]),
+              child: GestureDetector(
+                onDoubleTap: _exit,
+                child: Image.file(
+                  File(widget.images[_index]),
+                ),
               ),
             ),
             InfoOverlay(
@@ -79,5 +64,71 @@ class _ImageViewerState extends State<ImageViewer> {
         ),
       ),
     );
+  }
+
+  bool _onKey(RawKeyEvent event) {
+    if (PlatformKeyboard.isPrevious(event)) {
+      _previous();
+      return true;
+    } else if (PlatformKeyboard.isNext(event)) {
+      _next();
+      return true;
+    } else if (event.isKeyPressed(LogicalKeyboardKey.keyI)) {
+      _toggleLevel();
+      return true;
+    } else if (PlatformKeyboard.isDelete(event)) {
+      _confirmDelete();
+      return true;
+    } else if (PlatformKeyboard.isExit(event)) {
+      _exit();
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  void _exit() {
+    widget.exit(current: widget.images.isEmpty ? null : widget.images[_index]);
+  }
+
+  void _previous() {
+    setState(() {
+      _index = _index == 0 ? widget.images.length - 1 : _index - 1;
+    });
+  }
+
+  void _next() {
+    setState(() {
+      _index = _index == widget.images.length - 1 ? 0 : _index + 1;
+    });
+  }
+
+  void _toggleLevel() {
+    var index = _overlayLevel.index;
+    index = (index + 1) % OverlayLevel.values.length;
+    setState(() {
+      _overlayLevel = OverlayLevel.values[index];
+      Preferences.saveOverlayLevel(_overlayLevel);
+    });
+  }
+
+  void _confirmDelete() {
+    FileUtils.confirmDelete(context, [widget.images[_index]]).then((deleted) {
+      if (deleted) {
+        // remove
+        widget.images.removeAt(_index);
+        if (widget.images.isEmpty) {
+          _exit();
+        } else {
+          if (_index == widget.images.length) {
+            setState(() {
+              _index = _index - 1;
+            });
+          } else {
+            setState(() {});
+          }
+        }
+      }
+    });
   }
 }
