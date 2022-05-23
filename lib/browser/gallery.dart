@@ -78,46 +78,44 @@ class _ImageGalleryState extends State<ImageGallery> {
         _extendSelection = event.isControlPressed || event.isMetaPressed;
         return KeyEventResult.ignored;
       },
-      child: Positioned.fill(
-        child: GestureDetector(
-          onTap: () {
-            setState(() {
-              _selection = [];
-            });
-          },
-          child: GridView.extent(
-            shrinkWrap: true,
-            controller: widget.scrollController,
-            maxCrossAxisExtent: Thumbnail.thumbnailWidth,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            padding: const EdgeInsets.all(16),
-            childAspectRatio: Thumbnail.aspectRatio(),
-            children: files.map<Widget>((file) {
-              return InkResponse(
-                onTap: () {
-                  setState(() {
-                    if (!_extendSelection) {
-                      _selection = [];
-                    }
-                    _selection.add(file.path);
-                  });
-                },
-                onDoubleTap: () {
-                  if (file is Directory) {
-                    history.push(file.path);
-                  } else {
-                    widget.viewImage(file.path);
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selection = [];
+          });
+        },
+        child: GridView.extent(
+          shrinkWrap: true,
+          controller: widget.scrollController,
+          maxCrossAxisExtent: Thumbnail.thumbnailWidth,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          padding: const EdgeInsets.all(16),
+          childAspectRatio: Thumbnail.aspectRatio(),
+          children: files.map<Widget>((file) {
+            return InkResponse(
+              onTap: () {
+                setState(() {
+                  if (!_extendSelection) {
+                    _selection = [];
                   }
-                },
-                child: Thumbnail(
-                  path: file.path,
-                  folder: file is Directory,
-                  selected: _selection.contains(file.path),
-                ),
-              );
-            }).toList(),
-          ),
+                  _selection.add(file.path);
+                });
+              },
+              onDoubleTap: () {
+                if (file is Directory) {
+                  history.push(file.path);
+                } else {
+                  widget.viewImage(file.path);
+                }
+              },
+              child: Thumbnail(
+                path: file.path,
+                folder: file is Directory,
+                selected: _selection.contains(file.path),
+              ),
+            );
+          }).toList(),
         ),
       ),
     );
