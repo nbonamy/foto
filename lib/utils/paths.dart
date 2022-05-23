@@ -32,11 +32,24 @@ class SystemPath {
 
   static String getFolderNamedAsset(String? dirpath, {bool isDrive = false}) {
     if (isDrive) {
-      return 'assets/img/drive.png';
-    } else if (Utils.pathTitle(dirpath) == 'Pictures') {
-      return 'assets/img/pictures.png';
-    } else {
-      return 'assets/img/folder.png';
+      return 'assets/img/folders/drive.png';
+    } else if (dirpath != null) {
+      var basename = p.basename(dirpath).toLowerCase();
+      if ([
+        'applications',
+        'desktop',
+        'documents',
+        'downloads',
+        'dropbox',
+        'movies',
+        'music',
+        'pictures',
+      ].contains(basename)) {
+        return 'assets/img/folders/$basename.png';
+      }
     }
+
+    // default
+    return 'assets/img/folders/default.png';
   }
 }

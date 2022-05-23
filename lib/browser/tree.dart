@@ -298,7 +298,7 @@ class _BrowserTreeState extends State<BrowserTree> {
         nodes.add(Node(
           key: folder.path,
           label: Utils.pathTitle(folder.path) ?? '',
-          icon: const MacosIcon(CupertinoIcons.folder_fill).icon,
+          data: SystemPath.getFolderNamedAsset(folder.path),
           expanded: selectedPath != null &&
               selectedPath != path &&
               selectedPath.startsWith(folder.path),
