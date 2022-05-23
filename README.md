@@ -9,16 +9,16 @@ Currently only developed and tested for MacOS.
 - [x] Favorites ordering
 - [ ] ~~Get folder icons from NSWorkspace~~ (too slow)
 - [ ] Black background
-File operations:
+- File operations:
   - [x] delete
   - [ ] rename
   - [ ] move
-Folder operations
+- Folder operations
   - [ ] delete
   - [ ] rename
   - [ ] move
 - [ ] Selection info palette
-Image manipulations
+- Image manipulations
   - [ ] rotations
   - [ ] resize
   - [ ] convert
