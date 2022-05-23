@@ -70,8 +70,8 @@ class _InfoOverlayState extends State<InfoOverlay> {
         var width = _size!.width;
         var height = _size!.height;
         var size = filesize(_file?.lengthSync());
-        if (_exif?.containsKey("Image Orientation") == true) {
-          int? orientation = _exif?["Image Orientation"]?.values.firstAsInt();
+        if (_exif?.containsKey('Image Orientation') == true) {
+          int? orientation = _exif?['Image Orientation']?.values.firstAsInt();
           if (orientation != null && orientation >= 5 && orientation <= 8) {
             int swap = width;
             width = height;
@@ -85,30 +85,30 @@ class _InfoOverlayState extends State<InfoOverlay> {
       }
       if (widget.level == OverlayLevel.exif && _exif != null) {
         // date time original
-        String? datetime = _exif?["EXIF DateTimeOriginal"]?.printable;
+        String? datetime = _exif?['EXIF DateTimeOriginal']?.printable;
         if (datetime != null) {
-          DateFormat format = DateFormat("yyyy:MM:dd HH:mm:ss");
+          DateFormat format = DateFormat('yyyy:MM:dd HH:mm:ss');
           DateTime dt = format.parse(datetime);
           texts.add(Text(DateFormat().format(dt), style: textStyle));
         }
 
         // picture info
-        String? exposureTime = _exif?["EXIF ExposureTime"]?.printable;
-        String? fNumber = _exif?["EXIF FNumber"]?.printable;
-        String? isoSpeedRatings = _exif?["EXIF ISOSpeedRatings"]?.printable;
-        String? focalLength = _exif?["EXIF FocalLength"]?.printable;
-        String exifInfo = "";
+        String? exposureTime = _exif?['EXIF ExposureTime']?.printable;
+        String? fNumber = _exif?['EXIF FNumber']?.printable;
+        String? isoSpeedRatings = _exif?['EXIF ISOSpeedRatings']?.printable;
+        String? focalLength = _exif?['EXIF FocalLength']?.printable;
+        String exifInfo = '';
         if (exposureTime != null) {
-          exifInfo += "${exposureTime} sec. ";
+          exifInfo += '${exposureTime} sec. ';
         }
         if (fNumber != null) {
-          exifInfo += "f/${_parseRatio(fNumber)} ";
+          exifInfo += 'f/${_parseRatio(fNumber)} ';
         }
         if (isoSpeedRatings != null) {
-          exifInfo += "ISO${isoSpeedRatings} ";
+          exifInfo += 'ISO${isoSpeedRatings} ';
         }
         if (focalLength != null) {
-          exifInfo += "${_parseRatio(focalLength)}mm";
+          exifInfo += '${_parseRatio(focalLength)}mm';
         }
         if (exifInfo.trim().isNotEmpty) {
           texts.add(Text(exifInfo.trim(), style: textStyle));
@@ -129,7 +129,7 @@ class _InfoOverlayState extends State<InfoOverlay> {
 
   String? _parseRatio(String? exifValue) {
     if (exifValue == null) return null;
-    List<String> values = exifValue.split("/");
+    List<String> values = exifValue.split('/');
     if (values.length != 2) {
       return exifValue;
     }

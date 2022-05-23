@@ -48,7 +48,7 @@ class Thumbnail extends StatelessWidget {
                   ? Padding(
                       padding: const EdgeInsets.all(16),
                       child: Image.asset(
-                        "assets/img/folder.png",
+                        'assets/img/folder.png',
                       ),
                     )
                   : Image.file(

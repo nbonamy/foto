@@ -16,13 +16,14 @@ class Preferences {
 
   static Future<OverlayLevel> getOverlayLevel() async {
     final prefs = await SharedPreferences.getInstance();
-    final level = prefs.getInt("overlayLevel") ?? Preferences.defaultOverlayLevel().index;
+    final level =
+        prefs.getInt('overlayLevel') ?? Preferences.defaultOverlayLevel().index;
     return OverlayLevel.values[level];
   }
 
   static Future<void> saveOverlayLevel(OverlayLevel level) async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setInt("overlayLevel", level.index);
+    prefs.setInt('overlayLevel', level.index);
   }
 
   static Future<Rect> getWindowBounds() async {

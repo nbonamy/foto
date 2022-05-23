@@ -15,7 +15,7 @@ class Media {
 
   static bool shouldExcludeFileOrDir(String fullpath) {
     String basename = p.basename(fullpath);
-    return basename.startsWith(".") ||
+    return basename.startsWith('.') ||
         Media._excludedFilenames.contains(basename);
   }
 
@@ -58,5 +58,5 @@ class Media {
     }
   }
 
-  static final List<String> _excludedFilenames = ["\$RECYCLE.BIN"];
+  static final List<String> _excludedFilenames = ['\$RECYCLE.BIN'];
 }

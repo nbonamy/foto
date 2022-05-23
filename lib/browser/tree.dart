@@ -73,18 +73,18 @@ class _BrowserTreeState extends State<BrowserTree> {
                   menuItems: [
                     favorites.isFavorite(node.key)
                         ? ncm.MenuItem(
-                            action: "del_fav",
-                            title: "Remove from Favorites",
+                            action: 'del_fav',
+                            title: 'Remove from Favorites',
                           )
                         : ncm.MenuItem(
-                            action: "add_fav",
-                            title: "Add to Favorites",
+                            action: 'add_fav',
+                            title: 'Add to Favorites',
                           ),
                   ],
                   onItemSelected: (item) {
-                    if (item.action == "del_fav") {
+                    if (item.action == 'del_fav') {
                       favorites.remove(node.key);
-                    } else if (item.action == "add_fav") {
+                    } else if (item.action == 'add_fav') {
                       favorites.add(node.key);
                     }
                   },
@@ -152,7 +152,7 @@ class _BrowserTreeState extends State<BrowserTree> {
       width:
           true /*node.hasIcon*/ ? theme.iconTheme.size! + theme.iconPadding : 0,
       child: Image.asset(
-        node.data ?? "assets/img/folder.png",
+        node.data ?? 'assets/img/folder.png',
         width: theme.iconTheme.size,
       ),
     );
@@ -166,7 +166,7 @@ class _BrowserTreeState extends State<BrowserTree> {
     return Container(
       padding: EdgeInsets.symmetric(
         vertical: theme.verticalSpacing ?? (theme.dense ? 10 : 15),
-        horizontal: 0,
+        horizontal: node.isParent ? 0 : 2,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
