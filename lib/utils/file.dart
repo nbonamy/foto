@@ -6,9 +6,12 @@ import 'package:path/path.dart' as p;
 
 class FileUtils {
   static Future confirmDelete(BuildContext context, List<String> files) {
-    String text = files.length == 1
-        ? 'Are you sure you want to delete this image? This cannot be undone.'
-        : 'Are you sure you want to delete these images? This cannot be undone.';
+    String text = files.length > 1
+        ? 'Are you sure you want to delete these images? This cannot be undone.'
+        : (FileSystemEntity.typeSync(files[0]) ==
+                FileSystemEntityType.directory)
+            ? 'Are you sure you want to delete this folder? This cannot be undone.'
+            : 'Are you sure you want to delete this image? This cannot be undone.';
 
     return FotoDialog.confirm(
       context: context,

@@ -51,9 +51,7 @@ class Media {
       });
       return filtered;
     } catch (e) {
-      if (kDebugMode) {
-        print(e);
-      }
+      debugPrint(e.toString());
       return [];
     }
   }

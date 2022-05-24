@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/browser/tree.dart';
 import 'package:foto/model/favorites.dart';
@@ -41,7 +40,6 @@ class BrowserSidebar extends StatefulWidget {
 class _SidebarState extends State<BrowserSidebar> {
   String? _activeRoot;
   final List<RootNode> _devices = [];
-  FocusNode focusNode = FocusNode();
 
   @override
   void initState() {
@@ -68,15 +66,11 @@ class _SidebarState extends State<BrowserSidebar> {
             ));
           }
         } catch (e) {
-          if (kDebugMode) {
-            print(e);
-          }
+          debugPrint(e.toString());
         }
       }
     } catch (e) {
-      if (kDebugMode) {
-        print(e);
-      }
+      debugPrint(e.toString());
     }
 
     // we need root
@@ -119,15 +113,9 @@ class _SidebarState extends State<BrowserSidebar> {
     }
 
     return Consumer2<HistoryModel, FavoritesModel>(
-      builder: (context, history, favorites, child) => Focus(
-        focusNode: focusNode,
-        onFocusChange: (hasFocus) {
-          if (hasFocus) debugPrint('sidebar');
-        },
-        child: ListView(
-          controller: widget.scrollController,
-          children: buildSidebar(context, history, favorites),
-        ),
+      builder: (context, history, favorites, child) => ListView(
+        controller: widget.scrollController,
+        children: buildSidebar(context, history, favorites),
       ),
     );
   }
@@ -229,7 +217,6 @@ class _SidebarState extends State<BrowserSidebar> {
   }
 
   void onPathUpdated(String root) async {
-    focusNode.requestFocus();
     setState(() {
       _activeRoot = root;
     });

@@ -1,15 +1,15 @@
 import 'dart:io';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
+import 'package:foto/utils/file.dart';
 import 'package:foto/utils/media.dart';
 import 'package:foto/utils/paths.dart';
+import 'package:foto/utils/platform_keyboard.dart';
 import 'package:foto/utils/utils.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:flutter_treeview/flutter_treeview.dart';
 import 'package:native_context_menu/native_context_menu.dart' as ncm;
+import 'package:pasteboard/pasteboard.dart';
 import 'package:provider/provider.dart';
 
 class BrowserTree extends StatefulWidget {
@@ -34,6 +34,7 @@ class BrowserTree extends StatefulWidget {
 
 class _BrowserTreeState extends State<BrowserTree> {
   TreeViewController? _treeViewController;
+  FocusNode focusNode = FocusNode();
 
   @override
   void initState() {
@@ -97,9 +98,11 @@ class _BrowserTreeState extends State<BrowserTree> {
                 );
               },
               onNodeTap: (key) {
+                focusNode.requestFocus();
                 updateSelectedPath(history, key);
               },
               onExpansionChanged: (key, state) {
+                focusNode.requestFocus();
                 expandPath(key, state);
               },
             );
@@ -110,7 +113,26 @@ class _BrowserTreeState extends State<BrowserTree> {
       padding: const EdgeInsets.symmetric(
         horizontal: 8,
       ),
-      child: tree,
+      child: Focus(
+        focusNode: focusNode,
+        onFocusChange: (hasFocus) {
+          if (hasFocus) debugPrint(widget.root);
+        },
+        onKey: (_, event) {
+          var selectedPath = _treeViewController?.selectedKey;
+          if (selectedPath == null) return KeyEventResult.ignored;
+          if (PlatformKeyboard.isDelete(event)) {
+            FileUtils.confirmDelete(context, [selectedPath]);
+            return KeyEventResult.handled;
+          } else if (PlatformKeyboard.isCopy(event)) {
+            Pasteboard.writeFiles([selectedPath]);
+            return KeyEventResult.handled;
+          } else {
+            return KeyEventResult.ignored;
+          }
+        },
+        child: tree,
+      ),
     );
   }
 
@@ -303,9 +325,7 @@ class _BrowserTreeState extends State<BrowserTree> {
         ));
       }
     } catch (e) {
-      if (kDebugMode) {
-        print(e);
-      }
+      debugPrint(e.toString());
     }
 
     // done
