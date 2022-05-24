@@ -206,10 +206,6 @@ class _BrowserTreeState extends State<BrowserTree> {
 
   void updateSelectedPath(HistoryModel history, String selectedPath) {
     history.push(selectedPath);
-    setState(() {
-      _treeViewController =
-          _treeViewController!.copyWith(selectedKey: history.top);
-    });
     widget.onUpdate(widget.root);
   }
 

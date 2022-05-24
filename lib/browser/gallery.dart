@@ -29,6 +29,7 @@ class _ImageGalleryState extends State<ImageGallery> {
   bool _extendSelection = false;
   bool _historyListenedAdded = false;
   StreamSubscription<FileSystemEvent>? _dirSubscription;
+  FocusNode focusNode = FocusNode();
 
   @override
   void initState() {
@@ -39,13 +40,14 @@ class _ImageGalleryState extends State<ImageGallery> {
   @override
   Widget build(BuildContext context) {
     // history
-    var history = Provider.of<HistoryModel>(context);
+    var history = Provider.of<HistoryModel>(
+      context,
+      listen: false,
+    );
     if (!_historyListenedAdded) {
       _historyListenedAdded = true;
       history.addListener(() {
-        setState(() {
-          _selection = [];
-        });
+        _selection = [];
       });
     }
 
@@ -68,9 +70,12 @@ class _ImageGalleryState extends State<ImageGallery> {
 
     // focus for keyboard listener
     return Focus(
-      autofocus: true,
+      focusNode: focusNode,
+      onFocusChange: (hasFocus) {
+        if (hasFocus) debugPrint('gallery');
+      },
       onKey: (_, event) {
-        if (PlatformKeyboard.isDelete(event)) {
+        if (PlatformKeyboard.isDelete(event) && _selection.isNotEmpty) {
           FileUtils.confirmDelete(context, _selection);
           return KeyEventResult.handled;
         } else if (PlatformKeyboard.isCopy(event)) {
@@ -87,6 +92,7 @@ class _ImageGalleryState extends State<ImageGallery> {
       },
       child: GestureDetector(
         onTap: () {
+          focusNode.requestFocus();
           setState(() {
             _selection = [];
           });
@@ -102,6 +108,7 @@ class _ImageGalleryState extends State<ImageGallery> {
           children: files.map<Widget>((file) {
             return InkResponse(
               onTap: () {
+                focusNode.requestFocus();
                 setState(() {
                   if (!_extendSelection) {
                     _selection = [];
@@ -110,6 +117,7 @@ class _ImageGalleryState extends State<ImageGallery> {
                 });
               },
               onDoubleTap: () {
+                focusNode.requestFocus();
                 if (file is Directory) {
                   history.push(file.path);
                 } else {

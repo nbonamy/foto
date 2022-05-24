@@ -70,18 +70,16 @@ class _BrowserState extends State<Browser> {
           );
         },
       ),
-      child: Consumer<HistoryModel>(
-        builder: (context, history, child) => MacosScaffold(
-          toolBar: buildToolbar(history),
-          children: [
-            ContentArea(
-              builder: (context, scrollController) => ImageGallery(
-                scrollController: scrollController,
-                viewImage: widget.viewImage,
-              ),
+      child: MacosScaffold(
+        toolBar: buildToolbar(),
+        children: [
+          ContentArea(
+            builder: (context, scrollController) => ImageGallery(
+              scrollController: scrollController,
+              viewImage: widget.viewImage,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
 
@@ -90,7 +88,8 @@ class _BrowserState extends State<Browser> {
     );
   }
 
-  ToolBar buildToolbar(HistoryModel history) {
+  ToolBar buildToolbar() {
+    HistoryModel history = Provider.of<HistoryModel>(context, listen: false);
     return ToolBar(
       title: Text(
         Utils.pathTitle(history.top) ?? '',
