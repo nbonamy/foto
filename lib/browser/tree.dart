@@ -115,9 +115,10 @@ class _BrowserTreeState extends State<BrowserTree> {
       ),
       child: Focus(
         focusNode: focusNode,
-        onFocusChange: (hasFocus) {
-          if (hasFocus) debugPrint(widget.root);
-        },
+        debugLabel: widget.root,
+        //onFocusChange: (hasFocus) {
+        //  if (hasFocus) debugPrint(widget.root);
+        //},
         onKey: (_, event) {
           var selectedPath = _treeViewController?.selectedKey;
           if (selectedPath == null) return KeyEventResult.ignored;

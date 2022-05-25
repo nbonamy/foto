@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:foto/utils/paths.dart';
-import 'package:foto/utils/platform_utils.dart';
 import 'package:foto/utils/utils.dart';
 
 class Thumbnail extends StatelessWidget {
@@ -9,11 +8,12 @@ class Thumbnail extends StatelessWidget {
   static const double thumbnailPadding = 8;
   static const double highlightRadius = 6;
   static const Color highlightColor = Colors.black;
+  static const double labelSpacing = 8;
   static const double labelHeight = 44;
-  static const double labelFontSize = 11;
+  static const double labelFontSize = 12;
 
   static double thumbnailHeight() {
-    return thumbnailWidth + labelHeight + thumbnailPadding;
+    return thumbnailWidth + labelSpacing + labelHeight + thumbnailPadding;
   }
 
   static double aspectRatio() {
@@ -60,9 +60,10 @@ class Thumbnail extends StatelessWidget {
           Container(
             width: thumbnailWidth,
             height: labelHeight,
-            alignment: Alignment.center,
+            padding: const EdgeInsets.only(top: labelSpacing),
             child: Text(
               Utils.pathTitle(path) ?? '',
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: labelFontSize,
                 color: Colors.white,

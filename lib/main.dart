@@ -1,5 +1,7 @@
+import 'package:flutter/services.dart';
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
+import 'package:foto/utils/platform_keyboard.dart';
 import 'package:foto/utils/preferences.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
@@ -88,13 +90,13 @@ class FotoApp extends StatelessWidget {
                   ),
                 ],
               ),
-              /*PlatformMenu(
+              PlatformMenu(
                 label: 'Edit',
                 menus: [
-                  PlatformMenuItem(label: 'Copy'),
-                  PlatformMenuItem(label: 'Paste'),
+                  //_menuItem('Copy', LogicalKeyboardKey.keyC),
+                  //_menuItem('Paste', LogicalKeyboardKey.keyV),
                 ],
-              ),*/
+              ),
               PlatformMenu(
                 label: 'View',
                 menus: [
@@ -118,6 +120,20 @@ class FotoApp extends StatelessWidget {
             body: Home(args: args),
           ),
         );
+      },
+    );
+  }
+
+  // ignore: unused_element
+  PlatformMenuItem _menuItem(
+    String label,
+    LogicalKeyboardKey key,
+  ) {
+    return PlatformMenuItem(
+      label: label,
+      shortcut: PlatformKeyboard.commandActivator(key),
+      onSelected: () {
+        debugPrint(FocusManager.instance.primaryFocus?.debugLabel);
       },
     );
   }

@@ -25,32 +25,28 @@ class ImageGallery extends StatefulWidget {
 }
 
 class _ImageGalleryState extends State<ImageGallery> {
-  late List<String> _selection;
+  List<FileSystemEntity>? _files;
+  List<String> _selection = [];
   bool _extendSelection = false;
-  bool _historyListenedAdded = false;
   StreamSubscription<FileSystemEvent>? _dirSubscription;
   FocusNode focusNode = FocusNode();
 
-  @override
-  void initState() {
-    _selection = [];
-    super.initState();
+  HistoryModel get history {
+    return Provider.of<HistoryModel>(context, listen: false);
   }
 
   @override
-  Widget build(BuildContext context) {
-    // history
-    var history = Provider.of<HistoryModel>(
-      context,
-      listen: false,
-    );
-    if (!_historyListenedAdded) {
-      _historyListenedAdded = true;
-      history.addListener(() {
-        _selection = [];
-      });
-    }
+  void initState() {
+    _watchDir();
+    history.addListener(() {
+      _selection = [];
+      _files = null;
+      _watchDir();
+    });
+    super.initState();
+  }
 
+  void _watchDir() {
     // watcher
     _dirSubscription?.cancel();
     _dirSubscription = Directory(history.top!).watch().listen((event) {
@@ -61,19 +57,24 @@ class _ImageGalleryState extends State<ImageGallery> {
         }
       }
       setState(() {
+        _files = null;
         _selection = selection;
       });
     });
+  }
 
+  @override
+  Widget build(BuildContext context) {
     // get files
-    var files = Media.getMediaFiles(history.top, true);
+    _files ??= Media.getMediaFiles(history.top, true);
 
     // focus for keyboard listener
     return Focus(
       focusNode: focusNode,
-      onFocusChange: (hasFocus) {
-        if (hasFocus) debugPrint('gallery');
-      },
+      debugLabel: 'gallery',
+      //onFocusChange: (hasFocus) {
+      //  if (hasFocus) debugPrint('gallery');
+      //},
       onKey: (_, event) {
         if (PlatformKeyboard.isDelete(event) && _selection.isNotEmpty) {
           FileUtils.confirmDelete(context, _selection);
@@ -105,7 +106,7 @@ class _ImageGalleryState extends State<ImageGallery> {
           crossAxisSpacing: 16,
           padding: const EdgeInsets.all(16),
           childAspectRatio: Thumbnail.aspectRatio(),
-          children: files.map<Widget>((file) {
+          children: _files!.map<Widget>((file) {
             return InkResponse(
               onTap: () {
                 focusNode.requestFocus();
@@ -121,6 +122,11 @@ class _ImageGalleryState extends State<ImageGallery> {
                 if (file is Directory) {
                   history.push(file.path);
                 } else {
+                  if (!_selection.contains(file.path)) {
+                    setState(() {
+                      _selection = [file.path];
+                    });
+                  }
                   widget.viewImage(file.path);
                 }
               },

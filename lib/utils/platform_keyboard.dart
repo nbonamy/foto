@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class PlatformKeyboard {
@@ -37,10 +38,26 @@ class PlatformKeyboard {
   }
 
   static bool commandModifierPressed(RawKeyEvent event) {
-    if (Platform.isMacOS) {
+    if (metaIsCommandModifier()) {
       return event.isMetaPressed;
     } else {
       return event.isControlPressed;
     }
+  }
+
+  static bool metaIsCommandModifier() {
+    return Platform.isMacOS;
+  }
+
+  static bool ctrlIsCommandModifier() {
+    return !metaIsCommandModifier();
+  }
+
+  static SingleActivator commandActivator(LogicalKeyboardKey key) {
+    return SingleActivator(
+      key,
+      meta: PlatformKeyboard.metaIsCommandModifier(),
+      control: PlatformKeyboard.ctrlIsCommandModifier(),
+    );
   }
 }
