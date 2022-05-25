@@ -36,12 +36,19 @@ class _ImageViewerState extends State<ImageViewer>
   @override
   void initState() {
     _resetState();
-    _index = max(0, widget.start);
+    _index = _clampIndex(widget.start);
     _scaleAnimationController = AnimationController(vsync: this)
       ..addListener(() {
         _controller.scale = _scaleAnimation!.value;
       });
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    _preload(_index - 1);
+    _preload(_index + 1);
+    super.didChangeDependencies();
   }
 
   void _resetState() {
@@ -85,9 +92,7 @@ class _ImageViewerState extends State<ImageViewer>
                   child: PhotoView(
                     key: Key(widget.images[_index]),
                     controller: _controller,
-                    imageProvider: FileImage(
-                      File(widget.images[_index]),
-                    ),
+                    imageProvider: FileImage(File(widget.images[_index])),
                     initialScale: _fitScale ?? PhotoViewComputedScale.contained,
                     maxScale: _fitScale == null ? 1.0 : null,
                     //minScale: PhotoViewComputedScale.contained * 0.8,
@@ -191,17 +196,27 @@ class _ImageViewerState extends State<ImageViewer>
     );
   }
 
+  int _clampIndex(int index) {
+    return max(0, min(widget.images.length - 1, index));
+  }
+
+  void _preload(int index) {
+    precacheImage(FileImage(File(widget.images[_clampIndex(index)])), context);
+  }
+
   void _previous() {
     setState(() {
       _resetState();
-      _index = _index == 0 ? widget.images.length - 1 : _index - 1;
+      _index = _clampIndex(_index - 1);
+      _preload(_index - 1);
     });
   }
 
   void _next() {
     setState(() {
       _resetState();
-      _index = _index == widget.images.length - 1 ? 0 : _index + 1;
+      _index = _clampIndex(_index + 1);
+      _preload(_index + 1);
     });
   }
 
