@@ -52,8 +52,10 @@ class _ImageViewerState extends State<ImageViewer>
   void _initController() {
     _controller = PhotoViewController();
     _controller.outputStateStream.listen((event) {
-      if (event.scale != null) {
-        _fitScale ??= event.scale;
+      if (event.scale != null && _fitScale == null) {
+        setState(() {
+          _fitScale = event.scale;
+        });
       }
     });
   }
@@ -86,7 +88,8 @@ class _ImageViewerState extends State<ImageViewer>
                     imageProvider: FileImage(
                       File(widget.images[_index]),
                     ),
-                    initialScale: PhotoViewComputedScale.contained,
+                    initialScale: _fitScale ?? PhotoViewComputedScale.contained,
+                    maxScale: _fitScale == null ? 1.0 : null,
                     //minScale: PhotoViewComputedScale.contained * 0.8,
                     //maxScale: PhotoViewComputedScale.contained * 5,
                   ),
