@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:foto/utils/file.dart';
 import 'package:foto/utils/platform_keyboard.dart';
-import 'package:foto/utils/preferences.dart';
+import 'package:foto/model/preferences.dart';
 import 'package:foto/viewer/overlay.dart';
 
 class ImageViewer extends StatefulWidget {
@@ -25,16 +25,10 @@ class ImageViewer extends StatefulWidget {
 
 class _ImageViewerState extends State<ImageViewer> {
   late int _index;
-  OverlayLevel _overlayLevel = Preferences.defaultOverlayLevel();
 
   @override
   void initState() {
     _index = max(0, widget.start);
-    Preferences.getOverlayLevel().then(
-      (value) => setState(() {
-        _overlayLevel = value;
-      }),
-    );
     super.initState();
   }
 
@@ -58,7 +52,6 @@ class _ImageViewerState extends State<ImageViewer> {
             ),
             InfoOverlay(
               image: widget.images[_index],
-              level: _overlayLevel,
             ),
           ],
         ),
@@ -110,12 +103,11 @@ class _ImageViewerState extends State<ImageViewer> {
   }
 
   void _toggleLevel() {
-    var index = _overlayLevel.index;
+    Preferences prefs = Preferences.of(context);
+    var index = prefs.overlayLevel.index;
     index = (index + 1) % OverlayLevel.values.length;
-    setState(() {
-      _overlayLevel = OverlayLevel.values[index];
-      Preferences.saveOverlayLevel(_overlayLevel);
-    });
+    Preferences.of(context).overlayLevel = OverlayLevel.values[index];
+    setState(() {});
   }
 
   void _confirmDelete() {

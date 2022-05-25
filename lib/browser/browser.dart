@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:foto/browser/sidebar.dart';
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
+import 'package:foto/model/preferences.dart';
 import 'package:foto/utils/paths.dart';
 import 'package:foto/utils/utils.dart';
 import 'package:macos_ui/macos_ui.dart';
@@ -89,6 +90,9 @@ class _BrowserState extends State<Browser> {
   }
 
   ToolBar buildToolbar() {
+    const String tickOnPrefix = '✓';
+    const String tickOffPrefix = '   ';
+    Preferences prefs = Provider.of<Preferences>(context);
     HistoryModel history = Provider.of<HistoryModel>(context, listen: false);
     return ToolBar(
       title: Text(
@@ -104,11 +108,43 @@ class _BrowserState extends State<Browser> {
             )
           : null,
       actions: [
-        ToolBarIconButton(
-          label: 'Toggle Sidebar',
-          icon: const MacosIcon(CupertinoIcons.sidebar_left),
-          onPressed: () => MacosWindowScope.of(context).toggleSidebar(),
-          showLabel: true,
+        ToolBarPullDownButton(
+          label: 'Actions',
+          icon: CupertinoIcons.sort_down_circle,
+          tooltipMessage: 'Sort',
+          items: [
+            MacosPulldownMenuItem(
+              label: 'Alphabetical',
+              title: Text(
+                  '${(prefs.sortType == SortType.alphabetical) ? tickOnPrefix : tickOffPrefix} Sort Alphabetical'),
+              onTap: () {
+                prefs.sortType = SortType.alphabetical;
+                prefs.notifyListeners();
+                setState(() {});
+              },
+            ),
+            MacosPulldownMenuItem(
+              label: 'Chronological',
+              title: Text(
+                  '${(prefs.sortType == SortType.chronological) ? tickOnPrefix : tickOffPrefix} Sort Chronological'),
+              onTap: () {
+                prefs.sortType = SortType.chronological;
+                prefs.notifyListeners();
+                setState(() {});
+              },
+            ),
+            const MacosPulldownMenuDivider(),
+            MacosPulldownMenuItem(
+              label: 'Reverse.',
+              title: Text(
+                  '${prefs.sortReversed ? tickOnPrefix : tickOffPrefix} Reverse Order'),
+              onTap: () {
+                prefs.sortReversed = !prefs.sortReversed;
+                prefs.notifyListeners();
+                setState(() {});
+              },
+            ),
+          ],
         ),
       ],
     );

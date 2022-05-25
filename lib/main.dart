@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
 import 'package:foto/utils/platform_keyboard.dart';
-import 'package:foto/utils/preferences.dart';
+import 'package:foto/model/preferences.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:macos_ui/macos_ui.dart';
@@ -23,19 +23,22 @@ void main(List<String> args) async {
   );
 
   // load some stuff
+  Preferences preferences = Preferences();
   HistoryModel historyModel = HistoryModel();
   FavoritesModel favoritesModel = FavoritesModel();
+  await preferences.init();
   await historyModel.init();
   await favoritesModel.init();
 
   windowManager.waitUntilReadyToShow(windowOptions, () async {
-    Rect rc = await Preferences.getWindowBounds();
+    Rect rc = preferences.windowBounds;
     await windowManager.setBounds(rc);
     await windowManager.show();
     await windowManager.focus();
 
     runApp(FotoApp(
       args: args,
+      preferences: preferences,
       historyModel: historyModel,
       favoritesModel: favoritesModel,
     ));
@@ -44,11 +47,14 @@ void main(List<String> args) async {
 
 class FotoApp extends StatelessWidget {
   final List<String> args;
+  final Preferences preferences;
   final HistoryModel historyModel;
   final FavoritesModel favoritesModel;
+
   const FotoApp({
     super.key,
     required this.args,
+    required this.preferences,
     required this.historyModel,
     required this.favoritesModel,
   });
@@ -60,6 +66,9 @@ class FotoApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(
           create: (_) => AppTheme(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => preferences,
         ),
         ChangeNotifierProvider(
           create: (_) => historyModel,

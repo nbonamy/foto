@@ -7,6 +7,7 @@ import 'package:foto/model/history.dart';
 import 'package:foto/utils/file.dart';
 import 'package:foto/utils/media.dart';
 import 'package:foto/utils/platform_keyboard.dart';
+import 'package:foto/model/preferences.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:provider/provider.dart';
 
@@ -43,6 +44,9 @@ class _ImageGalleryState extends State<ImageGallery> {
       _files = null;
       _watchDir();
     });
+    Preferences.of(context).addListener(() {
+      _files = null;
+    });
     super.initState();
   }
 
@@ -66,7 +70,13 @@ class _ImageGalleryState extends State<ImageGallery> {
   @override
   Widget build(BuildContext context) {
     // get files
-    _files ??= Media.getMediaFiles(history.top, true);
+    Preferences prefs = Preferences.of(context);
+    _files ??= Media.getMediaFiles(
+      history.top,
+      includeDirs: true,
+      sortType: prefs.sortType,
+      sortReversed: prefs.sortReversed,
+    );
 
     // focus for keyboard listener
     return Focus(

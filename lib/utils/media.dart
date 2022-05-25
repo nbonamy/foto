@@ -1,12 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:foto/model/preferences.dart';
 import 'package:path/path.dart' as p;
-
-enum SortOrder {
-  alphabetical,
-  chronological,
-}
 
 class Media {
   static String getExtension(String file) {
@@ -25,10 +21,10 @@ class Media {
   }
 
   static List<FileSystemEntity> getMediaFiles(
-    String? path,
-    bool includeDirs, {
-    SortOrder sortOrder = SortOrder.chronological,
-    bool sortReverse = false,
+    String? path, {
+    required bool includeDirs,
+    SortType sortType = SortType.chronological,
+    bool sortReversed = false,
   }) {
     try {
       // null
@@ -56,7 +52,15 @@ class Media {
         } else if (b is Directory && a is! Directory) {
           return 1;
         } else {
-          return a.path.toLowerCase().compareTo(b.path.toLowerCase());
+          if (sortType == SortType.alphabetical) {
+            return (sortReversed ? -1 : 1) *
+                a.path.toLowerCase().compareTo(b.path.toLowerCase());
+          } else if (sortType == SortType.chronological) {
+            return (sortReversed ? -1 : 1) *
+                a.statSync().changed.compareTo(b.statSync().changed);
+          } else {
+            return -1;
+          }
         }
       });
       return filtered;

@@ -5,19 +5,17 @@ import 'package:exif/exif.dart';
 import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:foto/utils/preferences.dart';
+import 'package:foto/model/preferences.dart';
 import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart';
 import 'package:intl/intl.dart';
 
 class InfoOverlay extends StatefulWidget {
   final String image;
-  final OverlayLevel level;
 
   const InfoOverlay({
     super.key,
     required this.image,
-    required this.level,
   });
 
   @override
@@ -51,12 +49,13 @@ class _InfoOverlayState extends State<InfoOverlay> {
 
   @override
   Widget build(BuildContext context) {
+    Preferences prefs = Preferences.of(context);
     TextStyle textStyle = const TextStyle(
       color: Color.fromARGB(255, 92, 202, 71),
     );
 
     List<Widget> texts = [];
-    if (widget.level != OverlayLevel.none) {
+    if (prefs.overlayLevel != OverlayLevel.none) {
       texts.add(
         Text(
           widget.image,
@@ -65,8 +64,8 @@ class _InfoOverlayState extends State<InfoOverlay> {
       );
     }
     if (_size != null) {
-      if (widget.level == OverlayLevel.image ||
-          widget.level == OverlayLevel.exif) {
+      if (prefs.overlayLevel == OverlayLevel.image ||
+          prefs.overlayLevel == OverlayLevel.exif) {
         var width = _size!.width;
         var height = _size!.height;
         var size = filesize(_file?.lengthSync());
@@ -83,7 +82,7 @@ class _InfoOverlayState extends State<InfoOverlay> {
           style: textStyle,
         ));
       }
-      if (widget.level == OverlayLevel.exif && _exif != null) {
+      if (prefs.overlayLevel == OverlayLevel.exif && _exif != null) {
         // date time original
         String? datetime = _exif?['EXIF DateTimeOriginal']?.printable;
         if (datetime != null) {

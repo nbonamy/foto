@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:foto/model/history.dart';
 import 'package:foto/utils/file_handler.dart';
 import 'package:foto/utils/media.dart';
-import 'package:foto/utils/preferences.dart';
+import 'package:foto/model/preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
@@ -71,8 +71,9 @@ class _HomeState extends State<Home> with WindowListener {
 
   void viewImage(String image) {
     var path = File(image).parent.path;
-    var images =
-        Media.getMediaFiles(path, false).map<String>((e) => e.path).toList();
+    var images = Media.getMediaFiles(path, includeDirs: false)
+        .map<String>((e) => e.path)
+        .toList();
     var index = images.indexOf(image);
     viewImages(images, index);
   }
@@ -125,6 +126,7 @@ class _HomeState extends State<Home> with WindowListener {
 
   void _saveWindowBounds() async {
     Rect rc = await windowManager.getBounds();
-    Preferences.saveWindowBounds(rc);
+    // ignore: use_build_context_synchronously
+    Preferences.of(context).windowBounds = rc;
   }
 }
