@@ -1,6 +1,7 @@
 // ignore_for_file: unnecessary_brace_in_string_interps
 
 import 'dart:io';
+
 import 'package:exif/exif.dart';
 import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';

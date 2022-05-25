@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:foto/utils/utils.dart';
 import 'package:path/path.dart' as p;
 
 class SystemPath {
