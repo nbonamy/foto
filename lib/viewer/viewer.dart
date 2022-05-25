@@ -36,7 +36,7 @@ class _ImageViewerState extends State<ImageViewer>
   @override
   void initState() {
     _resetState();
-    _index = _clampIndex(widget.start);
+    _index = _cycleIndex(widget.start);
     _scaleAnimationController = AnimationController(vsync: this)
       ..addListener(() {
         _controller.scale = _scaleAnimation!.value;
@@ -196,18 +196,20 @@ class _ImageViewerState extends State<ImageViewer>
     );
   }
 
-  int _clampIndex(int index) {
-    return max(0, min(widget.images.length - 1, index));
+  int _cycleIndex(int index) {
+    if (index < 0) return widget.images.length - 1;
+    if (index > widget.images.length - 1) return 0;
+    return index;
   }
 
   void _preload(int index) {
-    precacheImage(FileImage(File(widget.images[_clampIndex(index)])), context);
+    precacheImage(FileImage(File(widget.images[_cycleIndex(index)])), context);
   }
 
   void _previous() {
     setState(() {
       _resetState();
-      _index = _clampIndex(_index - 1);
+      _index = _cycleIndex(_index - 1);
       _preload(_index - 1);
     });
   }
@@ -215,7 +217,7 @@ class _ImageViewerState extends State<ImageViewer>
   void _next() {
     setState(() {
       _resetState();
-      _index = _clampIndex(_index + 1);
+      _index = _cycleIndex(_index + 1);
       _preload(_index + 1);
     });
   }
