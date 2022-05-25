@@ -12,10 +12,12 @@ import 'package:intl/intl.dart';
 
 class InfoOverlay extends StatefulWidget {
   final String image;
+  final double? scale;
 
   const InfoOverlay({
     super.key,
     required this.image,
+    required this.scale,
   });
 
   @override
@@ -78,7 +80,7 @@ class _InfoOverlayState extends State<InfoOverlay> {
           }
         }
         texts.add(Text(
-          '${width}x${height} pixels (${size})',
+          '${width}x${height} pixels${widget.scale != null ? ' (Zoom x${widget.scale?.toStringAsFixed(4)})' : ''}, ${size}',
           style: textStyle,
         ));
       }

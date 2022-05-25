@@ -29,6 +29,7 @@ dependencies:
   exif: ^3.1.1
   intl: ^0.17.0
   pasteboard: ^0.0.3
+  photo_view: ^0.14.0
 
 dev_dependencies:
   flutter_test:

@@ -34,7 +34,8 @@ class PlatformKeyboard {
   }
 
   static bool isEnter(RawKeyEvent event) {
-    return event.physicalKey == PhysicalKeyboardKey.enter;
+    return event.physicalKey == PhysicalKeyboardKey.enter ||
+        event.physicalKey == PhysicalKeyboardKey.numpadEnter;
   }
 
   static bool commandModifierPressed(RawKeyEvent event) {
