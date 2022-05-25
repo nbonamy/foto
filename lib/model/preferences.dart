@@ -30,6 +30,10 @@ class Preferences extends ChangeNotifier {
     return false;
   }
 
+  static bool get defaultShowFolders {
+    return true;
+  }
+
   static Preferences of(BuildContext context) {
     return Provider.of<Preferences>(context, listen: false);
   }
@@ -47,31 +51,41 @@ class Preferences extends ChangeNotifier {
   }
 
   OverlayLevel get overlayLevel {
-    final level =
-        _prefs.getInt('overlayLevel') ?? Preferences.defaultOverlayLevel.index;
+    final level = _prefs.getInt('viewer.overlayLevel') ??
+        Preferences.defaultOverlayLevel.index;
     return OverlayLevel.values[level];
   }
 
   set overlayLevel(OverlayLevel level) {
-    _prefs.setInt('overlayLevel', level.index);
+    _prefs.setInt('viewer.overlayLevel', level.index);
   }
 
   SortType get sortType {
     final type =
-        _prefs.getInt('sort.type') ?? Preferences.defaultSortType.index;
+        _prefs.getInt('browser.sort.type') ?? Preferences.defaultSortType.index;
     return SortType.values[type];
   }
 
   set sortType(SortType type) {
-    _prefs.setInt('sort.type', type.index);
+    _prefs.setInt('browser.sort.type', type.index);
   }
 
   bool get sortReversed {
-    return _prefs.getBool('sort.reversed') ?? Preferences.defaultSortReversed;
+    return _prefs.getBool('browser.sort.reversed') ??
+        Preferences.defaultSortReversed;
   }
 
   set sortReversed(bool reversed) {
-    _prefs.setBool('sort.reversed', reversed);
+    _prefs.setBool('browser.sort.reversed', reversed);
+  }
+
+  bool get showFolders {
+    return _prefs.getBool('browser.show_folders') ??
+        Preferences.defaultShowFolders;
+  }
+
+  set showFolders(bool show) {
+    _prefs.setBool('browser.show_folders', show);
   }
 
   Rect get windowBounds {

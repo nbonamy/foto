@@ -47,7 +47,9 @@ class Media {
         }
       }).toList();
       filtered.sort((a, b) {
-        if (a is Directory && b is! Directory) {
+        if (a is Directory && b is Directory) {
+          return a.path.toLowerCase().compareTo(b.path.toLowerCase());
+        } else if (a is Directory && b is! Directory) {
           return -1;
         } else if (b is Directory && a is! Directory) {
           return 1;

@@ -73,7 +73,7 @@ class _ImageGalleryState extends State<ImageGallery> {
     Preferences prefs = Preferences.of(context);
     _files ??= Media.getMediaFiles(
       history.top,
-      includeDirs: true,
+      includeDirs: prefs.showFolders,
       sortType: prefs.sortType,
       sortReversed: prefs.sortReversed,
     );

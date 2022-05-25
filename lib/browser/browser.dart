@@ -108,6 +108,18 @@ class _BrowserState extends State<Browser> {
             )
           : null,
       actions: [
+        ToolBarIconButton(
+          icon: MacosIcon(prefs.showFolders
+              ? CupertinoIcons.folder
+              : CupertinoIcons.folder_fill),
+          onPressed: () {
+            prefs.showFolders = !prefs.showFolders;
+            prefs.notifyListeners();
+            setState(() {});
+          },
+          label: prefs.showFolders ? 'Hide Folders' : 'Show Folders',
+          showLabel: true,
+        ),
         ToolBarPullDownButton(
           label: 'Actions',
           icon: CupertinoIcons.sort_down_circle,
