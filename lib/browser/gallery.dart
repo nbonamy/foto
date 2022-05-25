@@ -13,11 +13,11 @@ import 'package:provider/provider.dart';
 
 class ImageGallery extends StatefulWidget {
   final ScrollController scrollController;
-  final Function viewImage;
+  final Function viewImages;
 
   const ImageGallery({
     Key? key,
-    required this.viewImage,
+    required this.viewImages,
     required this.scrollController,
   }) : super(key: key);
 
@@ -137,7 +137,10 @@ class _ImageGalleryState extends State<ImageGallery> {
                       _selection = [file.path];
                     });
                   }
-                  widget.viewImage(file.path);
+                  widget.viewImages(
+                    _files!.map((f) => f.path).toList(),
+                    _files!.indexOf(file),
+                  );
                 }
               },
               child: Thumbnail(

@@ -15,10 +15,10 @@ import 'package:provider/provider.dart';
 class Browser extends StatefulWidget {
   const Browser({
     Key? key,
-    required this.viewImage,
+    required this.viewImages,
   }) : super(key: key);
 
-  final Function viewImage;
+  final Function viewImages;
 
   @override
   State<Browser> createState() => _BrowserState();
@@ -77,7 +77,7 @@ class _BrowserState extends State<Browser> {
           ContentArea(
             builder: (context, scrollController) => ImageGallery(
               scrollController: scrollController,
-              viewImage: widget.viewImage,
+              viewImages: widget.viewImages,
             ),
           ),
         ],

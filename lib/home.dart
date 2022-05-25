@@ -58,7 +58,7 @@ class _HomeState extends State<Home> with WindowListener {
   Widget build(BuildContext context) {
     if (_images == null) {
       return Browser(
-        viewImage: viewImage,
+        viewImages: viewImages,
       );
     } else {
       return ImageViewer(
