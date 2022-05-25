@@ -2,6 +2,8 @@ import 'package:contextual_menu/contextual_menu.dart' as ncm;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide MenuItem;
 
+typedef BoolCallback = bool Function();
+
 class Menu extends ncm.Menu {
   Menu({
     super.items,
@@ -28,7 +30,7 @@ class MenuItem extends ncm.MenuItem {
 class ContextMenu extends StatefulWidget {
   final Menu menu;
   final ncm.Placement placement;
-  final Function? onBeforeShowMenu;
+  final BoolCallback? onBeforeShowMenu;
   final Widget child;
 
   const ContextMenu({
@@ -44,28 +46,30 @@ class ContextMenu extends StatefulWidget {
 }
 
 class _ContextMenuState extends State<ContextMenu> {
-  bool _shouldReact = false;
   Offset? _position;
 
   @override
   Widget build(BuildContext context) {
     return Listener(
       onPointerDown: (event) {
-        _shouldReact = event.kind == PointerDeviceKind.mouse &&
-            event.buttons == kSecondaryMouseButton;
-        if (_shouldReact && widget.onBeforeShowMenu != null) {
-          widget.onBeforeShowMenu!();
+        if (event.kind == PointerDeviceKind.mouse &&
+            event.buttons == kSecondaryMouseButton) {
+          _position = Offset(
+            event.position.dx,
+            event.position.dy,
+          );
+
+          // parent widget may want to setState...
+          bool wait = false;
+          if (widget.onBeforeShowMenu != null) {
+            wait = widget.onBeforeShowMenu!();
+          }
+
+          // ugly hack for now...
+          Future.delayed(Duration(milliseconds: wait ? 100 : 0), () {
+            _handleClickPopUp();
+          });
         }
-      },
-      onPointerUp: (event) {
-        if (!_shouldReact) return;
-
-        _position = Offset(
-          event.position.dx,
-          event.position.dy,
-        );
-
-        _handleClickPopUp();
       },
       child: widget.child,
     );

@@ -154,7 +154,9 @@ class _ImageGalleryState extends State<ImageGallery> {
                     setState(() {
                       _selection = [file.path];
                     });
+                    return true;
                   }
+                  return false;
                 },
                 child: Thumbnail(
                   path: file.path,
