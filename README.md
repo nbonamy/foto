@@ -8,18 +8,20 @@ Currently only developed and tested for MacOS.
 
 - [x] Favorites ordering
 - [ ] ~~Get folder icons from NSWorkspace~~ (too slow)
+- [x] Photo viewer with zoom
+- [ ] Exif cache database
 - [ ] Black background
+- [ ] Selection info palette
 - File operations:
+  - [x] delete
+  - [x] clipboard
+  - [ ] rename
+  - [ ] move
+- Folder operations
   - [x] delete
   - [ ] clipboard
   - [ ] rename
   - [ ] move
-- Folder operations
-  - [ ] delete
-  - [ ] clipboard
-  - [ ] rename
-  - [ ] move
-- [ ] Selection info palette
 - Image manipulations
   - [ ] rotations
   - [ ] resize
