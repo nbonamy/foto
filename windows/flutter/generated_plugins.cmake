@@ -3,7 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  native_context_menu
+  contextual_menu
   pasteboard
   window_manager
 )

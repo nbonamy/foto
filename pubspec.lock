@@ -50,6 +50,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.16.0"
+  contextual_menu:
+    dependency: "direct main"
+    description:
+      name: contextual_menu
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.1"
   convert:
     dependency: transitive
     description:
@@ -191,6 +198,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.1.4"
+  menu_base:
+    dependency: transitive
+    description:
+      name: menu_base
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.0"
   meta:
     dependency: transitive
     description:
@@ -198,15 +212,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.7.0"
-  native_context_menu:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: flutter-3
-      resolved-ref: "902cd6c1a561b3fbfeed92db9008b736244fcd1f"
-      url: "https://github.com/jmatth/native_context_menu.git"
-    source: git
-    version: "0.2.0+3"
   nested:
     dependency: transitive
     description:

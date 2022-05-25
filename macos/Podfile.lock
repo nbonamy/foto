@@ -1,8 +1,8 @@
 PODS:
+  - contextual_menu (0.0.1):
+    - FlutterMacOS
   - FlutterMacOS (1.0.0)
   - macos_ui (0.1.0):
-    - FlutterMacOS
-  - native_context_menu (0.0.1):
     - FlutterMacOS
   - pasteboard (0.0.1):
     - FlutterMacOS
@@ -12,20 +12,20 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
+  - contextual_menu (from `Flutter/ephemeral/.symlinks/plugins/contextual_menu/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
   - macos_ui (from `Flutter/ephemeral/.symlinks/plugins/macos_ui/macos`)
-  - native_context_menu (from `Flutter/ephemeral/.symlinks/plugins/native_context_menu/macos`)
   - pasteboard (from `Flutter/ephemeral/.symlinks/plugins/pasteboard/macos`)
   - shared_preferences_macos (from `Flutter/ephemeral/.symlinks/plugins/shared_preferences_macos/macos`)
   - window_manager (from `Flutter/ephemeral/.symlinks/plugins/window_manager/macos`)
 
 EXTERNAL SOURCES:
+  contextual_menu:
+    :path: Flutter/ephemeral/.symlinks/plugins/contextual_menu/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
   macos_ui:
     :path: Flutter/ephemeral/.symlinks/plugins/macos_ui/macos
-  native_context_menu:
-    :path: Flutter/ephemeral/.symlinks/plugins/native_context_menu/macos
   pasteboard:
     :path: Flutter/ephemeral/.symlinks/plugins/pasteboard/macos
   shared_preferences_macos:
@@ -34,9 +34,9 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/window_manager/macos
 
 SPEC CHECKSUMS:
+  contextual_menu: 6d35fb15942c0d8769f5eae8d3bda653994a6f5a
   FlutterMacOS: 57701585bf7de1b3fc2bb61f6378d73bbdea8424
   macos_ui: 125c911559d646194386d84c017ad6819122e2db
-  native_context_menu: 8b710e17c5962cf3f005b805eb97cce668b3839a
   pasteboard: 9b69dba6fedbb04866be632205d532fe2f6b1d99
   shared_preferences_macos: a64dc611287ed6cbe28fd1297898db1336975727
   window_manager: 3a1844359a6295ab1e47659b1a777e36773cd6e8

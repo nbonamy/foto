@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:foto/browser/thumbnail.dart';
+import 'package:foto/components/context_menu.dart' as ctxm;
 import 'package:foto/model/history.dart';
 import 'package:foto/utils/file.dart';
 import 'package:foto/utils/media.dart';
@@ -20,7 +21,6 @@ class ImageGallery extends StatefulWidget {
     required this.viewImages,
     required this.scrollController,
   }) : super(key: key);
-
   @override
   State<StatefulWidget> createState() => _ImageGalleryState();
 }
@@ -118,7 +118,7 @@ class _ImageGalleryState extends State<ImageGallery> {
           childAspectRatio: Thumbnail.aspectRatio(),
           children: _files!.map<Widget>((file) {
             return InkResponse(
-              onTap: () {
+              onTapDown: (_) {
                 focusNode.requestFocus();
                 setState(() {
                   if (!_extendSelection) {
@@ -129,30 +129,60 @@ class _ImageGalleryState extends State<ImageGallery> {
               },
               onDoubleTap: () {
                 focusNode.requestFocus();
-                if (file is Directory) {
-                  history.push(file.path);
-                } else {
-                  if (!_selection.contains(file.path)) {
+                _onDoubleTap(file);
+              },
+              child: ctxm.ContextMenu(
+                menu: ctxm.Menu(
+                  items: [
+                    ctxm.MenuItem(
+                      label: 'View',
+                      onClick: (_) => _onDoubleTap(file),
+                    ),
+                    ctxm.MenuItem(
+                      label: 'Rename',
+                    ),
+                    ctxm.MenuItem.separator(),
+                    ctxm.MenuItem(
+                      label: 'Move to Trash',
+                      onClick: (_) =>
+                          FileUtils.confirmDelete(context, _selection),
+                    ),
+                  ],
+                ),
+                onBeforeShowMenu: () {
+                  if (_selection.contains(file.path) == false) {
                     setState(() {
                       _selection = [file.path];
                     });
                   }
-                  widget.viewImages(
-                    _files!.map((f) => f.path).toList(),
-                    _files!.indexOf(file),
-                  );
-                }
-              },
-              child: Thumbnail(
-                path: file.path,
-                folder: file is Directory,
-                selected: _selection.contains(file.path),
+                },
+                child: Thumbnail(
+                  path: file.path,
+                  folder: file is Directory,
+                  selected: _selection.contains(file.path),
+                ),
               ),
             );
           }).toList(),
         ),
       ),
     );
+  }
+
+  void _onDoubleTap(FileSystemEntity file) {
+    if (file is Directory) {
+      history.push(file.path);
+    } else {
+      if (!_selection.contains(file.path)) {
+        setState(() {
+          _selection = [file.path];
+        });
+      }
+      widget.viewImages(
+        _files!.whereType<File>().map((f) => f.path).toList(),
+        _files!.indexOf(file),
+      );
+    }
   }
 
   void _copyToClipboard() {

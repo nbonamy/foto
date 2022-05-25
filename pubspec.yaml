@@ -20,16 +20,13 @@ dependencies:
   window_manager: ^0.2.3
   shared_preferences: ^2.0.15
   path: ^1.8.1
-  native_context_menu:
-    git:
-      url: https://github.com/jmatth/native_context_menu.git
-      ref: flutter-3
   image_size_getter: ^2.1.1
   filesize: ^2.0.1
   exif: ^3.1.1
   intl: ^0.17.0
   pasteboard: ^0.0.3
   photo_view: ^0.14.0
+  contextual_menu: ^0.1.1
 
 dev_dependencies:
   flutter_test:

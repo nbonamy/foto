@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:foto/components/context_menu.dart' as ctxm;
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
 import 'package:foto/utils/file.dart';
@@ -8,7 +9,6 @@ import 'package:foto/utils/paths.dart';
 import 'package:foto/utils/platform_keyboard.dart';
 import 'package:foto/utils/utils.dart';
 import 'package:flutter_treeview/flutter_treeview.dart';
-import 'package:native_context_menu/native_context_menu.dart' as ncm;
 import 'package:pasteboard/pasteboard.dart';
 import 'package:provider/provider.dart';
 
@@ -67,33 +67,16 @@ class _BrowserTreeState extends State<BrowserTree> {
             builder: (context, history, favorites, child) {
             return TreeView(
               controller: _treeViewController!,
-              theme: getTreeTheme(context),
+              theme: _getTreeTheme(context),
               allowParentSelect: true,
               shrinkWrap: true,
               nodeBuilder: (context, node) {
-                return ncm.ContextMenuRegion(
-                  menuItems: [
-                    favorites.isFavorite(node.key)
-                        ? ncm.MenuItem(
-                            action: 'del_fav',
-                            title: 'Remove from Favorites',
-                          )
-                        : ncm.MenuItem(
-                            action: 'add_fav',
-                            title: 'Add to Favorites',
-                          ),
-                  ],
-                  onItemSelected: (item) {
-                    if (item.action == 'del_fav') {
-                      favorites.remove(node.key);
-                    } else if (item.action == 'add_fav') {
-                      favorites.add(node.key);
-                    }
-                  },
+                return ctxm.ContextMenu(
+                  menu: _buildMenu(favorites, node),
                   child: _buildNodeLabel(
                     _treeViewController!,
                     node,
-                    getTreeTheme(context),
+                    _getTreeTheme(context),
                   ),
                 );
               },
@@ -137,7 +120,23 @@ class _BrowserTreeState extends State<BrowserTree> {
     );
   }
 
-  TreeViewTheme getTreeTheme(BuildContext context) {
+  ctxm.Menu _buildMenu(FavoritesModel favorites, Node<dynamic> node) {
+    return ctxm.Menu(
+      items: [
+        favorites.isFavorite(node.key)
+            ? ctxm.MenuItem(
+                label: 'Remove from Favorites',
+                onClick: (_) => favorites.remove(node.key),
+              )
+            : ctxm.MenuItem(
+                label: 'Add to Favorites',
+                onClick: (_) => favorites.add(node.key),
+              ),
+      ],
+    );
+  }
+
+  TreeViewTheme _getTreeTheme(BuildContext context) {
     TreeViewTheme treeViewTheme = TreeViewTheme(
       expanderTheme: const ExpanderThemeData(
         type: ExpanderType.chevron,
