@@ -39,7 +39,7 @@ class FotoDialog {
           isSecondary: true,
           buttonSize: ButtonSize.small,
           onPressed: () =>
-              onCancel != null ? onCancel(context) : Navigator.of(context).pop,
+              onCancel != null ? onCancel(context) : Navigator.of(context).pop(),
           child: const Text('Cancel'),
         ),
       ),
@@ -78,7 +78,7 @@ class FotoDialog {
                         isSecondary: true,
                         onPressed: () => onCancel != null
                             ? onCancel(context)
-                            : Navigator.of(context).pop,
+                            : Navigator.of(context).pop(),
                       ),
                     ),
                     const SizedBox(width: 8.0),
