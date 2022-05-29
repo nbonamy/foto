@@ -9,6 +9,7 @@ import 'package:foto/model/history.dart';
 import 'package:foto/utils/paths.dart';
 import 'package:foto/utils/utils.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class RootNode {
   final String? _title;
@@ -209,12 +210,14 @@ class _SidebarState extends State<BrowserSidebar> {
       );
 
       // add this
-      sidebarContent.add(const Section(title: 'Favorites'));
+      sidebarContent
+          .add(Section(title: AppLocalizations.of(context)!.favorites));
       sidebarContent.add(favoritesList);
     }
 
     // devices
-    sidebarContent.add(const Section(title: 'Devices'));
+    sidebarContent
+        .add(Section(title: AppLocalizations.of(context)!.devices));
     for (var device in _devices) {
       sidebarContent.add(
         BrowserTree(

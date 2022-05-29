@@ -3,15 +3,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:foto/components/dialogs.dart';
 import 'package:path/path.dart' as p;
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FileUtils {
   static Future confirmDelete(BuildContext context, List<String> files) {
     String text = files.length > 1
-        ? 'Are you sure you want to delete these images? This cannot be undone.'
+        ? AppLocalizations.of(context)!.deleteConfirmImages
         : (FileSystemEntity.typeSync(files[0]) ==
                 FileSystemEntityType.directory)
-            ? 'Are you sure you want to delete this folder? This cannot be undone.'
-            : 'Are you sure you want to delete this image? This cannot be undone.';
+            ? AppLocalizations.of(context)!.deleteConfirmFolder
+            : AppLocalizations.of(context)!.deleteConfirmImage;
 
     return FotoDialog.confirm(
       context: context,
@@ -51,8 +52,7 @@ class FileUtils {
     if (conflicts) {
       return FotoDialog.confirm(
         context: context,
-        text:
-            'Destination file(s) already exists. Do you want to overwrite them?',
+        text: AppLocalizations.of(context)!.overwriteConfirm,
         onConfirmed: (context) {
           Navigator.of(context).pop();
           copy(operations);

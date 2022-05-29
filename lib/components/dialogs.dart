@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:macos_ui/macos_ui.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 typedef DialogCallback = void Function(BuildContext);
 typedef PromptCallback = void Function(BuildContext, String);
@@ -33,14 +34,15 @@ class FotoDialog {
           buttonSize: ButtonSize.small,
           color: isDanger ? Colors.red : null,
           onPressed: () => onConfirmed(context),
-          child: const Text('Yes'),
+          child: Text(AppLocalizations.of(context)!.yes),
         ),
         secondaryButton: PushButton(
           isSecondary: true,
           buttonSize: ButtonSize.small,
-          onPressed: () =>
-              onCancel != null ? onCancel(context) : Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          onPressed: () => onCancel != null
+              ? onCancel(context)
+              : Navigator.of(context).pop(),
+          child: Text(AppLocalizations.of(context)!.cancel),
         ),
       ),
     );
@@ -73,22 +75,22 @@ class FotoDialog {
                   children: [
                     Expanded(
                       child: PushButton(
-                        child: Text('Cancel'),
                         buttonSize: ButtonSize.small,
                         isSecondary: true,
                         onPressed: () => onCancel != null
                             ? onCancel(context)
                             : Navigator.of(context).pop(),
+                        child: Text(AppLocalizations.of(context)!.cancel),
                       ),
                     ),
                     const SizedBox(width: 8.0),
                     Expanded(
                       child: PushButton(
-                        child: Text('OK'),
                         color: Colors.green,
                         buttonSize: ButtonSize.small,
                         onPressed: () =>
                             onConfirmed(context, controller.value.text),
+                        child: Text(AppLocalizations.of(context)!.ok),
                       ),
                     ),
                   ],

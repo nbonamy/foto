@@ -8,6 +8,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/browser/browser.dart';
 import 'package:foto/viewer/viewer.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class Home extends StatefulWidget {
   final List<String> args;
@@ -53,40 +54,40 @@ class _HomeState extends State<Home> with WindowListener {
   @override
   Widget build(BuildContext context) {
     return PlatformMenuBar(
-      menus: const [
+      menus: [
         PlatformMenu(
-          label: 'foto',
+          label: AppLocalizations.of(context)!.appName,
           menus: [
-            PlatformProvidedMenuItem(
+            const PlatformProvidedMenuItem(
               type: PlatformProvidedMenuItemType.about,
             ),
-            PlatformProvidedMenuItem(
+            const PlatformProvidedMenuItem(
               type: PlatformProvidedMenuItemType.quit,
             ),
           ],
         ),
         PlatformMenu(
-          label: 'Edit',
+          label: AppLocalizations.of(context)!.menuEdit,
           menus: [
             //_menuItem('Copy', LogicalKeyboardKey.keyC),
             //_menuItem('Paste', LogicalKeyboardKey.keyV),
           ],
         ),
         PlatformMenu(
-          label: 'View',
+          label: AppLocalizations.of(context)!.menuView,
           menus: [
-            PlatformProvidedMenuItem(
+            const PlatformProvidedMenuItem(
               type: PlatformProvidedMenuItemType.toggleFullScreen,
             ),
           ],
         ),
         PlatformMenu(
-          label: 'Window',
+          label: AppLocalizations.of(context)!.menuWindow,
           menus: [
-            PlatformProvidedMenuItem(
+            const PlatformProvidedMenuItem(
               type: PlatformProvidedMenuItemType.minimizeWindow,
             ),
-            PlatformProvidedMenuItem(
+            const PlatformProvidedMenuItem(
               type: PlatformProvidedMenuItemType.zoomWindow,
             ),
           ],

@@ -13,6 +13,7 @@ import 'package:flutter_treeview/flutter_treeview.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class BrowserTree extends StatefulWidget {
   const BrowserTree({
@@ -130,11 +131,11 @@ class _BrowserTreeState extends State<BrowserTree> {
       items: [
         favorites.isFavorite(node.key)
             ? ctxm.MenuItem(
-                label: 'Remove from Favorites',
+                label: AppLocalizations.of(context)!.favoritesRemove,
                 onClick: (_) => favorites.remove(node.key),
               )
             : ctxm.MenuItem(
-                label: 'Add to Favorites',
+                label: AppLocalizations.of(context)!.favoritesAdd,
                 onClick: (_) => favorites.add(node.key),
               ),
       ],
@@ -171,8 +172,7 @@ class _BrowserTreeState extends State<BrowserTree> {
       TreeViewController controller, Node node, TreeViewTheme theme) {
     return Container(
       alignment: Alignment.center,
-      width:
-          true /*node.hasIcon*/ ? theme.iconTheme.size! + theme.iconPadding : 0,
+      width: theme.iconTheme.size! + theme.iconPadding,
       child: Image.asset(
         node.data ?? SystemPath.getFolderNamedAsset(null),
         width: theme.iconTheme.size,

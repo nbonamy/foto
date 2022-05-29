@@ -1,7 +1,9 @@
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
 import 'package:foto/utils/platform_keyboard.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:foto/model/preferences.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
@@ -86,6 +88,16 @@ class FotoApp extends StatelessWidget {
           themeMode: appTheme.mode,
           debugShowCheckedModeBanner: false,
           color: Colors.black,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en', ''),
+            Locale('fr', ''),
+          ],
           home: Home(args: args),
         );
       },

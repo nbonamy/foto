@@ -9,6 +9,7 @@ import 'package:foto/utils/media.dart';
 import 'package:foto/utils/platform_keyboard.dart';
 import 'package:foto/model/preferences.dart';
 import 'package:pasteboard/pasteboard.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ImageGallery extends StatefulWidget {
   final String path;
@@ -142,11 +143,11 @@ class _ImageGalleryState extends State<ImageGallery> {
                 menu: ctxm.Menu(
                   items: [
                     ctxm.MenuItem(
-                      label: 'View',
+                      label: AppLocalizations.of(context)!.view,
                       onClick: (_) => _onDoubleTap(file),
                     ),
                     ctxm.MenuItem(
-                      label: 'Rename',
+                      label: AppLocalizations.of(context)!.rename,
                       disabled: _selection.length != 1,
                       onClick: (_) => setState(() {
                         _fileBeingRenamed = file.path;
@@ -154,7 +155,7 @@ class _ImageGalleryState extends State<ImageGallery> {
                     ),
                     ctxm.MenuItem.separator(),
                     ctxm.MenuItem(
-                      label: 'Move to Trash',
+                      label: AppLocalizations.of(context)!.delete,
                       onClick: (_) =>
                           FileUtils.confirmDelete(context, _selection),
                     ),

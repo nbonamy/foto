@@ -7,7 +7,6 @@ import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
 import 'package:foto/utils/paths.dart';
 import 'package:macos_ui/macos_ui.dart';
-import 'package:provider/provider.dart';
 
 class Browser extends StatefulWidget {
   const Browser({
