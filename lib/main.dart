@@ -81,7 +81,7 @@ class FotoApp extends StatelessWidget {
         final appTheme = context.watch<AppTheme>();
         return MacosApp(
           title: 'foto',
-          theme: MacosThemeData.dark(),
+          theme: MacosThemeData.light(),
           darkTheme: MacosThemeData.dark(),
           themeMode: appTheme.mode,
           debugShowCheckedModeBanner: false,

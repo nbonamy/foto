@@ -180,9 +180,9 @@ packages:
   macos_ui:
     dependency: "direct main"
     description:
-      name: macos_ui
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: "../GitHub/macos_ui"
+      relative: true
+    source: path
     version: "1.4.1+1"
   matcher:
     dependency: transitive

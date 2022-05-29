@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:foto/components/context_menu.dart' as ctxm;
+import 'package:foto/components/theme.dart';
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
 import 'package:foto/utils/file.dart';
@@ -9,6 +10,7 @@ import 'package:foto/utils/paths.dart';
 import 'package:foto/utils/platform_keyboard.dart';
 import 'package:foto/utils/utils.dart';
 import 'package:flutter_treeview/flutter_treeview.dart';
+import 'package:macos_ui/macos_ui.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:provider/provider.dart';
 
@@ -63,13 +65,13 @@ class _BrowserTreeState extends State<BrowserTree> {
   @override
   Widget build(BuildContext context) {
     Widget tree = _treeViewController != null
-        ? Consumer2<HistoryModel, FavoritesModel>(
-            builder: (context, history, favorites, child) {
+        ? Consumer3<AppTheme, HistoryModel, FavoritesModel>(
+            builder: (context, theme, history, favorites, child) {
             return Material(
               type: MaterialType.transparency,
               child: TreeView(
                 controller: _treeViewController!,
-                theme: _getTreeTheme(context),
+                theme: _getTreeTheme(context, theme),
                 allowParentSelect: true,
                 shrinkWrap: true,
                 nodeBuilder: (context, node) {
@@ -78,7 +80,7 @@ class _BrowserTreeState extends State<BrowserTree> {
                     child: _buildNodeLabel(
                       _treeViewController!,
                       node,
-                      _getTreeTheme(context),
+                      _getTreeTheme(context, theme),
                     ),
                   );
                 },
@@ -139,30 +141,24 @@ class _BrowserTreeState extends State<BrowserTree> {
     );
   }
 
-  TreeViewTheme _getTreeTheme(BuildContext context) {
+  TreeViewTheme _getTreeTheme(BuildContext context, AppTheme appTheme) {
     TreeViewTheme treeViewTheme = TreeViewTheme(
-      expanderTheme: const ExpanderThemeData(
+      expanderTheme: ExpanderThemeData(
         type: ExpanderType.chevron,
         modifier: ExpanderModifier.none,
         position: ExpanderPosition.start,
         size: 16,
-        color: Colors.white,
+        color: MacosTheme.of(context).typography.body.color,
       ),
-      labelStyle: const TextStyle(
-        fontSize: 12,
-        color: Colors.white,
-      ),
-      parentLabelStyle: const TextStyle(
-        fontSize: 12,
-        color: Colors.white,
-      ),
+      labelStyle: MacosTheme.of(context).typography.body.copyWith(fontSize: 12),
+      parentLabelStyle:
+          MacosTheme.of(context).typography.body.copyWith(fontSize: 12),
+      colorScheme: Theme.of(context)
+          .colorScheme
+          .copyWith(primary: const Color.fromARGB(255, 48, 105, 202)),
       iconTheme: const IconThemeData(
         size: 16,
-        color: Colors.blueAccent,
       ),
-      colorScheme: Theme.of(context).colorScheme.copyWith(
-            primary: const Color.fromARGB(255, 48, 105, 202),
-          ),
       iconPadding: 16,
       verticalSpacing: 4,
       parentLabelOverflow: TextOverflow.ellipsis,

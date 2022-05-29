@@ -47,7 +47,6 @@ class _ThumbnailState extends State<Thumbnail> {
   static const double thumbnailWidth = 160;
   static const double thumbnailPadding = 8;
   static const double highlightRadius = 6;
-  static const Color highlightColor = Colors.black;
   static const double labelSpacing = 8;
   static const double labelHeight = 44;
   static const double labelFontSize = 12;
@@ -68,17 +67,21 @@ class _ThumbnailState extends State<Thumbnail> {
       }
       _editController.selection = const TextSelection.collapsed(offset: 0);
     } else if (!oldWidget.rename && widget.rename) {
-      _focusNode.requestFocus();
       _editController.selection = TextSelection(
         baseOffset: 0,
         extentOffset: _editController.text.lastIndexOf('.'),
       );
+      _focusNode.requestFocus();
     }
     super.didUpdateWidget(oldWidget);
   }
 
   @override
   Widget build(BuildContext context) {
+    Color highlightColor = MacosTheme.brightnessOf(context) == Brightness.dark
+        ? Colors.black
+        : Colors.grey.shade300;
+
     return SizedBox(
       width: thumbnailWidth,
       height: Thumbnail.thumbnailHeight(),
@@ -104,11 +107,8 @@ class _ThumbnailState extends State<Thumbnail> {
                     ),
             ),
           ),
-          Container(
+          SizedBox(
             width: thumbnailWidth,
-            //height: labelHeight,
-            //padding: EdgeInsets.only(
-            //    top: labelSpacing - (widget.rename ? labelSpacing : 0)),
             child: MacosTextField(
               focusNode: _focusNode,
               maxLines: 2,
@@ -126,10 +126,11 @@ class _ThumbnailState extends State<Thumbnail> {
                 ),
                 borderRadius: BorderRadius.circular(highlightRadius),
               ),
+              disabledColor: Colors.transparent,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: labelFontSize,
-                color: Colors.white,
+                //color: Colors.white,
               ),
             ),
           )

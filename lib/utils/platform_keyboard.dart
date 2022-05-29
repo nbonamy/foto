@@ -4,6 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class PlatformKeyboard {
+  static bool isSelectAll(RawKeyEvent event) {
+    return event.isKeyPressed(LogicalKeyboardKey.keyA) &&
+        commandModifierPressed(event);
+  }
+  
   static bool isCopy(RawKeyEvent event) {
     return event.isKeyPressed(LogicalKeyboardKey.keyC) &&
         commandModifierPressed(event);

@@ -164,7 +164,7 @@ class _SidebarState extends State<BrowserSidebar> {
               );
             },
             child: Container(
-              color: Colors.grey.shade800,
+              color: Theme.of(context).highlightColor,
               child: child,
             ),
           );
@@ -194,9 +194,9 @@ class _SidebarState extends State<BrowserSidebar> {
                     cursor: SystemMouseCursors.grab,
                     child: ReorderableDragStartListener(
                       index: favorites.indexOf(favorite),
-                      child: Icon(
+                      child: const Icon(
                         CupertinoIcons.bars,
-                        color: Colors.grey.shade400,
+                        color: Color(0xFF86838A),
                         size: 16,
                       ),
                     ),

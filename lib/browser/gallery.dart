@@ -88,7 +88,10 @@ class _ImageGalleryState extends State<ImageGallery> {
       //  if (hasFocus) debugPrint('gallery');
       //},
       onKey: (_, event) {
-        if (PlatformKeyboard.isDelete(event) && _selection.isNotEmpty) {
+        if (PlatformKeyboard.isSelectAll(event)) {
+          _selectAll();
+          return KeyEventResult.handled;
+        } else if (PlatformKeyboard.isDelete(event) && _selection.isNotEmpty) {
           FileUtils.confirmDelete(context, _selection);
           return KeyEventResult.handled;
         } else if (PlatformKeyboard.isCopy(event)) {
@@ -202,6 +205,18 @@ class _ImageGalleryState extends State<ImageGallery> {
         index: _files!.indexOf(file),
       );
     }
+  }
+
+  void _selectAll() {
+    List<String> selection = [];
+    for (var file in _files!) {
+      if (file is File) {
+        selection.add(file.path);
+      }
+    }
+    setState(() {
+      _selection = selection;
+    });
   }
 
   void _copyToClipboard() {
