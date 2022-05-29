@@ -79,9 +79,6 @@ class _ThumbnailState extends State<Thumbnail> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.rename) {
-      var i = 1;
-    }
     return SizedBox(
       width: thumbnailWidth,
       height: Thumbnail.thumbnailHeight(),

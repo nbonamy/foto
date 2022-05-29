@@ -16,7 +16,7 @@ class FileUtils {
     return FotoDialog.confirm(
       context: context,
       text: text,
-      onConfirmed: () {
+      onConfirmed: (context) {
         delete(files).then((value) {
           Navigator.of(context).pop(true);
         }).onError((error, stackTrace) {
@@ -53,7 +53,7 @@ class FileUtils {
         context: context,
         text:
             'Destination file(s) already exists. Do you want to overwrite them?',
-        onConfirmed: () {
+        onConfirmed: (context) {
           Navigator.of(context).pop();
           copy(operations);
         },

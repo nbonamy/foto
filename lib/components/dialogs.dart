@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:macos_ui/macos_ui.dart';
 
+typedef DialogCallback = void Function(BuildContext);
+typedef PromptCallback = void Function(BuildContext, String);
+
 class FotoDialog {
   static Future confirm({
     required BuildContext context,
     required String text,
-    required VoidCallback onConfirmed,
-    VoidCallback? onCancel,
+    required DialogCallback onConfirmed,
+    DialogCallback? onCancel,
     bool isDanger = false,
   }) {
     return showMacosAlertDialog(
       context: context,
-      builder: (_) => MacosAlertDialog(
+      builder: (context) => MacosAlertDialog(
         appIcon: Image.asset(
           'assets/img/foto.png',
           width: 56,
@@ -29,13 +32,14 @@ class FotoDialog {
         primaryButton: PushButton(
           buttonSize: ButtonSize.small,
           color: isDanger ? Colors.red : null,
-          onPressed: onConfirmed,
+          onPressed: () => onConfirmed(context),
           child: const Text('Yes'),
         ),
         secondaryButton: PushButton(
           isSecondary: true,
           buttonSize: ButtonSize.small,
-          onPressed: onCancel ?? Navigator.of(context).pop,
+          onPressed: () =>
+              onCancel != null ? onCancel(context) : Navigator.of(context).pop,
           child: const Text('Cancel'),
         ),
       ),
@@ -46,14 +50,14 @@ class FotoDialog {
     required BuildContext context,
     required String text,
     required String value,
-    required Function onConfirmed,
-    VoidCallback? onCancel,
+    required PromptCallback onConfirmed,
+    DialogCallback? onCancel,
     bool isDanger = false,
   }) {
     TextEditingController controller = TextEditingController(text: value);
     return showMacosSheet(
       context: context,
-      builder: (_) => MacosSheet(
+      builder: (context) => MacosSheet(
         child: Align(
           alignment: Alignment.center,
           child: SizedBox(
@@ -72,7 +76,9 @@ class FotoDialog {
                         child: Text('Cancel'),
                         buttonSize: ButtonSize.small,
                         isSecondary: true,
-                        onPressed: onCancel ?? Navigator.of(context).pop,
+                        onPressed: () => onCancel != null
+                            ? onCancel(context)
+                            : Navigator.of(context).pop,
                       ),
                     ),
                     const SizedBox(width: 8.0),
@@ -81,7 +87,8 @@ class FotoDialog {
                         child: Text('OK'),
                         color: Colors.green,
                         buttonSize: ButtonSize.small,
-                        onPressed: () => onConfirmed(controller.value),
+                        onPressed: () =>
+                            onConfirmed(context, controller.value.text),
                       ),
                     ),
                   ],
