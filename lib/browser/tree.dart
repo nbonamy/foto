@@ -34,7 +34,7 @@ class BrowserTree extends StatefulWidget {
 
 class _BrowserTreeState extends State<BrowserTree> {
   TreeViewController? _treeViewController;
-  FocusNode focusNode = FocusNode();
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
@@ -65,29 +65,32 @@ class _BrowserTreeState extends State<BrowserTree> {
     Widget tree = _treeViewController != null
         ? Consumer2<HistoryModel, FavoritesModel>(
             builder: (context, history, favorites, child) {
-            return TreeView(
-              controller: _treeViewController!,
-              theme: _getTreeTheme(context),
-              allowParentSelect: true,
-              shrinkWrap: true,
-              nodeBuilder: (context, node) {
-                return ctxm.ContextMenu(
-                  menu: _buildMenu(favorites, node),
-                  child: _buildNodeLabel(
-                    _treeViewController!,
-                    node,
-                    _getTreeTheme(context),
-                  ),
-                );
-              },
-              onNodeTap: (key) {
-                focusNode.requestFocus();
-                updateSelectedPath(history, key);
-              },
-              onExpansionChanged: (key, state) {
-                focusNode.requestFocus();
-                expandPath(key, state);
-              },
+            return Material(
+              type: MaterialType.transparency,
+              child: TreeView(
+                controller: _treeViewController!,
+                theme: _getTreeTheme(context),
+                allowParentSelect: true,
+                shrinkWrap: true,
+                nodeBuilder: (context, node) {
+                  return ctxm.ContextMenu(
+                    menu: _buildMenu(favorites, node),
+                    child: _buildNodeLabel(
+                      _treeViewController!,
+                      node,
+                      _getTreeTheme(context),
+                    ),
+                  );
+                },
+                onNodeTap: (key) {
+                  _focusNode.requestFocus();
+                  updateSelectedPath(history, key);
+                },
+                onExpansionChanged: (key, state) {
+                  _focusNode.requestFocus();
+                  expandPath(key, state);
+                },
+              ),
             );
           })
         : Container();
@@ -97,7 +100,7 @@ class _BrowserTreeState extends State<BrowserTree> {
         horizontal: 8,
       ),
       child: Focus(
-        focusNode: focusNode,
+        focusNode: _focusNode,
         debugLabel: widget.root,
         //onFocusChange: (hasFocus) {
         //  if (hasFocus) debugPrint(widget.root);
@@ -226,8 +229,8 @@ class _BrowserTreeState extends State<BrowserTree> {
     );
   }
 
-  void updateSelectedPath(HistoryModel history, String selectedPath) {
-    history.push(selectedPath);
+  void updateSelectedPath(HistoryModel historyModel, String selectedPath) {
+    historyModel.push(selectedPath, true);
     widget.onUpdate(widget.root);
   }
 

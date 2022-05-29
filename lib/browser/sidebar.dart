@@ -84,20 +84,20 @@ class _SidebarState extends State<BrowserSidebar> {
 
   void _setActiveRoot(context) {
     // get data
-    var history = Provider.of<HistoryModel>(context, listen: false);
+    var history = HistoryModel.of(context);
     var favorites = Provider.of<FavoritesModel>(context, listen: false).get;
 
     // default active root
     _activeRoot = null;
     for (var favorite in favorites) {
-      if (history.top?.startsWith(favorite) == true) {
+      if (history.top.startsWith(favorite) == true) {
         _activeRoot = favorite;
         break;
       }
     }
     if (_activeRoot == null) {
       for (var device in _devices) {
-        if (history.top?.startsWith(device.path) == true) {
+        if (history.top.startsWith(device.path) == true) {
           _activeRoot = device.path;
           break;
         }
@@ -120,8 +120,11 @@ class _SidebarState extends State<BrowserSidebar> {
     );
   }
 
-  List<Widget> buildSidebar(BuildContext context, HistoryModel historyModel,
-      FavoritesModel favoritesModel) {
+  List<Widget> buildSidebar(
+    BuildContext context,
+    HistoryModel historyModel,
+    FavoritesModel favoritesModel,
+  ) {
     // sidebar content
     List<Widget> sidebarContent = [];
 

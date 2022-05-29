@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:foto/home.dart';
-import 'package:foto/utils/theme.dart';
+import 'package:foto/components/theme.dart';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -86,48 +86,7 @@ class FotoApp extends StatelessWidget {
           themeMode: appTheme.mode,
           debugShowCheckedModeBanner: false,
           color: Colors.black,
-          home: PlatformMenuBar(
-            menus: const [
-              PlatformMenu(
-                label: 'foto',
-                menus: [
-                  PlatformProvidedMenuItem(
-                    type: PlatformProvidedMenuItemType.about,
-                  ),
-                  PlatformProvidedMenuItem(
-                    type: PlatformProvidedMenuItemType.quit,
-                  ),
-                ],
-              ),
-              PlatformMenu(
-                label: 'Edit',
-                menus: [
-                  //_menuItem('Copy', LogicalKeyboardKey.keyC),
-                  //_menuItem('Paste', LogicalKeyboardKey.keyV),
-                ],
-              ),
-              PlatformMenu(
-                label: 'View',
-                menus: [
-                  PlatformProvidedMenuItem(
-                    type: PlatformProvidedMenuItemType.toggleFullScreen,
-                  ),
-                ],
-              ),
-              PlatformMenu(
-                label: 'Window',
-                menus: [
-                  PlatformProvidedMenuItem(
-                    type: PlatformProvidedMenuItemType.minimizeWindow,
-                  ),
-                  PlatformProvidedMenuItem(
-                    type: PlatformProvidedMenuItemType.zoomWindow,
-                  ),
-                ],
-              ),
-            ],
-            body: Home(args: args),
-          ),
+          home: Home(args: args),
         );
       },
     );

@@ -1,16 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
-import 'package:foto/model/history.dart';
 import 'package:foto/utils/file_handler.dart';
 import 'package:foto/utils/media.dart';
 import 'package:foto/model/preferences.dart';
-import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/browser/browser.dart';
 import 'package:foto/viewer/viewer.dart';
-import 'package:path/path.dart' as p;
 
 class Home extends StatefulWidget {
   final List<String> args;
@@ -22,8 +19,6 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> with WindowListener {
   bool _startedFromFinder = false;
-  List<String>? _images;
-  int? _startIndex;
 
   @override
   void initState() {
@@ -57,17 +52,50 @@ class _HomeState extends State<Home> with WindowListener {
 
   @override
   Widget build(BuildContext context) {
-    if (_images == null) {
-      return Browser(
+    return PlatformMenuBar(
+      menus: const [
+        PlatformMenu(
+          label: 'foto',
+          menus: [
+            PlatformProvidedMenuItem(
+              type: PlatformProvidedMenuItemType.about,
+            ),
+            PlatformProvidedMenuItem(
+              type: PlatformProvidedMenuItemType.quit,
+            ),
+          ],
+        ),
+        PlatformMenu(
+          label: 'Edit',
+          menus: [
+            //_menuItem('Copy', LogicalKeyboardKey.keyC),
+            //_menuItem('Paste', LogicalKeyboardKey.keyV),
+          ],
+        ),
+        PlatformMenu(
+          label: 'View',
+          menus: [
+            PlatformProvidedMenuItem(
+              type: PlatformProvidedMenuItemType.toggleFullScreen,
+            ),
+          ],
+        ),
+        PlatformMenu(
+          label: 'Window',
+          menus: [
+            PlatformProvidedMenuItem(
+              type: PlatformProvidedMenuItemType.minimizeWindow,
+            ),
+            PlatformProvidedMenuItem(
+              type: PlatformProvidedMenuItemType.zoomWindow,
+            ),
+          ],
+        ),
+      ],
+      body: Browser(
         viewImages: viewImages,
-      );
-    } else {
-      return ImageViewer(
-        images: _images!,
-        start: _startIndex!,
-        exit: closeViewer,
-      );
-    }
+      ),
+    );
   }
 
   void viewImage(String image) {
@@ -80,10 +108,18 @@ class _HomeState extends State<Home> with WindowListener {
   }
 
   void viewImages(List<String> images, int startIndex) {
-    setState(() {
-      _images = images;
-      _startIndex = startIndex;
-    });
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => ImageViewer(
+          images: images,
+          start: startIndex,
+          exit: closeViewer,
+        ),
+        transitionDuration: const Duration(seconds: 0),
+        reverseTransitionDuration: const Duration(seconds: 0),
+      ),
+    );
     windowManager.setFullScreen(true);
   }
 
@@ -91,24 +127,9 @@ class _HomeState extends State<Home> with WindowListener {
     windowManager.setFullScreen(false);
     if (quit == true && _startedFromFinder == true) {
       SystemNavigator.pop();
-      return;
+    } else {
+      Navigator.pop(context);
     }
-    setState(() {
-      _images = null;
-      _startedFromFinder = false;
-    });
-    if (current != null) {
-      var history = Provider.of<HistoryModel>(context, listen: false);
-      var dirname = p.dirname(current);
-      history.push(dirname);
-    }
-  }
-
-  @override
-  void onWindowLeaveFullScreen() {
-    setState(() {
-      _images = null;
-    });
   }
 
   @override

@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:foto/utils/dialogs.dart';
+import 'package:foto/components/dialogs.dart';
 import 'package:path/path.dart' as p;
 
 class FileUtils {
@@ -70,5 +70,20 @@ class FileUtils {
       futures.add(File(src).copy(dst));
     });
     return Future.wait(futures);
+  }
+
+  static bool tryRename(
+    String originalName,
+    String newName,
+  ) {
+    if (!newName.contains('/')) {
+      newName = p.join(p.dirname(originalName), newName);
+    }
+    if (File(newName).existsSync()) {
+      return false;
+    } else {
+      File(originalName).rename(newName);
+      return true;
+    }
   }
 }

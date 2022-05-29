@@ -4,23 +4,26 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:foto/browser/thumbnail.dart';
 import 'package:foto/components/context_menu.dart' as ctxm;
-import 'package:foto/model/history.dart';
 import 'package:foto/utils/file.dart';
 import 'package:foto/utils/media.dart';
 import 'package:foto/utils/platform_keyboard.dart';
 import 'package:foto/model/preferences.dart';
 import 'package:pasteboard/pasteboard.dart';
-import 'package:provider/provider.dart';
 
 class ImageGallery extends StatefulWidget {
+  final String path;
+  final Function executeItem;
+  final BuildContext navigatorContext;
   final ScrollController scrollController;
-  final Function viewImages;
 
   const ImageGallery({
     Key? key,
-    required this.viewImages,
+    required this.path,
+    required this.navigatorContext,
+    required this.executeItem,
     required this.scrollController,
   }) : super(key: key);
+
   @override
   State<StatefulWidget> createState() => _ImageGalleryState();
 }
@@ -30,30 +33,29 @@ class _ImageGalleryState extends State<ImageGallery> {
   List<String> _selection = [];
   bool _extendSelection = false;
   StreamSubscription<FileSystemEvent>? _dirSubscription;
-  FocusNode focusNode = FocusNode();
-
-  HistoryModel get history {
-    return Provider.of<HistoryModel>(context, listen: false);
-  }
+  final FocusNode _focusNode = FocusNode();
+  String? _fileBeingRenamed;
 
   @override
   void initState() {
     _watchDir();
-    history.addListener(() {
-      _selection = [];
-      _files = null;
-      _watchDir();
-    });
     Preferences.of(context).addListener(() {
       _files = null;
     });
     super.initState();
   }
 
+  @override
+  void dispose() {
+    _dirSubscription?.cancel();
+    _dirSubscription = null;
+    super.dispose();
+  }
+
   void _watchDir() {
     // watcher
     _dirSubscription?.cancel();
-    _dirSubscription = Directory(history.top!).watch().listen((event) {
+    _dirSubscription = Directory(widget.path).watch().listen((event) {
       List<String> selection = [];
       for (var file in _selection) {
         if (File(file).existsSync()) {
@@ -72,7 +74,7 @@ class _ImageGalleryState extends State<ImageGallery> {
     // get files
     Preferences prefs = Preferences.of(context);
     _files ??= Media.getMediaFiles(
-      history.top,
+      widget.path,
       includeDirs: prefs.showFolders,
       sortType: prefs.sortType,
       sortReversed: prefs.sortReversed,
@@ -80,7 +82,7 @@ class _ImageGalleryState extends State<ImageGallery> {
 
     // focus for keyboard listener
     return Focus(
-      focusNode: focusNode,
+      focusNode: _focusNode,
       debugLabel: 'gallery',
       //onFocusChange: (hasFocus) {
       //  if (hasFocus) debugPrint('gallery');
@@ -103,32 +105,34 @@ class _ImageGalleryState extends State<ImageGallery> {
       },
       child: GestureDetector(
         onTap: () {
-          focusNode.requestFocus();
+          _focusNode.requestFocus();
           setState(() {
             _selection = [];
+            _fileBeingRenamed = null;
           });
         },
         child: GridView.extent(
           shrinkWrap: true,
           controller: widget.scrollController,
-          maxCrossAxisExtent: Thumbnail.thumbnailWidth,
+          maxCrossAxisExtent: Thumbnail.thumbnailWidth(),
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
           padding: const EdgeInsets.all(16),
           childAspectRatio: Thumbnail.aspectRatio(),
           children: _files!.map<Widget>((file) {
-            return InkResponse(
+            return GestureDetector(
               onTapDown: (_) {
-                focusNode.requestFocus();
+                _focusNode.requestFocus();
                 setState(() {
                   if (!_extendSelection) {
                     _selection = [];
                   }
                   _selection.add(file.path);
+                  _fileBeingRenamed = null;
                 });
               },
               onDoubleTap: () {
-                focusNode.requestFocus();
+                _focusNode.requestFocus();
                 _onDoubleTap(file);
               },
               child: ctxm.ContextMenu(
@@ -140,6 +144,10 @@ class _ImageGalleryState extends State<ImageGallery> {
                     ),
                     ctxm.MenuItem(
                       label: 'Rename',
+                      disabled: _selection.length != 1,
+                      onClick: (_) => setState(() {
+                        _fileBeingRenamed = file.path;
+                      }),
                     ),
                     ctxm.MenuItem.separator(),
                     ctxm.MenuItem(
@@ -162,6 +170,15 @@ class _ImageGalleryState extends State<ImageGallery> {
                   path: file.path,
                   folder: file is Directory,
                   selected: _selection.contains(file.path),
+                  rename: _fileBeingRenamed == file.path,
+                  onRenamed: (file, newName) {
+                    setState(() {
+                      _fileBeingRenamed = null;
+                      if (newName != null) {
+                        FileUtils.tryRename(file, newName);
+                      }
+                    });
+                  },
                 ),
               ),
             );
@@ -173,16 +190,16 @@ class _ImageGalleryState extends State<ImageGallery> {
 
   void _onDoubleTap(FileSystemEntity file) {
     if (file is Directory) {
-      history.push(file.path);
+      widget.executeItem(folder: file.path);
     } else {
       if (!_selection.contains(file.path)) {
         setState(() {
           _selection = [file.path];
         });
       }
-      widget.viewImages(
-        _files!.whereType<File>().map((f) => f.path).toList(),
-        _files!.indexOf(file),
+      widget.executeItem(
+        images: _files!.whereType<File>().map((f) => f.path).toList(),
+        index: _files!.indexOf(file),
       );
     }
   }
@@ -192,11 +209,8 @@ class _ImageGalleryState extends State<ImageGallery> {
   }
 
   void _pasteFromClipboard() {
-    var history = Provider.of<HistoryModel>(context, listen: false);
-    if (history.top != null) {
-      Pasteboard.files().then((files) {
-        FileUtils.tryCopy(context, files, history.top!);
-      });
-    }
+    Pasteboard.files().then((files) {
+      FileUtils.tryCopy(context, files, widget.path);
+    });
   }
 }
