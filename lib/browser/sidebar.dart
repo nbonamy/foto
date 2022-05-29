@@ -82,10 +82,10 @@ class _SidebarState extends State<BrowserSidebar> {
     _devices.sort((a, b) => a.path.compareTo(b.path));
   }
 
-  void _setActiveRoot(context) {
+  void _initActiveRoot(context) {
     // get data
     var history = HistoryModel.of(context);
-    var favorites = Provider.of<FavoritesModel>(context, listen: false).get;
+    var favorites = FavoritesModel.of(context).get;
 
     // default active root
     _activeRoot = null;
@@ -105,18 +105,35 @@ class _SidebarState extends State<BrowserSidebar> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // we need a root
-    if (_activeRoot == null) {
-      _setActiveRoot(context);
+  void _checkActiveRoot(context) {
+    // first check consistency
+    if (_activeRoot != null) {
+      HistoryModel historyModel = HistoryModel.of(context);
+      if (historyModel.top.startsWith(_activeRoot!) == false) {
+        _activeRoot = null;
+      }
     }
 
+    // now check if null
+    if (_activeRoot == null) {
+      _initActiveRoot(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    //
     return Consumer2<HistoryModel, FavoritesModel>(
-      builder: (context, history, favorites, child) => ListView(
-        controller: widget.scrollController,
-        children: buildSidebar(context, history, favorites),
-      ),
+      builder: (context, history, favorites, child) {
+        // we need a root
+        _checkActiveRoot(context);
+
+        // now build
+        return ListView(
+          controller: widget.scrollController,
+          children: buildSidebar(context, history, favorites),
+        );
+      },
     );
   }
 

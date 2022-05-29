@@ -3,12 +3,17 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:foto/utils/paths.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FavoritesModel extends ChangeNotifier {
   final List<String> _favorites = [];
 
   UnmodifiableListView<String> get get => UnmodifiableListView(_favorites);
+
+  static FavoritesModel of(BuildContext context) {
+    return Provider.of<FavoritesModel>(context, listen: false);
+  }
 
   init() async {
     await _load();

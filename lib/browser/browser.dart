@@ -103,7 +103,7 @@ class _BrowserState extends State<Browser> {
     }
 
     // start with favorites
-    var favorites = Provider.of<FavoritesModel>(context).get;
+    var favorites = FavoritesModel.of(context).get;
     if (favorites.isNotEmpty) {
       history.push(favorites.first, false);
       return;
