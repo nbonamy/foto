@@ -113,7 +113,8 @@ class _ImageGalleryState extends State<ImageGallery> {
         }
 
         // default
-        _extendSelection = PlatformKeyboard.selectionExtensionModifierPressed(event);
+        _extendSelection =
+            PlatformKeyboard.selectionExtensionModifierPressed(event);
         return KeyEventResult.ignored;
       },
       child: GestureDetector(
@@ -282,6 +283,7 @@ class _ImageGalleryState extends State<ImageGallery> {
 
   void _handlePanEnd(DragEndDetails details) {
     setState(() {
+      _focusNode.requestFocus();
       _selection = _mergeSelections(_selection, _dragSelection);
       _dragSelectRect = null;
       _dragSelection = [];
