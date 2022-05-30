@@ -43,6 +43,3 @@ flutter:
     - assets/img/
     - assets/img/folders/
   #  - assets/i18n/
-
-flutter_intl:
-  enabled: true

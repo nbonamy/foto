@@ -184,17 +184,19 @@ class _ImageGalleryState extends State<ImageGallery> {
                       onMountElement: _elements.add,
                       onUnmountElement: _elements.remove,
                       child: Thumbnail(
+                        key: Key(file.path),
                         path: file.path,
                         folder: file is Directory,
                         selected: selection.contains(file.path),
                         rename: _fileBeingRenamed == file.path,
                         onRenamed: (file, newName) {
-                          setState(() {
-                            _fileBeingRenamed = null;
-                            if (newName != null) {
-                              FileUtils.tryRename(file, newName);
-                            }
-                          });
+                          _fileBeingRenamed = null;
+                          if (newName != null && newName != '') {
+                            FileUtils.tryRename(file, newName);
+                          }
+                          try {
+                            setState(() {});
+                          } catch (_) {}
                         },
                       ),
                     ),

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:foto/utils/paths.dart';
 import 'package:foto/utils/utils.dart';
 import 'package:macos_ui/macos_ui.dart';
@@ -71,7 +72,9 @@ class _ThumbnailState extends State<Thumbnail> {
         baseOffset: 0,
         extentOffset: _editController.text.lastIndexOf('.'),
       );
-      _focusNode.requestFocus();
+      Future.delayed(Duration(milliseconds: 0), () {
+        _focusNode.requestFocus();
+      });
     }
     super.didUpdateWidget(oldWidget);
   }
@@ -107,30 +110,44 @@ class _ThumbnailState extends State<Thumbnail> {
                     ),
             ),
           ),
-          SizedBox(
-            width: thumbnailWidth,
-            child: MacosTextField(
-              focusNode: _focusNode,
-              maxLines: 2,
-              enabled: widget.rename,
-              enableSuggestions: false,
-              controller: _editController,
-              decoration: BoxDecoration(
-                color: null,
-                boxShadow: null,
-                border: Border.all(
-                  color: widget.rename
-                      ? const Color.fromARGB(255, 147, 178, 246)
-                      : Colors.transparent,
-                  width: 1,
+          RawKeyboardListener(
+            focusNode: FocusNode(),
+            onKey: (event) {
+              if (event.logicalKey == LogicalKeyboardKey.escape) {
+                _editController.text = Utils.pathTitle(widget.path)!;
+                widget.onRenamed(widget.path, null);
+              }
+              if (event.logicalKey == LogicalKeyboardKey.enter) {
+                widget.onRenamed(widget.path, _editController.text);
+              }
+            },
+            child: SizedBox(
+              width: thumbnailWidth,
+              child: MacosTextField(
+                focusNode: _focusNode, // or FocusNode()
+                maxLines: 2,
+                enabled: widget.rename,
+                enableSuggestions: false,
+                autocorrect: false,
+                controller: _editController,
+                textInputAction: TextInputAction.done,
+                decoration: BoxDecoration(
+                  color: null,
+                  boxShadow: null,
+                  border: Border.all(
+                    color: widget.rename
+                        ? const Color.fromARGB(255, 147, 178, 246)
+                        : Colors.transparent,
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(highlightRadius),
                 ),
-                borderRadius: BorderRadius.circular(highlightRadius),
-              ),
-              disabledColor: Colors.transparent,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: labelFontSize,
-                //color: Colors.white,
+                disabledColor: Colors.transparent,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: labelFontSize,
+                  //color: Colors.white,
+                ),
               ),
             ),
           )
