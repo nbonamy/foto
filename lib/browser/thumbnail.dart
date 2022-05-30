@@ -44,6 +44,7 @@ class Thumbnail extends StatefulWidget {
 class _ThumbnailState extends State<Thumbnail> {
   final FocusNode _focusNode = FocusNode();
   late TextEditingController _editController;
+  late Key _textFieldKey;
 
   static const double thumbnailWidth = 160;
   static const double thumbnailPadding = 8;
@@ -56,6 +57,7 @@ class _ThumbnailState extends State<Thumbnail> {
   void initState() {
     String label = Utils.pathTitle(widget.path)!;
     _editController = TextEditingController(text: label);
+    _textFieldKey = GlobalKey();
     super.initState();
   }
 
@@ -72,7 +74,7 @@ class _ThumbnailState extends State<Thumbnail> {
         baseOffset: 0,
         extentOffset: _editController.text.lastIndexOf('.'),
       );
-      Future.delayed(Duration(milliseconds: 0), () {
+      Future.delayed(const Duration(milliseconds: 0), () {
         _focusNode.requestFocus();
       });
     }
@@ -81,78 +83,92 @@ class _ThumbnailState extends State<Thumbnail> {
 
   @override
   Widget build(BuildContext context) {
-    Color highlightColor = MacosTheme.brightnessOf(context) == Brightness.dark
-        ? Colors.black
-        : Colors.grey.shade300;
-
+    Widget textField = _getTextField();
+    if (widget.rename) {
+      textField = RawKeyboardListener(
+        focusNode: FocusNode(),
+        onKey: _handleRenameKeyEvent,
+        child: textField,
+      );
+    }
     return SizedBox(
       width: thumbnailWidth,
       height: Thumbnail.thumbnailHeight(),
       child: Column(
         children: [
-          AspectRatio(
-            aspectRatio: 1.0,
-            child: Container(
-              padding: const EdgeInsets.all(thumbnailPadding),
-              decoration: BoxDecoration(
-                color: widget.selected ? highlightColor : Colors.transparent,
-                borderRadius: BorderRadius.circular(highlightRadius),
-              ),
-              child: widget.folder
-                  ? Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Image.asset(
-                          SystemPath.getFolderNamedAsset(widget.path)),
-                    )
-                  : Image.file(
-                      File(widget.path),
-                      cacheWidth: thumbnailWidth.toInt(),
-                    ),
-            ),
-          ),
-          RawKeyboardListener(
-            focusNode: FocusNode(),
-            onKey: (event) {
-              if (event.logicalKey == LogicalKeyboardKey.escape) {
-                _editController.text = Utils.pathTitle(widget.path)!;
-                widget.onRenamed(widget.path, null);
-              }
-              if (event.logicalKey == LogicalKeyboardKey.enter) {
-                widget.onRenamed(widget.path, _editController.text);
-              }
-            },
-            child: SizedBox(
-              width: thumbnailWidth,
-              child: MacosTextField(
-                focusNode: _focusNode, // or FocusNode()
-                maxLines: 2,
-                enabled: widget.rename,
-                enableSuggestions: false,
-                autocorrect: false,
-                controller: _editController,
-                textInputAction: TextInputAction.done,
-                decoration: BoxDecoration(
-                  color: null,
-                  boxShadow: null,
-                  border: Border.all(
-                    color: widget.rename
-                        ? const Color.fromARGB(255, 147, 178, 246)
-                        : Colors.transparent,
-                    width: 1,
-                  ),
-                  borderRadius: BorderRadius.circular(highlightRadius),
-                ),
-                disabledColor: Colors.transparent,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: labelFontSize,
-                  //color: Colors.white,
-                ),
-              ),
-            ),
-          )
+          _getThumbnailImage(),
+          textField,
         ],
       ),
     );
+  }
+
+  Widget _getThumbnailImage() {
+    Color highlightColor = MacosTheme.brightnessOf(context) == Brightness.dark
+        ? Colors.black
+        : Colors.grey.shade300;
+
+    return AspectRatio(
+      aspectRatio: 1.0,
+      child: Container(
+        padding: const EdgeInsets.all(thumbnailPadding),
+        decoration: BoxDecoration(
+          color: widget.selected ? highlightColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(highlightRadius),
+        ),
+        child: widget.folder
+            ? Padding(
+                padding: const EdgeInsets.all(16),
+                child: Image.asset(SystemPath.getFolderNamedAsset(widget.path)),
+              )
+            : Image.file(
+                File(widget.path),
+                cacheWidth: thumbnailWidth.toInt(),
+              ),
+      ),
+    );
+  }
+
+  Widget _getTextField() {
+    return SizedBox(
+      width: thumbnailWidth,
+      child: MacosTextField(
+        key: _textFieldKey,
+        focusNode: _focusNode,
+        maxLines: 2,
+        enabled: widget.rename,
+        enableSuggestions: false,
+        autocorrect: false,
+        controller: _editController,
+        textInputAction: TextInputAction.done,
+        decoration: BoxDecoration(
+          color: null,
+          boxShadow: null,
+          border: Border.all(
+            color: widget.rename
+                ? const Color.fromARGB(255, 147, 178, 246)
+                : Colors.transparent,
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(highlightRadius),
+        ),
+        disabledColor: Colors.transparent,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: labelFontSize,
+          //color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  void _handleRenameKeyEvent(RawKeyEvent event) {
+    if (event.logicalKey == LogicalKeyboardKey.escape) {
+      _editController.text = Utils.pathTitle(widget.path)!;
+      widget.onRenamed(widget.path, null);
+    }
+    if (event.logicalKey == LogicalKeyboardKey.enter) {
+      widget.onRenamed(widget.path, _editController.text);
+    }
   }
 }
