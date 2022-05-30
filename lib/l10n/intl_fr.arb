@@ -1,0 +1,29 @@
+{
+  "ok": "OK",
+  "cancel": "Annuler",
+  "yes": "Oui",
+  "no": "Non",
+  
+  "menuEdit": "Editer",
+  "menuView": "Présentation",
+  "menuWindow": "Fenêtre",
+
+  "favorites": "Favoris",
+  "favoritesAdd": "Ajouter aux Favoris",
+  "favoritesRemove": "Retirer des Favoris",
+  "devices": "Appareils",
+  
+  "edit": "Editer",
+  "view": "Visualiser",
+  "rename": "Renommer",
+  "delete": "Déplacer dans la Corbeille",
+
+  "deleteConfirmImage": "Etes-vous sûr de vouloir supprimer cette image ?",
+  "deleteConfirmFolder": "Etes-vous sûr de vouloir supprimer ce dossier ?",
+  "deleteConfirmImages": "Etes-vous sûr de vouloir supprimer ces images ?",
+
+  "overwriteConfirm": "Les fichiers existent déjà. Voulez-vous les remplacer ?",
+
+
+  "appName": "foto"
+}
