@@ -113,7 +113,7 @@ class _ImageGalleryState extends State<ImageGallery> {
         }
 
         // default
-        _extendSelection = event.isControlPressed || event.isMetaPressed;
+        _extendSelection = PlatformKeyboard.selectionExtensionModifierPressed(event);
         return KeyEventResult.ignored;
       },
       child: GestureDetector(

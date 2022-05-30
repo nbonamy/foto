@@ -8,7 +8,7 @@ class PlatformKeyboard {
     return event.isKeyPressed(LogicalKeyboardKey.keyA) &&
         commandModifierPressed(event);
   }
-  
+
   static bool isCopy(RawKeyEvent event) {
     return event.isKeyPressed(LogicalKeyboardKey.keyC) &&
         commandModifierPressed(event);
@@ -41,6 +41,10 @@ class PlatformKeyboard {
   static bool isEnter(RawKeyEvent event) {
     return event.physicalKey == PhysicalKeyboardKey.enter ||
         event.physicalKey == PhysicalKeyboardKey.numpadEnter;
+  }
+
+  static bool selectionExtensionModifierPressed(RawKeyEvent event) {
+    return Platform.isIOS ? event.isMetaPressed : event.isControlPressed;
   }
 
   static bool commandModifierPressed(RawKeyEvent event) {
