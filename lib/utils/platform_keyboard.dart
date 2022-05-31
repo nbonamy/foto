@@ -44,7 +44,7 @@ class PlatformKeyboard {
   }
 
   static bool selectionExtensionModifierPressed(RawKeyEvent event) {
-    return Platform.isIOS ? event.isMetaPressed : event.isControlPressed;
+    return Platform.isMacOS ? event.isMetaPressed : event.isControlPressed;
   }
 
   static bool commandModifierPressed(RawKeyEvent event) {

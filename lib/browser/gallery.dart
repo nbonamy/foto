@@ -122,6 +122,7 @@ class _ImageGalleryState extends State<ImageGallery> {
         onPanDown: _handlePanDown,
         onPanUpdate: _handlePanUpdate,
         onPanEnd: _handlePanEnd,
+        behavior: HitTestBehavior.translucent,
         child: Stack(
           children: [
             GridView.extent(
@@ -252,21 +253,29 @@ class _ImageGalleryState extends State<ImageGallery> {
   }
 
   void _handlePanDown(DragDownDetails details) {
+    // do not start if item tap
+    Rect rc =
+        Rect.fromLTWH(details.localPosition.dx, details.localPosition.dy, 0, 0);
+    final ancestor = context.findRenderObject();
+    for (SelectableElement item in _elements) {
+      if (item.isIn(ancestor, rc)) {
+        return;
+      }
+    }
+
     setState(() {
       if (_extendSelection == false) {
         _selection = [];
       }
       _dragSelectOrig = details.localPosition;
-      _dragSelectRect = Rect.fromLTWH(
-        _dragSelectOrig!.dx,
-        _dragSelectOrig!.dy,
-        0,
-        0,
-      );
+      _dragSelectRect = rc;
     });
   }
 
   void _handlePanUpdate(DragUpdateDetails details) {
+    if (_dragSelectOrig == null) {
+      return;
+    }
     _dragSelection = [];
     _dragSelectRect = Rect.fromLTRB(
       min(_dragSelectOrig!.dx, details.localPosition.dx),
@@ -284,9 +293,13 @@ class _ImageGalleryState extends State<ImageGallery> {
   }
 
   void _handlePanEnd(DragEndDetails details) {
+    if (_dragSelectOrig == null) {
+      return;
+    }
     setState(() {
       _focusNode.requestFocus();
       _selection = _mergeSelections(_selection, _dragSelection);
+      _dragSelectOrig = null;
       _dragSelectRect = null;
       _dragSelection = [];
     });
