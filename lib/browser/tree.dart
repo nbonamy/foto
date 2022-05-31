@@ -4,10 +4,8 @@ import 'package:foto/components/context_menu.dart' as ctxm;
 import 'package:foto/components/theme.dart';
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
-import 'package:foto/utils/file.dart';
 import 'package:foto/utils/media.dart';
 import 'package:foto/utils/paths.dart';
-import 'package:foto/utils/platform_keyboard.dart';
 import 'package:foto/utils/utils.dart';
 import 'package:flutter_treeview/flutter_treeview.dart';
 import 'package:macos_ui/macos_ui.dart';
@@ -102,7 +100,7 @@ class _BrowserTreeState extends State<BrowserTree> {
       padding: const EdgeInsets.symmetric(
         horizontal: 8,
       ),
-      child: Focus(
+      child: /*Focus(
         focusNode: _focusNode,
         debugLabel: widget.root,
         //onFocusChange: (hasFocus) {
@@ -121,8 +119,9 @@ class _BrowserTreeState extends State<BrowserTree> {
             return KeyEventResult.ignored;
           }
         },
-        child: tree,
-      ),
+        child: */
+          tree,
+      //),
     );
   }
 
