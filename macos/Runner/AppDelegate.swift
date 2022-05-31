@@ -14,10 +14,12 @@ extension NSImage {
 
 extension Data {
     var md5 : String {
-        var digest = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
-        _ =  self.withUnsafeBytes { bytes in
-            CC_MD5(bytes, CC_LONG(self.count), &digest)
-        }
+        let digest = UnsafeMutablePointer<UInt8>.allocate(capacity: Int(CC_MD5_DIGEST_LENGTH))
+				defer { digest.deallocate() }
+        self.withUnsafeBytes { bytes in 
+					guard let baseAddress = bytes.baseAddress else { return }
+					CC_MD5(baseAddress, CC_LONG(bytes.count), digest)
+				}
         var digestHex = ""
         for index in 0..<Int(CC_MD5_DIGEST_LENGTH) {
             digestHex += String(format: "%02x", digest[index])

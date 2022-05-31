@@ -120,7 +120,16 @@ class _ThumbnailState extends State<Thumbnail> {
             ? Padding(
                 padding: const EdgeInsets.all(16),
                 child: Image.asset(SystemPath.getFolderNamedAsset(widget.path)),
-              )
+              ) /*
+            FutureBuilder(
+                future: PlatformUtils.getPlatformIcon(widget.path),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return snapshot.data as Image;
+                  } else {
+                    return Container();
+                  }
+                })*/
             : Image.file(
                 File(widget.path),
                 cacheWidth: thumbnailWidth.toInt(),
