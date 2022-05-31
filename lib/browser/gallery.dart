@@ -93,6 +93,7 @@ class _ImageGalleryState extends State<ImageGallery> {
     // focus for keyboard listener
     return Focus(
       focusNode: _focusNode,
+      autofocus: true,
       debugLabel: 'gallery',
       //onFocusChange: (hasFocus) {
       //  if (hasFocus) debugPrint('gallery');
@@ -149,37 +150,9 @@ class _ImageGalleryState extends State<ImageGallery> {
                     _focusNode.requestFocus();
                     _handleDoubleTap(file);
                   },
-                  child: ctxm.ContextMenu(
-                    menu: ctxm.Menu(
-                      items: [
-                        ctxm.MenuItem(
-                          label: AppLocalizations.of(context)!.view,
-                          onClick: (_) => _handleDoubleTap(file),
-                        ),
-                        ctxm.MenuItem(
-                          label: AppLocalizations.of(context)!.rename,
-                          disabled: _selection.length != 1,
-                          onClick: (_) => setState(() {
-                            _fileBeingRenamed = file.path;
-                          }),
-                        ),
-                        ctxm.MenuItem.separator(),
-                        ctxm.MenuItem(
-                          label: AppLocalizations.of(context)!.delete,
-                          onClick: (_) =>
-                              FileUtils.confirmDelete(context, _selection),
-                        ),
-                      ],
-                    ),
-                    onBeforeShowMenu: () {
-                      if (_selection.contains(file.path) == false) {
-                        setState(() {
-                          _selection = [file.path];
-                        });
-                        return true;
-                      }
-                      return false;
-                    },
+                  child: _getContextMenu(
+                    context,
+                    file: file,
                     child: Selectable(
                       id: file.path,
                       onMountElement: _elements.add,
@@ -205,27 +178,76 @@ class _ImageGalleryState extends State<ImageGallery> {
                 );
               }).toList(),
             ),
-            _dragSelectRect == null
-                ? Container()
-                : Positioned(
-                    left: _dragSelectRect?.left,
-                    top: _dragSelectRect?.top,
-                    width: _dragSelectRect?.width,
-                    height: _dragSelectRect?.height,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(64, 170, 170, 170),
-                        border: Border.all(
-                          color: const Color.fromARGB(255, 170, 170, 170),
-                          width: 0.5,
-                        ),
-                      ),
-                    ),
-                  ),
+            _getSelectionRect(),
           ],
         ),
       ),
     );
+  }
+
+  Widget _getContextMenu(
+    BuildContext context, {
+    required FileSystemEntity file,
+    required Widget child,
+  }) {
+    return ctxm.ContextMenu(
+      menu: ctxm.Menu(
+        items: [
+          ctxm.MenuItem(
+            label: AppLocalizations.of(context)!.view,
+            onClick: (_) => _handleDoubleTap(file),
+          ),
+          ctxm.MenuItem(
+            label: AppLocalizations.of(context)!.rename,
+            disabled: _selection.length != 1,
+            onClick: (_) => setState(() {
+              _fileBeingRenamed = file.path;
+            }),
+          ),
+          ctxm.MenuItem.separator(),
+          ctxm.MenuItem(
+            label: AppLocalizations.of(context)!.copy,
+            disabled: _selection.isEmpty,
+            onClick: (_) => _copyToClipboard(),
+          ),
+          ctxm.MenuItem.separator(),
+          ctxm.MenuItem(
+            label: AppLocalizations.of(context)!.delete,
+            onClick: (_) => FileUtils.confirmDelete(context, _selection),
+          ),
+        ],
+      ),
+      onBeforeShowMenu: () {
+        if (_selection.contains(file.path) == false) {
+          setState(() {
+            _selection = [file.path];
+          });
+          return true;
+        }
+        return false;
+      },
+      child: child,
+    );
+  }
+
+  Widget _getSelectionRect() {
+    return _dragSelectRect == null
+        ? Container()
+        : Positioned(
+            left: _dragSelectRect?.left,
+            top: _dragSelectRect?.top,
+            width: _dragSelectRect?.width,
+            height: _dragSelectRect?.height,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(64, 170, 170, 170),
+                border: Border.all(
+                  color: const Color.fromARGB(255, 170, 170, 170),
+                  width: 0.5,
+                ),
+              ),
+            ),
+          );
   }
 
   void _handleTap() {
@@ -293,11 +315,11 @@ class _ImageGalleryState extends State<ImageGallery> {
   }
 
   void _handlePanEnd(DragEndDetails details) {
+    _focusNode.requestFocus();
     if (_dragSelectOrig == null) {
       return;
     }
     setState(() {
-      _focusNode.requestFocus();
       _selection = _mergeSelections(_selection, _dragSelection);
       _dragSelectOrig = null;
       _dragSelectRect = null;
