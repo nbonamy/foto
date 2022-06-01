@@ -4,6 +4,7 @@ import 'package:foto/components/context_menu.dart' as ctxm;
 import 'package:foto/components/theme.dart';
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
+import 'package:foto/utils/file.dart';
 import 'package:foto/utils/media.dart';
 import 'package:foto/utils/paths.dart';
 import 'package:foto/utils/utils.dart';
@@ -137,6 +138,16 @@ class _BrowserTreeState extends State<BrowserTree> {
                 label: AppLocalizations.of(context)!.favoritesAdd,
                 onClick: (_) => favorites.add(node.key),
               ),
+        ctxm.MenuItem.separator(),
+        ctxm.MenuItem(
+          label: AppLocalizations.of(context)!.copy,
+          onClick: (_) => Pasteboard.writeFiles([node.key]),
+        ),
+        ctxm.MenuItem.separator(),
+        ctxm.MenuItem(
+          label: AppLocalizations.of(context)!.delete,
+          onClick: (_) => FileUtils.confirmDelete(context, [node.key]),
+        ),
       ],
     );
   }

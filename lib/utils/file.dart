@@ -31,7 +31,11 @@ class FileUtils {
   static Future delete(List<String> files) {
     List<Future> futures = [];
     for (var file in files) {
-      futures.add(File(file).delete());
+      if (FileSystemEntity.isDirectorySync(file)) {
+        futures.add(Directory(file).delete());
+      } else if (FileSystemEntity.isFileSync(file)) {
+        futures.add(File(file).delete());
+      }
     }
     return Future.wait(futures);
   }
