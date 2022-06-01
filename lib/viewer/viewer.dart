@@ -29,6 +29,7 @@ class _ImageViewerState extends State<ImageViewer>
     with TickerProviderStateMixin {
   late int _index;
   double? _fitScale;
+  FocusNode _focusNode = FocusNode();
   late PhotoViewController _controller;
   late AnimationController _scaleAnimationController;
   Animation<double>? _scaleAnimation;
@@ -71,6 +72,11 @@ class _ImageViewerState extends State<ImageViewer>
   Widget build(BuildContext context) {
     return Focus(
       autofocus: true,
+      focusNode: _focusNode,
+      debugLabel: 'viewer',
+      onFocusChange: (hasFocus) {
+        debugPrint('viewer ${hasFocus ? "on" : "off"}');
+      },
       onKey: (_, event) => _onKey(event),
       child: Container(
         color: Colors.black,
