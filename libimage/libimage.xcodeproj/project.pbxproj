@@ -17,6 +17,8 @@
 		8D0798BC17C38D2D00EEB4F9 /* ImageUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D0798A817C38D2D00EEB4F9 /* ImageUtils.m */; };
 		8D2A9F9C28492F5E00E7B298 /* libintl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D2A9F9B28492F1300E7B298 /* libintl.a */; };
 		8D2A9F9E28492FB700E7B298 /* libiconv.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D2A9F9D28492FB700E7B298 /* libiconv.a */; };
+		8D590350284985D700D7BBA5 /* NSImage+Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D59034E284985D600D7BBA5 /* NSImage+Utils.m */; };
+		8D590351284985D700D7BBA5 /* NSImage+Utils.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D59034F284985D700D7BBA5 /* NSImage+Utils.h */; };
 		8DCA6E9517C67D2300219E7A /* NSImage+Bitmap.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DCA6E9317C67D2300219E7A /* NSImage+Bitmap.h */; };
 		8DCA6E9617C67D2300219E7A /* NSImage+Bitmap.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DCA6E9417C67D2300219E7A /* NSImage+Bitmap.m */; };
 		8DE8B58517C38F8B00EE8526 /* libcutils.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DE8B58417C38F8000EE8526 /* libcutils.a */; };
@@ -81,6 +83,8 @@
 		8D2A9F99284926C800E7B298 /* libintl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libintl.a; path = ../../../../../../usr/local/Cellar/gettext/0.21/lib/libintl.a; sourceTree = "<group>"; };
 		8D2A9F9B28492F1300E7B298 /* libintl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libintl.a; path = libexif/libintl.a; sourceTree = "<group>"; };
 		8D2A9F9D28492FB700E7B298 /* libiconv.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libiconv.a; path = libexif/libiconv.a; sourceTree = "<group>"; };
+		8D59034E284985D600D7BBA5 /* NSImage+Utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSImage+Utils.m"; sourceTree = "<group>"; };
+		8D59034F284985D700D7BBA5 /* NSImage+Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSImage+Utils.h"; sourceTree = "<group>"; };
 		8DCA6E9317C67D2300219E7A /* NSImage+Bitmap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSImage+Bitmap.h"; sourceTree = "<group>"; };
 		8DCA6E9417C67D2300219E7A /* NSImage+Bitmap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSImage+Bitmap.m"; sourceTree = "<group>"; };
 		8DE8B57F17C38F7F00EE8526 /* cutils.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = cutils.xcodeproj; path = cutils/cutils.xcodeproj; sourceTree = "<group>"; };
@@ -191,6 +195,8 @@
 				8DFFCF60284983D3003C5BCB /* NSImage+MGCropExtensions.m */,
 				8D07989A17C38D2D00EEB4F9 /* NSImage+Transform.h */,
 				8D07989B17C38D2D00EEB4F9 /* NSImage+Transform.m */,
+				8D59034F284985D700D7BBA5 /* NSImage+Utils.h */,
+				8D59034E284985D600D7BBA5 /* NSImage+Utils.m */,
 			);
 			path = Categories;
 			sourceTree = "<group>";
@@ -227,6 +233,7 @@
 				8DFFCF61284983D3003C5BCB /* NSImage+MGCropExtensions.h in Headers */,
 				8DFFCF4228497F6F003C5BCB /* NSFileManager+Utils.h in Headers */,
 				8DFFCF4B28498025003C5BCB /* FileUtils.h in Headers */,
+				8D590351284985D700D7BBA5 /* NSImage+Utils.h in Headers */,
 				8DFFCF59284982F8003C5BCB /* NSBitmapImageRep+Save.h in Headers */,
 				8D0798B517C38D2D00EEB4F9 /* Exif.h in Headers */,
 				8D0798BB17C38D2D00EEB4F9 /* ImageUtils.h in Headers */,
@@ -320,6 +327,7 @@
 				8D0798B017C38D2D00EEB4F9 /* NSImage+Transform.m in Sources */,
 				8D0798B617C38D2D00EEB4F9 /* Exif.m in Sources */,
 				8D0798BC17C38D2D00EEB4F9 /* ImageUtils.m in Sources */,
+				8D590350284985D700D7BBA5 /* NSImage+Utils.m in Sources */,
 				8DCA6E9617C67D2300219E7A /* NSImage+Bitmap.m in Sources */,
 				8DFFCF5A284982F8003C5BCB /* NSBitmapImageRep+Save.m in Sources */,
 				8DFFCF4328497F6F003C5BCB /* NSFileManager+Utils.m in Sources */,
