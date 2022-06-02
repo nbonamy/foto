@@ -49,7 +49,7 @@ class _ThumbnailState extends State<Thumbnail> {
   static const double thumbnailWidth = 160;
   static const double thumbnailPadding = 8;
   static const double highlightRadius = 6;
-  static const double labelSpacing = 8;
+  //static const double labelSpacing = 8;
   static const double labelHeight = 44;
   static const double labelFontSize = 12;
 
@@ -144,12 +144,11 @@ class _ThumbnailState extends State<Thumbnail> {
       child: MacosTextField(
         key: _textFieldKey,
         focusNode: _focusNode,
-        maxLines: 2,
+        maxLines: widget.rename ? 1 : 2,
         enabled: widget.rename,
         enableSuggestions: false,
         autocorrect: false,
         controller: _editController,
-        textInputAction: TextInputAction.done,
         decoration: BoxDecoration(
           color: null,
           boxShadow: null,
@@ -157,15 +156,17 @@ class _ThumbnailState extends State<Thumbnail> {
             color: widget.rename
                 ? const Color.fromARGB(255, 147, 178, 246)
                 : Colors.transparent,
-            width: 1,
+            width: 2,
           ),
           borderRadius: BorderRadius.circular(highlightRadius),
         ),
-        disabledColor: Colors.transparent,
+        disabledColor: widget.selected
+            ? const Color.fromARGB(255, 48, 105, 202)
+            : Colors.transparent,
         textAlign: TextAlign.center,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: labelFontSize,
-          //color: Colors.white,
+          color: (widget.selected && !widget.rename) ? Colors.white : null,
         ),
       ),
     );
@@ -177,7 +178,7 @@ class _ThumbnailState extends State<Thumbnail> {
       widget.onRenamed(widget.path, null);
     }
     if (event.logicalKey == LogicalKeyboardKey.enter) {
-      widget.onRenamed(widget.path, _editController.text);
+      widget.onRenamed(widget.path, null);
     }
   }
 }
