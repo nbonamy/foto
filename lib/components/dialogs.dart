@@ -8,10 +8,13 @@ typedef PromptCallback = void Function(BuildContext, String);
 class FotoDialog {
   static Future confirm({
     required BuildContext context,
+    String? title,
     required String text,
+    String? cancelLabel,
+    String? confirmLabel,
     required DialogCallback onConfirmed,
     DialogCallback? onCancel,
-    bool isDanger = false,
+    bool isDestructive = false,
   }) {
     return showMacosAlertDialog(
       context: context,
@@ -22,27 +25,30 @@ class FotoDialog {
           height: 56,
         ),
         title: Text(
-          'foto',
-          style: MacosTheme.of(context).typography.title3,
+          title ?? AppLocalizations.of(context)?.appName ?? 'foto',
+          style: MacosTheme.of(context)
+              .typography
+              .title3
+              .copyWith(fontWeight: FontWeight.bold),
         ),
         message: Text(
           text,
           textAlign: TextAlign.center,
-          style: MacosTheme.of(context).typography.body,
+          style: MacosTheme.of(context).typography.callout,
         ),
         primaryButton: PushButton(
-          buttonSize: ButtonSize.small,
-          color: isDanger ? Colors.red : null,
+          isSecondary: isDestructive,
+          buttonSize: ButtonSize.large,
           onPressed: () => onConfirmed(context),
-          child: Text(AppLocalizations.of(context)!.yes),
+          child: Text(confirmLabel ?? AppLocalizations.of(context)!.yes),
         ),
         secondaryButton: PushButton(
-          isSecondary: true,
-          buttonSize: ButtonSize.small,
+          isSecondary: !isDestructive,
+          buttonSize: ButtonSize.large,
           onPressed: () => onCancel != null
               ? onCancel(context)
               : Navigator.of(context).pop(),
-          child: Text(AppLocalizations.of(context)!.cancel),
+          child: Text(cancelLabel ?? AppLocalizations.of(context)!.cancel),
         ),
       ),
     );

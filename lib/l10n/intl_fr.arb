@@ -15,16 +15,15 @@
   
   "edit": "Editer",
   "view": "Visualiser",
-  "cppy": "Copier",
+  "copy": "Copier",
   "rename": "Renommer",
   "delete": "Déplacer dans la Corbeille",
 
-  "deleteConfirmImage": "Etes-vous sûr de vouloir supprimer cette image ?",
-  "deleteConfirmFolder": "Etes-vous sûr de vouloir supprimer ce dossier ?",
-  "deleteConfirmImages": "Etes-vous sûr de vouloir supprimer ces images ?",
-
+  "deleteTitleSingle": "Etes-vous sûr de vouloir supprimer \"{name}\" ?",
+  "deleteTitleMultiple": "Etes-vous sûr de vouloir supprimer les {count} éléments sélectionnés ?",
+  "deleteText": "{count,plural ,=1{Cet élément} other{{count} éléments}} vont être supprimés immédiatement. Cette action est irréversible.",
+  
   "overwriteConfirm": "Les fichiers existent déjà. Voulez-vous les remplacer ?",
-
 
   "appName": "foto"
 }

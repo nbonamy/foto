@@ -7,16 +7,18 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FileUtils {
   static Future confirmDelete(BuildContext context, List<String> files) {
-    String text = files.length > 1
-        ? AppLocalizations.of(context)!.deleteConfirmImages
-        : (FileSystemEntity.typeSync(files[0]) ==
-                FileSystemEntityType.directory)
-            ? AppLocalizations.of(context)!.deleteConfirmFolder
-            : AppLocalizations.of(context)!.deleteConfirmImage;
+    var t = AppLocalizations.of(context)!;
+    String title = files.length == 1
+        ? t.deleteTitleSingle(p.basename(files[0]))
+        : t.deleteTitleMultiple(files.length);
+    String text = t.deleteText(files.length);
 
     return FotoDialog.confirm(
       context: context,
+      title: title,
       text: text,
+      isDestructive: true,
+      confirmLabel: AppLocalizations.of(context)?.delete,
       onConfirmed: (context) {
         delete(files).then((value) {
           Navigator.of(context).pop(true);
@@ -24,7 +26,6 @@ class FileUtils {
           Navigator.of(context).pop();
         });
       },
-      isDanger: true,
     );
   }
 
@@ -57,11 +58,11 @@ class FileUtils {
       return FotoDialog.confirm(
         context: context,
         text: AppLocalizations.of(context)!.overwriteConfirm,
+        isDestructive: true,
         onConfirmed: (context) {
           Navigator.of(context).pop();
           copy(operations);
         },
-        isDanger: true,
       );
     } else {
       return copy(operations);
