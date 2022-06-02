@@ -48,7 +48,7 @@ class _HomeState extends State<Home> with WindowListener {
         _startedFromFinder = true;
         viewImage(initialFile);
       }
-    } catch (e) {}
+    } catch (_) {}
   }
 
   @override
