@@ -46,39 +46,37 @@ class ContextMenu extends StatefulWidget {
 }
 
 class _ContextMenuState extends State<ContextMenu> {
-  Offset? _position;
+  bool _shouldReact = false;
+  bool _shouldWait = false;
 
   @override
   Widget build(BuildContext context) {
     return Listener(
       onPointerDown: (event) {
-        if (event.kind == PointerDeviceKind.mouse &&
-            event.buttons == kSecondaryMouseButton) {
-          _position = Offset(
-            event.position.dx,
-            event.position.dy,
-          );
-
-          // parent widget may want to setState...
-          bool wait = false;
-          if (widget.onBeforeShowMenu != null) {
-            wait = widget.onBeforeShowMenu!();
-          }
-
-          // ugly hack for now...
-          Future.delayed(Duration(milliseconds: wait ? 100 : 0), () {
-            _handleClickPopUp();
+        _shouldReact = (event.kind == PointerDeviceKind.mouse &&
+            event.buttons == kSecondaryMouseButton);
+        if (_shouldReact && widget.onBeforeShowMenu != null) {
+          _shouldWait = widget.onBeforeShowMenu!();
+        }
+      },
+      onPointerUp: (event) async {
+        if (!_shouldReact) return;
+        if (_shouldWait) {
+          Future.delayed(const Duration(milliseconds: 100), () {
+            _handleClickPopUp(event.position);
           });
+        } else {
+          _handleClickPopUp(event.position);
         }
       },
       child: widget.child,
     );
   }
 
-  void _handleClickPopUp() {
+  void _handleClickPopUp(Offset position) {
     ncm.popUpContextualMenu(
       widget.menu,
-      position: _position,
+      position: position,
       placement: widget.placement,
     );
   }
