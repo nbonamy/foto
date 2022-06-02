@@ -1,0 +1,10 @@
+//
+// Prefix header for all source files of the 'nbImage' target in the 'nbImage' project
+//
+
+#ifdef __OBJC__
+	#import <Cocoa/Cocoa.h>
+#endif
+
+#define RELEASE(x) [x release]
+#define AUTORELEASE(x) [x autorelease]

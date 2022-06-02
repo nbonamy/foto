@@ -51,9 +51,13 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 				let fileEventChannel = FlutterEventChannel(name: "foto_file_handler/events", binaryMessenger: flutterController.engine.binaryMessenger)
 				fileEventChannel.setStreamHandler(self);
 
-				// platform icon method
-				let iconMethodChannel = FlutterMethodChannel(name: "foto_platform_utils/messages", binaryMessenger: flutterController.engine.binaryMessenger)
-				iconMethodChannel.setMethodCallHandler(_methodHandler);
+				// platform utils method
+				let platformMethodChannel = FlutterMethodChannel(name: "foto_platform_utils/messages", binaryMessenger: flutterController.engine.binaryMessenger)
+				platformMethodChannel.setMethodCallHandler(_methodHandler);
+				
+				// image utils method
+				let imageMethodChannel = FlutterMethodChannel(name: "foto_image_utils/messages", binaryMessenger: flutterController.engine.binaryMessenger)
+				imageMethodChannel.setMethodCallHandler(_methodHandler);
 				
 			}
 		}
@@ -114,6 +118,17 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 					"png": FlutterStandardTypedData.init(bytes: png!)
 				]);
 			}
+		} else if ("transformImage" == call.method) {
+			guard let args = call.arguments as? [String:Any] else {return}
+			let filepath = args["filepath"] as? String;
+			let transformation = args["transformation"] as? UInt32;
+			let jpegcompression = args["jpegCompression"] as? Float;
+			let rc = ImageUtils.transformImage(filepath, withTransform: ImageTransformation(rawValue: transformation!), jpegCompression: jpegcompression!);
+			result(rc);
+		} else if ("losslessRotate" == call.method) {
+			let filepath = call.arguments as! String;
+			let rc = ImageUtils.autoLosslessRotateImage(filepath);
+			result(rc);
 		}
 	}
 	

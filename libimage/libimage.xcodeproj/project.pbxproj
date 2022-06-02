@@ -1,0 +1,532 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		8D07987917C38CCC00EEB4F9 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D07987817C38CCC00EEB4F9 /* Cocoa.framework */; };
+		8D07988317C38CCC00EEB4F9 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 8D07988117C38CCC00EEB4F9 /* InfoPlist.strings */; };
+		8D0798AF17C38D2D00EEB4F9 /* NSImage+Transform.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D07989A17C38D2D00EEB4F9 /* NSImage+Transform.h */; };
+		8D0798B017C38D2D00EEB4F9 /* NSImage+Transform.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D07989B17C38D2D00EEB4F9 /* NSImage+Transform.m */; };
+		8D0798B517C38D2D00EEB4F9 /* Exif.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D0798A117C38D2D00EEB4F9 /* Exif.h */; };
+		8D0798B617C38D2D00EEB4F9 /* Exif.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D0798A217C38D2D00EEB4F9 /* Exif.m */; };
+		8D0798BB17C38D2D00EEB4F9 /* ImageUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D0798A717C38D2D00EEB4F9 /* ImageUtils.h */; };
+		8D0798BC17C38D2D00EEB4F9 /* ImageUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D0798A817C38D2D00EEB4F9 /* ImageUtils.m */; };
+		8D2A9F9C28492F5E00E7B298 /* libintl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D2A9F9B28492F1300E7B298 /* libintl.a */; };
+		8D2A9F9E28492FB700E7B298 /* libiconv.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D2A9F9D28492FB700E7B298 /* libiconv.a */; };
+		8DCA6E9517C67D2300219E7A /* NSImage+Bitmap.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DCA6E9317C67D2300219E7A /* NSImage+Bitmap.h */; };
+		8DCA6E9617C67D2300219E7A /* NSImage+Bitmap.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DCA6E9417C67D2300219E7A /* NSImage+Bitmap.m */; };
+		8DE8B58517C38F8B00EE8526 /* libcutils.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DE8B58417C38F8000EE8526 /* libcutils.a */; };
+		8DE8B58717C38FC100EE8526 /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DE8B58617C38FC100EE8526 /* libc++.dylib */; };
+		8DE8B58917C38FD800EE8526 /* libexif.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DE8B58817C38FD800EE8526 /* libexif.a */; };
+		8DE8B58B17C38FE400EE8526 /* libjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DE8B58A17C38FE400EE8526 /* libjpeg.a */; };
+		8DFFCF4228497F6F003C5BCB /* NSFileManager+Utils.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DFFCF4028497F6F003C5BCB /* NSFileManager+Utils.h */; };
+		8DFFCF4328497F6F003C5BCB /* NSFileManager+Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DFFCF4128497F6F003C5BCB /* NSFileManager+Utils.m */; };
+		8DFFCF4A28498025003C5BCB /* FileUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DFFCF4828498025003C5BCB /* FileUtils.m */; };
+		8DFFCF4B28498025003C5BCB /* FileUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DFFCF4928498025003C5BCB /* FileUtils.h */; };
+		8DFFCF59284982F8003C5BCB /* NSBitmapImageRep+Save.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DFFCF57284982F8003C5BCB /* NSBitmapImageRep+Save.h */; };
+		8DFFCF5A284982F8003C5BCB /* NSBitmapImageRep+Save.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DFFCF58284982F8003C5BCB /* NSBitmapImageRep+Save.m */; };
+		8DFFCF61284983D3003C5BCB /* NSImage+MGCropExtensions.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DFFCF5F284983D3003C5BCB /* NSImage+MGCropExtensions.h */; };
+		8DFFCF62284983D3003C5BCB /* NSImage+MGCropExtensions.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DFFCF60284983D3003C5BCB /* NSImage+MGCropExtensions.m */; settings = {COMPILER_FLAGS = "-w -fno-objc-arc"; }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8D12ED5217C4D92B00E013A3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8DE8B57F17C38F7F00EE8526 /* cutils.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D6815CC169608CB00A0CD65;
+			remoteInfo = cutils;
+		};
+		8DE8B58317C38F8000EE8526 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8DE8B57F17C38F7F00EE8526 /* cutils.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8D6815CD169608CB00A0CD65;
+			remoteInfo = cutils;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		8D00019023C13CEA009ADE34 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		8D07987517C38CCC00EEB4F9 /* libimage.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = libimage.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D07987817C38CCC00EEB4F9 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		8D07987B17C38CCC00EEB4F9 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		8D07987C17C38CCC00EEB4F9 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+		8D07987D17C38CCC00EEB4F9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		8D07988017C38CCC00EEB4F9 /* libimage-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "libimage-Info.plist"; sourceTree = "<group>"; };
+		8D07988217C38CCC00EEB4F9 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		8D07988417C38CCC00EEB4F9 /* libimage-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "libimage-Prefix.pch"; sourceTree = "<group>"; };
+		8D07989A17C38D2D00EEB4F9 /* NSImage+Transform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSImage+Transform.h"; sourceTree = "<group>"; };
+		8D07989B17C38D2D00EEB4F9 /* NSImage+Transform.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSImage+Transform.m"; sourceTree = "<group>"; };
+		8D0798A117C38D2D00EEB4F9 /* Exif.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Exif.h; sourceTree = "<group>"; };
+		8D0798A217C38D2D00EEB4F9 /* Exif.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Exif.m; sourceTree = "<group>"; };
+		8D0798A717C38D2D00EEB4F9 /* ImageUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageUtils.h; sourceTree = "<group>"; };
+		8D0798A817C38D2D00EEB4F9 /* ImageUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ImageUtils.m; sourceTree = "<group>"; };
+		8D2A9F99284926C800E7B298 /* libintl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libintl.a; path = ../../../../../../usr/local/Cellar/gettext/0.21/lib/libintl.a; sourceTree = "<group>"; };
+		8D2A9F9B28492F1300E7B298 /* libintl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libintl.a; path = libexif/libintl.a; sourceTree = "<group>"; };
+		8D2A9F9D28492FB700E7B298 /* libiconv.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libiconv.a; path = libexif/libiconv.a; sourceTree = "<group>"; };
+		8DCA6E9317C67D2300219E7A /* NSImage+Bitmap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSImage+Bitmap.h"; sourceTree = "<group>"; };
+		8DCA6E9417C67D2300219E7A /* NSImage+Bitmap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSImage+Bitmap.m"; sourceTree = "<group>"; };
+		8DE8B57F17C38F7F00EE8526 /* cutils.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = cutils.xcodeproj; path = cutils/cutils.xcodeproj; sourceTree = "<group>"; };
+		8DE8B58617C38FC100EE8526 /* libc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libc++.dylib"; path = "usr/lib/libc++.dylib"; sourceTree = SDKROOT; };
+		8DE8B58817C38FD800EE8526 /* libexif.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libexif.a; path = libexif/libexif.a; sourceTree = "<group>"; };
+		8DE8B58A17C38FE400EE8526 /* libjpeg.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libjpeg.a; path = libjpeg/libjpeg.a; sourceTree = "<group>"; };
+		8DFFCF4028497F6F003C5BCB /* NSFileManager+Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSFileManager+Utils.h"; sourceTree = "<group>"; };
+		8DFFCF4128497F6F003C5BCB /* NSFileManager+Utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSFileManager+Utils.m"; sourceTree = "<group>"; };
+		8DFFCF4828498025003C5BCB /* FileUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FileUtils.m; sourceTree = "<group>"; };
+		8DFFCF4928498025003C5BCB /* FileUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileUtils.h; sourceTree = "<group>"; };
+		8DFFCF57284982F8003C5BCB /* NSBitmapImageRep+Save.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSBitmapImageRep+Save.h"; sourceTree = "<group>"; };
+		8DFFCF58284982F8003C5BCB /* NSBitmapImageRep+Save.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSBitmapImageRep+Save.m"; sourceTree = "<group>"; };
+		8DFFCF5F284983D3003C5BCB /* NSImage+MGCropExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSImage+MGCropExtensions.h"; sourceTree = "<group>"; };
+		8DFFCF60284983D3003C5BCB /* NSImage+MGCropExtensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSImage+MGCropExtensions.m"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D07987117C38CCC00EEB4F9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D2A9F9E28492FB700E7B298 /* libiconv.a in Frameworks */,
+				8D2A9F9C28492F5E00E7B298 /* libintl.a in Frameworks */,
+				8DE8B58B17C38FE400EE8526 /* libjpeg.a in Frameworks */,
+				8DE8B58917C38FD800EE8526 /* libexif.a in Frameworks */,
+				8DE8B58717C38FC100EE8526 /* libc++.dylib in Frameworks */,
+				8DE8B58517C38F8B00EE8526 /* libcutils.a in Frameworks */,
+				8D07987917C38CCC00EEB4F9 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		8D07986B17C38CCC00EEB4F9 = {
+			isa = PBXGroup;
+			children = (
+				8DE8B57F17C38F7F00EE8526 /* cutils.xcodeproj */,
+				8D07987E17C38CCC00EEB4F9 /* libimage */,
+				8D07987717C38CCC00EEB4F9 /* Frameworks */,
+				8D07987617C38CCC00EEB4F9 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		8D07987617C38CCC00EEB4F9 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8D07987517C38CCC00EEB4F9 /* libimage.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8D07987717C38CCC00EEB4F9 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8D2A9F9D28492FB700E7B298 /* libiconv.a */,
+				8D2A9F99284926C800E7B298 /* libintl.a */,
+				8D2A9F9B28492F1300E7B298 /* libintl.a */,
+				8DE8B58A17C38FE400EE8526 /* libjpeg.a */,
+				8DE8B58817C38FD800EE8526 /* libexif.a */,
+				8DE8B58617C38FC100EE8526 /* libc++.dylib */,
+				8D07987817C38CCC00EEB4F9 /* Cocoa.framework */,
+				8D07987A17C38CCC00EEB4F9 /* Other Frameworks */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		8D07987A17C38CCC00EEB4F9 /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8D07987B17C38CCC00EEB4F9 /* AppKit.framework */,
+				8D07987C17C38CCC00EEB4F9 /* CoreData.framework */,
+				8D07987D17C38CCC00EEB4F9 /* Foundation.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		8D07987E17C38CCC00EEB4F9 /* libimage */ = {
+			isa = PBXGroup;
+			children = (
+				8D07989317C38D2D00EEB4F9 /* Categories */,
+				8D07989C17C38D2D00EEB4F9 /* Classes */,
+				8D07987F17C38CCC00EEB4F9 /* Supporting Files */,
+			);
+			path = libimage;
+			sourceTree = "<group>";
+		};
+		8D07987F17C38CCC00EEB4F9 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				8D07988017C38CCC00EEB4F9 /* libimage-Info.plist */,
+				8D07988117C38CCC00EEB4F9 /* InfoPlist.strings */,
+				8D07988417C38CCC00EEB4F9 /* libimage-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		8D07989317C38D2D00EEB4F9 /* Categories */ = {
+			isa = PBXGroup;
+			children = (
+				8DFFCF57284982F8003C5BCB /* NSBitmapImageRep+Save.h */,
+				8DFFCF58284982F8003C5BCB /* NSBitmapImageRep+Save.m */,
+				8DFFCF4028497F6F003C5BCB /* NSFileManager+Utils.h */,
+				8DFFCF4128497F6F003C5BCB /* NSFileManager+Utils.m */,
+				8DCA6E9317C67D2300219E7A /* NSImage+Bitmap.h */,
+				8DCA6E9417C67D2300219E7A /* NSImage+Bitmap.m */,
+				8DFFCF5F284983D3003C5BCB /* NSImage+MGCropExtensions.h */,
+				8DFFCF60284983D3003C5BCB /* NSImage+MGCropExtensions.m */,
+				8D07989A17C38D2D00EEB4F9 /* NSImage+Transform.h */,
+				8D07989B17C38D2D00EEB4F9 /* NSImage+Transform.m */,
+			);
+			path = Categories;
+			sourceTree = "<group>";
+		};
+		8D07989C17C38D2D00EEB4F9 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				8DFFCF4928498025003C5BCB /* FileUtils.h */,
+				8DFFCF4828498025003C5BCB /* FileUtils.m */,
+				8D0798A117C38D2D00EEB4F9 /* Exif.h */,
+				8D0798A217C38D2D00EEB4F9 /* Exif.m */,
+				8D0798A717C38D2D00EEB4F9 /* ImageUtils.h */,
+				8D0798A817C38D2D00EEB4F9 /* ImageUtils.m */,
+			);
+			path = Classes;
+			sourceTree = "<group>";
+		};
+		8DE8B58017C38F7F00EE8526 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8DE8B58417C38F8000EE8526 /* libcutils.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		8D07987217C38CCC00EEB4F9 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D0798AF17C38D2D00EEB4F9 /* NSImage+Transform.h in Headers */,
+				8DFFCF61284983D3003C5BCB /* NSImage+MGCropExtensions.h in Headers */,
+				8DFFCF4228497F6F003C5BCB /* NSFileManager+Utils.h in Headers */,
+				8DFFCF4B28498025003C5BCB /* FileUtils.h in Headers */,
+				8DFFCF59284982F8003C5BCB /* NSBitmapImageRep+Save.h in Headers */,
+				8D0798B517C38D2D00EEB4F9 /* Exif.h in Headers */,
+				8D0798BB17C38D2D00EEB4F9 /* ImageUtils.h in Headers */,
+				8DCA6E9517C67D2300219E7A /* NSImage+Bitmap.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		8D07987417C38CCC00EEB4F9 /* libimage */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8D07988A17C38CCC00EEB4F9 /* Build configuration list for PBXNativeTarget "libimage" */;
+			buildPhases = (
+				8D07987017C38CCC00EEB4F9 /* Sources */,
+				8D07987117C38CCC00EEB4F9 /* Frameworks */,
+				8D07987217C38CCC00EEB4F9 /* Headers */,
+				8D07987317C38CCC00EEB4F9 /* Resources */,
+				8D00019023C13CEA009ADE34 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8D12ED5317C4D92B00E013A3 /* PBXTargetDependency */,
+			);
+			name = libimage;
+			productName = libimage;
+			productReference = 8D07987517C38CCC00EEB4F9 /* libimage.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8D07986C17C38CCC00EEB4F9 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1340;
+				ORGANIZATIONNAME = "Nicolas Bonamy";
+			};
+			buildConfigurationList = 8D07986F17C38CCC00EEB4F9 /* Build configuration list for PBXProject "libimage" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 8D07986B17C38CCC00EEB4F9;
+			productRefGroup = 8D07987617C38CCC00EEB4F9 /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 8DE8B58017C38F7F00EE8526 /* Products */;
+					ProjectRef = 8DE8B57F17C38F7F00EE8526 /* cutils.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				8D07987417C38CCC00EEB4F9 /* libimage */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		8DE8B58417C38F8000EE8526 /* libcutils.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libcutils.a;
+			remoteRef = 8DE8B58317C38F8000EE8526 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8D07987317C38CCC00EEB4F9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D07988317C38CCC00EEB4F9 /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8D07987017C38CCC00EEB4F9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8DFFCF4A28498025003C5BCB /* FileUtils.m in Sources */,
+				8D0798B017C38D2D00EEB4F9 /* NSImage+Transform.m in Sources */,
+				8D0798B617C38D2D00EEB4F9 /* Exif.m in Sources */,
+				8D0798BC17C38D2D00EEB4F9 /* ImageUtils.m in Sources */,
+				8DCA6E9617C67D2300219E7A /* NSImage+Bitmap.m in Sources */,
+				8DFFCF5A284982F8003C5BCB /* NSBitmapImageRep+Save.m in Sources */,
+				8DFFCF4328497F6F003C5BCB /* NSFileManager+Utils.m in Sources */,
+				8DFFCF62284983D3003C5BCB /* NSImage+MGCropExtensions.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		8D12ED5317C4D92B00E013A3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = cutils;
+			targetProxy = 8D12ED5217C4D92B00E013A3 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		8D07988117C38CCC00EEB4F9 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				8D07988217C38CCC00EEB4F9 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		8D07988817C38CCC00EEB4F9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		8D07988917C38CCC00EEB4F9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		8D07988B17C38CCC00EEB4F9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/cam2mac-brwnysjakpxtkpbyqrqrztjiboqn/Build/Products/Debug",
+				);
+				FRAMEWORK_VERSION = A;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "libimage/libimage-Prefix.pch";
+				INFOPLIST_FILE = "libimage/libimage-Info.plist";
+				INSTALL_PATH = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/libexif\"",
+					"\"$(SRCROOT)/libjpeg\"",
+					/usr/local/Cellar/gettext/0.21/lib,
+					"$(PROJECT_DIR)/libexif",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.nabocorp.mac.${PRODUCT_NAME:rfc1034identifier}";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "../nbFoundation/** ../libimage/**";
+				WRAPPER_EXTENSION = framework;
+			};
+			name = Debug;
+		};
+		8D07988C17C38CCC00EEB4F9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/cam2mac-brwnysjakpxtkpbyqrqrztjiboqn/Build/Products/Debug",
+				);
+				FRAMEWORK_VERSION = A;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "libimage/libimage-Prefix.pch";
+				INFOPLIST_FILE = "libimage/libimage-Info.plist";
+				INSTALL_PATH = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/libexif\"",
+					"\"$(SRCROOT)/libjpeg\"",
+					/usr/local/Cellar/gettext/0.21/lib,
+					"$(PROJECT_DIR)/libexif",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.nabocorp.mac.${PRODUCT_NAME:rfc1034identifier}";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "../nbFoundation/** ../libimage/**";
+				WRAPPER_EXTENSION = framework;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		8D07986F17C38CCC00EEB4F9 /* Build configuration list for PBXProject "libimage" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8D07988817C38CCC00EEB4F9 /* Debug */,
+				8D07988917C38CCC00EEB4F9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8D07988A17C38CCC00EEB4F9 /* Build configuration list for PBXNativeTarget "libimage" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8D07988B17C38CCC00EEB4F9 /* Debug */,
+				8D07988C17C38CCC00EEB4F9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 8D07986C17C38CCC00EEB4F9 /* Project object */;
+}

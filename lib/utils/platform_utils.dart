@@ -1,7 +1,3 @@
-// Copyright 2018 Evo Stamatov. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -14,10 +10,6 @@ class PlatformUtils {
   static const MethodChannel _mChannel =
       MethodChannel('foto_platform_utils/messages');
 
-  /// Returns a [Future], which completes to one of the following:
-  ///
-  ///   * the initially stored link (possibly null), on successful invocation;
-  ///   * a [PlatformException], if the invocation failed in the platform plugin.
   static Future<Image?> getPlatformIcon(String filepath) async {
     var data = await _mChannel.invokeMethod('getPlatformIcon', filepath);
     if (data == null) return null;

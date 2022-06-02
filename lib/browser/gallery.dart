@@ -7,6 +7,7 @@ import 'package:foto/browser/thumbnail.dart';
 import 'package:foto/components/context_menu.dart' as ctxm;
 import 'package:foto/components/selectable.dart';
 import 'package:foto/utils/file.dart';
+import 'package:foto/utils/image_utils.dart';
 import 'package:foto/utils/media.dart';
 import 'package:foto/utils/platform_keyboard.dart';
 import 'package:foto/model/preferences.dart';
@@ -110,6 +111,12 @@ class _ImageGalleryState extends State<ImageGallery> {
           return KeyEventResult.handled;
         } else if (PlatformKeyboard.isPaste(event)) {
           _pasteFromClipboard();
+          return KeyEventResult.handled;
+        } else if (PlatformKeyboard.isRotate90CW(event)) {
+          _rotateSelection(ImageTransformation.rotate90CW);
+          return KeyEventResult.handled;
+        } else if (PlatformKeyboard.isRotate90CCW(event)) {
+          _rotateSelection(ImageTransformation.rotate90CCW);
           return KeyEventResult.handled;
         }
 
@@ -359,5 +366,14 @@ class _ImageGalleryState extends State<ImageGallery> {
     Pasteboard.files().then((files) {
       FileUtils.tryCopy(context, files, widget.path);
     });
+  }
+
+  void _rotateSelection(ImageTransformation transformation) {
+    for (var filepath in _selection) {
+      ImageUtils.transformImage(filepath, transformation).then((value) {
+        imageCache.clear();
+        setState(() {});
+      });
+    }
   }
 }

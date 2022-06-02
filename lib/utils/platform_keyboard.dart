@@ -38,6 +38,16 @@ class PlatformKeyboard {
     return event.physicalKey == PhysicalKeyboardKey.escape;
   }
 
+  static bool isRotate90CW(RawKeyEvent event) {
+    return event.isKeyPressed(LogicalKeyboardKey.arrowRight) &&
+        commandModifierPressed(event);
+  }
+
+  static bool isRotate90CCW(RawKeyEvent event) {
+    return event.isKeyPressed(LogicalKeyboardKey.arrowLeft) &&
+        commandModifierPressed(event);
+  }
+
   static bool isEnter(RawKeyEvent event) {
     return event.physicalKey == PhysicalKeyboardKey.enter ||
         event.physicalKey == PhysicalKeyboardKey.numpadEnter;
