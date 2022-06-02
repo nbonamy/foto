@@ -29,7 +29,7 @@ class _ImageViewerState extends State<ImageViewer>
     with TickerProviderStateMixin {
   late int _index;
   double? _fitScale;
-  FocusNode _focusNode = FocusNode();
+  final FocusNode _focusNode = FocusNode();
   late PhotoViewController _controller;
   late AnimationController _scaleAnimationController;
   Animation<double>? _scaleAnimation;
