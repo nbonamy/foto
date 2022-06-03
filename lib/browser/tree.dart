@@ -5,7 +5,7 @@ import 'package:foto/components/theme.dart';
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
 import 'package:foto/utils/file.dart';
-import 'package:foto/utils/media.dart';
+import 'package:foto/utils/media_utils.dart';
 import 'package:foto/utils/paths.dart';
 import 'package:foto/utils/utils.dart';
 import 'package:flutter_treeview/flutter_treeview.dart';
@@ -310,8 +310,9 @@ class _BrowserTreeState extends State<BrowserTree> {
       final dir = Directory(path);
       var folders =
           dir.listSync(recursive: false).whereType<Directory>().toList();
-      folders =
-          folders.where((f) => !Media.shouldExcludeFileOrDir(f.path)).toList();
+      folders = folders
+          .where((f) => !MediaUtils.shouldExcludeFileOrDir(f.path))
+          .toList();
       folders
           .sort((a, b) => a.path.toLowerCase().compareTo(b.path.toLowerCase()));
 

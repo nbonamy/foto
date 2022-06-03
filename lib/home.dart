@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:foto/utils/file_handler.dart';
-import 'package:foto/utils/media.dart';
+import 'package:foto/utils/media_utils.dart';
 import 'package:foto/model/preferences.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
@@ -101,7 +101,7 @@ class _HomeState extends State<Home> with WindowListener {
 
   void viewImage(String image) {
     var path = File(image).parent.path;
-    var images = Media.getMediaFiles(path, includeDirs: false)
+    var images = MediaUtils.getMediaFiles(path, includeDirs: false)
         .map<String>((e) => e.path)
         .toList();
     var index = images.indexOf(image);

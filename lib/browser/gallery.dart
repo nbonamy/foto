@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:foto/browser/thumbnail.dart';
 import 'package:foto/components/context_menu.dart' as ctxm;
 import 'package:foto/components/selectable.dart';
+import 'package:foto/model/media.dart';
+import 'package:foto/utils/database.dart';
 import 'package:foto/utils/file.dart';
 import 'package:foto/utils/image_utils.dart';
-import 'package:foto/utils/media.dart';
+import 'package:foto/utils/media_utils.dart';
 import 'package:foto/utils/platform_keyboard.dart';
 import 'package:foto/model/preferences.dart';
 import 'package:foto/utils/platform_utils.dart';
@@ -35,7 +37,9 @@ class ImageGallery extends StatefulWidget {
 }
 
 class _ImageGalleryState extends State<ImageGallery> {
-  List<FileSystemEntity>? _files;
+  final MediaDb _mediaDb = MediaDb();
+
+  List<MediaItem>? _items;
   String? _fileBeingRenamed;
 
   final _elements = <SelectableElement>{};
@@ -57,7 +61,7 @@ class _ImageGalleryState extends State<ImageGallery> {
   void initState() {
     _watchDir();
     Preferences.of(context).addListener(() {
-      _files = null;
+      _items = null;
     });
     PlatformUtils.bundlePathForIdentifier(photoshopBundleId).then((value) {
       _photoshopPath = value;
@@ -89,7 +93,7 @@ class _ImageGalleryState extends State<ImageGallery> {
         }
       }
       setState(() {
-        _files = null;
+        _items = null;
         _selection = selection;
       });
     });
@@ -98,13 +102,15 @@ class _ImageGalleryState extends State<ImageGallery> {
   @override
   Widget build(BuildContext context) {
     // get files
-    Preferences prefs = Preferences.of(context);
-    _files ??= Media.getMediaFiles(
-      widget.path,
-      includeDirs: prefs.showFolders,
-      sortType: prefs.sortType,
-      sortReversed: prefs.sortReversed,
-    );
+    if (_items == null) {
+      Preferences prefs = Preferences.of(context);
+      _items = MediaUtils.getMediaFiles(
+        widget.path,
+        includeDirs: prefs.showFolders,
+        sortType: prefs.sortType,
+        sortReversed: prefs.sortReversed,
+      );
+    }
 
     // merge selections
     var selection = _mergeSelections(_selection, _dragSelection);
@@ -166,7 +172,7 @@ class _ImageGalleryState extends State<ImageGallery> {
               crossAxisSpacing: 16,
               padding: const EdgeInsets.all(16),
               childAspectRatio: Thumbnail.aspectRatio(),
-              children: _files!.map<Widget>((file) {
+              children: _items!.map<Widget>((media) {
                 return GestureDetector(
                   onTapDown: (_) {
                     _focusNode.requestFocus();
@@ -174,27 +180,26 @@ class _ImageGalleryState extends State<ImageGallery> {
                       if (!_extendSelection) {
                         _selection = [];
                       }
-                      _selection.add(file.path);
+                      _selection.add(media.path);
                       _fileBeingRenamed = null;
                     });
                   },
                   onDoubleTap: () {
                     _focusNode.requestFocus();
-                    _handleDoubleTap(file);
+                    _handleDoubleTap(media);
                   },
                   child: _getContextMenu(
                     context,
-                    file: file,
+                    media: media,
                     child: Selectable(
-                      id: file.path,
+                      id: media.path,
                       onMountElement: _elements.add,
                       onUnmountElement: _elements.remove,
                       child: Thumbnail(
-                        key: Key(file.path),
-                        path: file.path,
-                        folder: file is Directory,
-                        selected: selection.contains(file.path),
-                        rename: _fileBeingRenamed == file.path,
+                        key: media.key,
+                        media: media,
+                        selected: selection.contains(media.path),
+                        rename: _fileBeingRenamed == media.path,
                         onRenamed: (file, newName) {
                           _fileBeingRenamed = null;
                           if (newName != null && newName != '') {
@@ -219,7 +224,7 @@ class _ImageGalleryState extends State<ImageGallery> {
 
   Widget _getContextMenu(
     BuildContext context, {
-    required FileSystemEntity file,
+    required MediaItem media,
     required Widget child,
   }) {
     return ctxm.ContextMenu(
@@ -227,7 +232,7 @@ class _ImageGalleryState extends State<ImageGallery> {
         items: [
           ctxm.MenuItem(
             label: AppLocalizations.of(context)!.view,
-            onClick: (_) => _handleDoubleTap(file),
+            onClick: (_) => _handleDoubleTap(media),
           ),
           ctxm.MenuItem(
               label: _photoshopPath == null
@@ -240,7 +245,7 @@ class _ImageGalleryState extends State<ImageGallery> {
             label: AppLocalizations.of(context)!.rename,
             disabled: _selection.length != 1,
             onClick: (_) => setState(() {
-              _fileBeingRenamed = file.path;
+              _fileBeingRenamed = media.path;
             }),
           ),
           ctxm.MenuItem.separator(),
@@ -257,9 +262,9 @@ class _ImageGalleryState extends State<ImageGallery> {
         ],
       ),
       onBeforeShowMenu: () {
-        if (_selection.contains(file.path) == false) {
+        if (_selection.contains(media.path) == false) {
           setState(() {
-            _selection = [file.path];
+            _selection = [media.path];
           });
           return true;
         }
@@ -297,18 +302,20 @@ class _ImageGalleryState extends State<ImageGallery> {
     });
   }
 
-  void _handleDoubleTap(FileSystemEntity file) {
-    if (file is Directory) {
-      widget.executeItem(folder: file.path);
+  void _handleDoubleTap(MediaItem media) {
+    if (!media.isFile()) {
+      widget.executeItem(folder: media.path);
     } else {
-      if (!_selection.contains(file.path)) {
+      if (!_selection.contains(media.path)) {
         setState(() {
-          _selection = [file.path];
+          _selection = [media.path];
         });
       }
+      List<String> images =
+          _items!.where((m) => m.isFile()).map((m) => m.path).toList();
       widget.executeItem(
-        images: _files!.whereType<File>().map((f) => f.path).toList(),
-        index: _files!.indexOf(file),
+        images: images,
+        index: images.indexOf(media.path),
       );
     }
   }
@@ -380,9 +387,9 @@ class _ImageGalleryState extends State<ImageGallery> {
 
   void _selectAll() {
     List<String> selection = [];
-    for (var file in _files!) {
-      if (file is File) {
-        selection.add(file.path);
+    for (var item in _items!) {
+      if (item is File) {
+        selection.add(item.path);
       }
     }
     setState(() {
@@ -400,12 +407,11 @@ class _ImageGalleryState extends State<ImageGallery> {
     });
   }
 
-  void _rotateSelection(ImageTransformation transformation) {
+  void _rotateSelection(ImageTransformation transformation) async {
     for (var filepath in _selection) {
-      ImageUtils.transformImage(filepath, transformation).then((value) {
-        imageCache.clear();
-        setState(() {});
-      });
+      await ImageUtils.transformImage(filepath, transformation);
+      _items!.firstWhere((i) => i.path == filepath).refresh();
     }
+    setState(() {});
   }
 }

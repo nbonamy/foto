@@ -181,6 +181,9 @@ class _ImageViewerState extends State<ImageViewer>
     } else if (event.isKeyPressed(LogicalKeyboardKey.keyI)) {
       _toggleLevel();
       return KeyEventResult.handled;
+    } else if (event.isKeyPressed(LogicalKeyboardKey.keyA)) {
+      _toggleOverlay();
+      return KeyEventResult.handled;
     } else if (PlatformKeyboard.isDelete(event)) {
       _confirmDelete();
       return KeyEventResult.handled;
@@ -232,6 +235,15 @@ class _ImageViewerState extends State<ImageViewer>
     Preferences prefs = Preferences.of(context);
     var index = prefs.overlayLevel.index;
     index = (index + 1) % OverlayLevel.values.length;
+    Preferences.of(context).overlayLevel = OverlayLevel.values[index];
+    setState(() {});
+  }
+
+  void _toggleOverlay() {
+    Preferences prefs = Preferences.of(context);
+    var index = prefs.overlayLevel.index;
+    var last = OverlayLevel.values.length - 1;
+    index = (index == last) ? 0 : last;
     Preferences.of(context).overlayLevel = OverlayLevel.values[index];
     setState(() {});
   }

@@ -1,26 +1,27 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:foto/model/media.dart';
 import 'package:foto/model/preferences.dart';
 import 'package:path/path.dart' as p;
 
-class Media {
+class MediaUtils {
   static String getExtension(String file) {
     return file.split('.').last.toLowerCase();
   }
 
   static bool isImage(String file) {
     return ['jpg', 'jpeg', 'heic', 'png', 'gif', 'tif', 'tiff']
-        .contains(Media.getExtension(file));
+        .contains(MediaUtils.getExtension(file));
   }
 
   static bool shouldExcludeFileOrDir(String fullpath) {
     String basename = p.basename(fullpath);
     return basename.startsWith('.') ||
-        Media._excludedFilenames.contains(basename);
+        MediaUtils._excludedFilenames.contains(basename);
   }
 
-  static List<FileSystemEntity> getMediaFiles(
+  static List<MediaItem> getMediaFiles(
     String? path, {
     required bool includeDirs,
     SortType sortType = SortType.chronological,
@@ -34,24 +35,26 @@ class Media {
 
       // get files
       final dir = Directory(path);
-      var entities = dir.listSync(recursive: false);
-      var filtered = entities.where((entity) {
-        if (Media.shouldExcludeFileOrDir(entity.path)) {
+      List<FileSystemEntity> entities = dir.listSync(recursive: false);
+      List<MediaItem> filtered = entities.where((entity) {
+        if (MediaUtils.shouldExcludeFileOrDir(entity.path)) {
           return false;
         } else if (entity is Directory) {
           return includeDirs;
         } else if (entity is File) {
-          return Media.isImage(entity.path);
+          return MediaUtils.isImage(entity.path);
         } else {
           return false;
         }
+      }).map<MediaItem>((entity) {
+        return MediaItem.forEntity(entity);
       }).toList();
       filtered.sort((a, b) {
-        if (a is Directory && b is Directory) {
+        if (a.isDir() && b.isDir()) {
           return a.path.toLowerCase().compareTo(b.path.toLowerCase());
-        } else if (a is Directory && b is! Directory) {
+        } else if (a.isDir() && !b.isDir()) {
           return -1;
-        } else if (b is Directory && a is! Directory) {
+        } else if (b.isDir() && !a.isDir()) {
           return 1;
         } else {
           if (sortType == SortType.alphabetical) {
@@ -59,7 +62,7 @@ class Media {
                 a.path.toLowerCase().compareTo(b.path.toLowerCase());
           } else if (sortType == SortType.chronological) {
             return (sortReversed ? -1 : 1) *
-                a.statSync().changed.compareTo(b.statSync().changed);
+                a.creationDate.compareTo(b.creationDate);
           } else {
             return -1;
           }

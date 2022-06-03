@@ -13,6 +13,11 @@ class ImageUtils {
   static const MethodChannel _mChannel =
       MethodChannel('foto_image_utils/messages');
 
+  static Future<DateTime> getCreationDate(String filepath) async {
+    double epoch = await _mChannel.invokeMethod('getCreationDate', filepath);
+    return DateTime.fromMillisecondsSinceEpoch(epoch.toInt() * 1000);
+  }
+
   static Future<bool> transformImage(
       String filepath, ImageTransformation transformation,
       {double jpegCompression = 90}) async {

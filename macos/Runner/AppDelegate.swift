@@ -139,7 +139,12 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 	}
 	
 	func _imageHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
-		if ("transformImage" == call.method) {
+		
+		if ("getCreationDate" == call.method) {
+			let filepath = call.arguments as! String;
+			let datetime = ImageUtils.getCreationDate(forImage: filepath);
+			result(datetime!.timeIntervalSince1970);
+		} else if ("transformImage" == call.method) {
 			guard let args = call.arguments as? [String:Any] else {return}
 			let filepath = args["filepath"] as? String;
 			let transformation = args["transformation"] as? UInt32;

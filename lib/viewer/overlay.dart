@@ -118,6 +118,10 @@ class _InfoOverlayState extends State<InfoOverlay> {
       }
     }
 
+    if (texts.isEmpty) {
+      return Container();
+    }
+
     return Container(
       color: const Color.fromARGB(180, 0, 0, 0),
       padding: const EdgeInsets.all(4),
