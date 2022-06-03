@@ -25,13 +25,15 @@ class PlatformKeyboard {
   }
 
   static bool isPrevious(RawKeyEvent event) {
-    return event.isKeyPressed(LogicalKeyboardKey.arrowLeft) ||
-        event.isKeyPressed(LogicalKeyboardKey.arrowUp);
+    return (event.isKeyPressed(LogicalKeyboardKey.arrowLeft) ||
+            event.isKeyPressed(LogicalKeyboardKey.arrowUp)) &&
+        !commandModifierPressed(event);
   }
 
   static bool isNext(RawKeyEvent event) {
-    return event.isKeyPressed(LogicalKeyboardKey.arrowRight) ||
-        event.isKeyPressed(LogicalKeyboardKey.arrowDown);
+    return (event.isKeyPressed(LogicalKeyboardKey.arrowRight) ||
+            event.isKeyPressed(LogicalKeyboardKey.arrowDown)) &&
+        !commandModifierPressed(event);
   }
 
   static bool isDelete(RawKeyEvent event) {
