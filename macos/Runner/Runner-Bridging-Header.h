@@ -10,5 +10,6 @@
 
 #include "FileUtils.h"
 #include "ImageUtils.h"
+#include "SystemUtils.h"
 
 #endif /* Runner_Bridging_Header_h */

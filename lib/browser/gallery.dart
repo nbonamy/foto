@@ -11,8 +11,10 @@ import 'package:foto/utils/image_utils.dart';
 import 'package:foto/utils/media.dart';
 import 'package:foto/utils/platform_keyboard.dart';
 import 'package:foto/model/preferences.dart';
+import 'package:foto/utils/platform_utils.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:path/path.dart' as p;
 
 class ImageGallery extends StatefulWidget {
   final String path;
@@ -34,15 +36,22 @@ class ImageGallery extends StatefulWidget {
 
 class _ImageGalleryState extends State<ImageGallery> {
   List<FileSystemEntity>? _files;
+  String? _fileBeingRenamed;
+
   final _elements = <SelectableElement>{};
   List<String> _selection = [];
   bool _extendSelection = false;
+
   StreamSubscription<FileSystemEvent>? _dirSubscription;
+
   final FocusNode _focusNode = FocusNode();
-  String? _fileBeingRenamed;
+
   Offset? _dragSelectOrig;
   Rect? _dragSelectRect;
   List<String> _dragSelection = [];
+
+  static const String photoshopBundleId = 'com.adobe.Photoshop';
+  String? _photoshopPath;
 
   @override
   void initState() {
@@ -50,7 +59,16 @@ class _ImageGalleryState extends State<ImageGallery> {
     Preferences.of(context).addListener(() {
       _files = null;
     });
+    PlatformUtils.bundlePathForIdentifier(photoshopBundleId).then((value) {
+      _photoshopPath = value;
+    });
     super.initState();
+  }
+
+  String? get photoshopName {
+    return _photoshopPath == null
+        ? null
+        : p.basenameWithoutExtension(_photoshopPath!);
   }
 
   @override
@@ -118,6 +136,13 @@ class _ImageGalleryState extends State<ImageGallery> {
         } else if (PlatformKeyboard.isRotate90CCW(event)) {
           _rotateSelection(ImageTransformation.rotate90CCW);
           return KeyEventResult.handled;
+          /*} else if (PlatformKeyboard.isEnter(event) &&
+            _selection.length == 1 &&
+            _fileBeingRenamed == null) {
+          setState(() {
+            _fileBeingRenamed = _selection[0];
+          });
+          return KeyEventResult.handled;*/
         }
 
         // default
@@ -204,6 +229,13 @@ class _ImageGalleryState extends State<ImageGallery> {
             label: AppLocalizations.of(context)!.view,
             onClick: (_) => _handleDoubleTap(file),
           ),
+          ctxm.MenuItem(
+              label: _photoshopPath == null
+                  ? AppLocalizations.of(context)!.edit
+                  : AppLocalizations.of(context)!.edit_with(photoshopName!),
+              disabled: _photoshopPath == null,
+              onClick: (_) => PlatformUtils.openFilesWithBundleIdentifier(
+                  _selection, photoshopBundleId)),
           ctxm.MenuItem(
             label: AppLocalizations.of(context)!.rename,
             disabled: _selection.length != 1,

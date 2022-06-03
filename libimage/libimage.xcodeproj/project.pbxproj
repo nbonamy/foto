@@ -17,6 +17,8 @@
 		8D0798BC17C38D2D00EEB4F9 /* ImageUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D0798A817C38D2D00EEB4F9 /* ImageUtils.m */; };
 		8D2A9F9C28492F5E00E7B298 /* libintl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D2A9F9B28492F1300E7B298 /* libintl.a */; };
 		8D2A9F9E28492FB700E7B298 /* libiconv.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D2A9F9D28492FB700E7B298 /* libiconv.a */; };
+		8D570BF1284989E500EBDC94 /* SystemUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D570BEF284989E500EBDC94 /* SystemUtils.m */; };
+		8D570BF2284989E500EBDC94 /* SystemUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D570BF0284989E500EBDC94 /* SystemUtils.h */; };
 		8D590350284985D700D7BBA5 /* NSImage+Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D59034E284985D600D7BBA5 /* NSImage+Utils.m */; };
 		8D590351284985D700D7BBA5 /* NSImage+Utils.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D59034F284985D700D7BBA5 /* NSImage+Utils.h */; };
 		8DCA6E9517C67D2300219E7A /* NSImage+Bitmap.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DCA6E9317C67D2300219E7A /* NSImage+Bitmap.h */; };
@@ -83,6 +85,8 @@
 		8D2A9F99284926C800E7B298 /* libintl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libintl.a; path = ../../../../../../usr/local/Cellar/gettext/0.21/lib/libintl.a; sourceTree = "<group>"; };
 		8D2A9F9B28492F1300E7B298 /* libintl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libintl.a; path = libexif/libintl.a; sourceTree = "<group>"; };
 		8D2A9F9D28492FB700E7B298 /* libiconv.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libiconv.a; path = libexif/libiconv.a; sourceTree = "<group>"; };
+		8D570BEF284989E500EBDC94 /* SystemUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SystemUtils.m; sourceTree = "<group>"; };
+		8D570BF0284989E500EBDC94 /* SystemUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SystemUtils.h; sourceTree = "<group>"; };
 		8D59034E284985D600D7BBA5 /* NSImage+Utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSImage+Utils.m"; sourceTree = "<group>"; };
 		8D59034F284985D700D7BBA5 /* NSImage+Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSImage+Utils.h"; sourceTree = "<group>"; };
 		8DCA6E9317C67D2300219E7A /* NSImage+Bitmap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSImage+Bitmap.h"; sourceTree = "<group>"; };
@@ -204,12 +208,14 @@
 		8D07989C17C38D2D00EEB4F9 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				8DFFCF4928498025003C5BCB /* FileUtils.h */,
-				8DFFCF4828498025003C5BCB /* FileUtils.m */,
 				8D0798A117C38D2D00EEB4F9 /* Exif.h */,
 				8D0798A217C38D2D00EEB4F9 /* Exif.m */,
+				8DFFCF4928498025003C5BCB /* FileUtils.h */,
+				8DFFCF4828498025003C5BCB /* FileUtils.m */,
 				8D0798A717C38D2D00EEB4F9 /* ImageUtils.h */,
 				8D0798A817C38D2D00EEB4F9 /* ImageUtils.m */,
+				8D570BF0284989E500EBDC94 /* SystemUtils.h */,
+				8D570BEF284989E500EBDC94 /* SystemUtils.m */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -238,6 +244,7 @@
 				8D0798B517C38D2D00EEB4F9 /* Exif.h in Headers */,
 				8D0798BB17C38D2D00EEB4F9 /* ImageUtils.h in Headers */,
 				8DCA6E9517C67D2300219E7A /* NSImage+Bitmap.h in Headers */,
+				8D570BF2284989E500EBDC94 /* SystemUtils.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -327,6 +334,7 @@
 				8D0798B017C38D2D00EEB4F9 /* NSImage+Transform.m in Sources */,
 				8D0798B617C38D2D00EEB4F9 /* Exif.m in Sources */,
 				8D0798BC17C38D2D00EEB4F9 /* ImageUtils.m in Sources */,
+				8D570BF1284989E500EBDC94 /* SystemUtils.m in Sources */,
 				8D590350284985D700D7BBA5 /* NSImage+Utils.m in Sources */,
 				8DCA6E9617C67D2300219E7A /* NSImage+Bitmap.m in Sources */,
 				8DFFCF5A284982F8003C5BCB /* NSBitmapImageRep+Save.m in Sources */,

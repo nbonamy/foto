@@ -14,6 +14,17 @@ class PlatformUtils {
     _mChannel.invokeMethod('moveToTrash', filepath);
   }
 
+  static Future<String?> bundlePathForIdentifier(String identifier) {
+    return _mChannel.invokeMethod('bundlePathForIdentifier', identifier);
+  }
+
+  static Future<void> openFilesWithBundleIdentifier(List<String> files, String bundleIdentifier) {
+    return _mChannel.invokeMethod('openFilesWithBundleIdentifier', {
+      'files': files,
+      'identifier': bundleIdentifier,
+    });
+  }
+
   static Future<Image?> getPlatformIcon(String filepath) async {
     var data = await _mChannel.invokeMethod('getPlatformIcon', filepath);
     if (data == null) return null;

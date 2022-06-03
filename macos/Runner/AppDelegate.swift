@@ -126,6 +126,15 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 					"png": FlutterStandardTypedData.init(bytes: png!)
 				]);
 			}
+		} else if ("bundlePathForIdentifier" == call.method) {
+			let identifier = call.arguments as! String;
+			result(SystemUtils.bundlePath(forIdentifier:identifier));
+		} else if ("openFilesWithBundleIdentifier" == call.method) {
+			guard let args = call.arguments as? [String:Any] else {return}
+			let files = args["files"] as? Array<String>;
+			let identifier = args["identifier"] as? String;
+			SystemUtils.openFiles(files, withBundleIdentifier: identifier);
+			result(true);
 		}
 	}
 	
