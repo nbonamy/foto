@@ -22,45 +22,57 @@
 	
 }
 
-- (NSBitmapImageRep*) getBitmap {
+- (NSBitmapImageRep*) unscaledBitmapImageRep {
 	
-	// check largest
-	NSImageRep* largest = [self largestRepresentation];
-	if ([largest isKindOfClass:[NSBitmapImageRep class]]) {
-		return (NSBitmapImageRep*) largest;
+	int targetWidth = self.size.width;
+	int targetHeight = self.size.height;
+	
+	for (NSImageRep* imageRep in self.representations) {
+		if ([imageRep isKindOfClass:[NSBitmapImageRep class]]) {
+			NSBitmapImageRep* bitmapRep = (NSBitmapImageRep*) imageRep;
+			if (bitmapRep.pixelsWide == targetWidth && bitmapRep.pixelsHigh == targetHeight) {
+				return bitmapRep;
+			}
+		}
 	}
 	
-	// try to figure out what the best size is
-	NSSize largestSize = largest.size;
-	NSSize pixelsSize = NSMakeSize(largest.pixelsWide, largest.pixelsHigh);
-	if (largest.size.width * largest.size.height > pixelsSize.width * pixelsSize.height) {
-		pixelsSize = largestSize;
-	}
+	NSBitmapImageRep *rep = [[NSBitmapImageRep alloc]
+													 initWithBitmapDataPlanes:NULL
+													 pixelsWide:self.size.width
+													 pixelsHigh:self.size.height
+													 bitsPerSample:8
+													 samplesPerPixel:4
+													 hasAlpha:YES
+													 isPlanar:NO
+													 colorSpaceName:NSDeviceRGBColorSpace
+													 bytesPerRow:0
+													 bitsPerPixel:0];
+	rep.size = self.size;
 	
-	// draw it in a bitmap
-	if (pixelsSize.width > 0 && pixelsSize.height > 0) {
-		[self lockFocus];
-		NSBitmapImageRep *bitmapRep = [[NSBitmapImageRep alloc] initWithFocusedViewRect:NSMakeRect(0.0, 0.0, pixelsSize.width, pixelsSize.height)];
-		[self unlockFocus];
-		return bitmapRep;
-	}
+	[NSGraphicsContext saveGraphicsState];
+	[NSGraphicsContext setCurrentContext:
+	[NSGraphicsContext graphicsContextWithBitmapImageRep:rep]];
 	
-	// we need to through the tiff representation
-	NSData* data = [self TIFFRepresentation];
-	return [NSBitmapImageRep imageRepWithData:data];
+	[self drawAtPoint:NSMakePoint(0, 0)
+					 fromRect:NSZeroRect
+					operation:NSCompositeSourceOver
+					 fraction:1.0];
+	
+	[NSGraphicsContext restoreGraphicsState];
+	return rep;
 	
 }
 
 - (BOOL) saveAsJpeg:(NSString*) destination compressed:(float) compression {
-	return [[self getBitmap] saveAsJpeg:destination compressed:compression];
+	return [[self unscaledBitmapImageRep] saveAsJpeg:destination compressed:compression];
 }
 
 - (BOOL) saveAsPng:(NSString*) destination {
-	return [[self getBitmap] saveAsPng:destination];
+	return [[self unscaledBitmapImageRep] saveAsPng:destination];
 }
 
 - (BOOL) saveSameAs:(NSString*) path to:(NSString*) destination jpegCompression:(float) jpegCompression {
-	return [[self getBitmap] saveSameAs:path to:destination jpegCompression:jpegCompression];
+	return [[self unscaledBitmapImageRep] saveSameAs:path to:destination jpegCompression:jpegCompression];
 }
 
 @end

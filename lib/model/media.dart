@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:foto/browser/thumbnail.dart';
 import 'package:foto/utils/paths.dart';
 import 'package:foto/utils/utils.dart';
 
@@ -9,7 +10,8 @@ class MediaItem {
   final FileSystemEntityType entityType;
   DateTime creationDate;
   DateTime modificationDate;
-  final Image? thumbnail;
+  Image? thumbnail;
+  final ValueNotifier<int> updateCounter = ValueNotifier<int>(0);
 
   static MediaItem forEntity(FileSystemEntity entity) {
     if (entity is File) {
@@ -27,10 +29,7 @@ class MediaItem {
       entityType: FileSystemEntityType.file,
       creationDate: stats.changed,
       modificationDate: stats.modified,
-      thumbnail: Image.file(
-        file,
-        cacheHeight: 160,
-      ),
+      thumbnail: _fileThumbnail(file),
     );
   }
 
@@ -68,11 +67,26 @@ class MediaItem {
     return Key('$path-${modificationDate.millisecondsSinceEpoch}');
   }
 
-  void refresh() {
+  Future<void> evictFromCache() async {
+    if (isFile()) {
+      await thumbnail?.image.evict();
+      thumbnail = _fileThumbnail(File(path));
+      updateCounter.value += 1;
+    }
+  }
+
+  Future<void> refresh() async {
     File file = File(path);
     FileStat stats = file.statSync();
     creationDate = stats.changed;
     modificationDate = stats.modified;
-    thumbnail?.image.evict();
+    evictFromCache();
+  }
+
+  static Image _fileThumbnail(File file) {
+    return Image.file(
+      file,
+      cacheHeight: Thumbnail.thumbnailHeight().toInt(),
+    );
   }
 }

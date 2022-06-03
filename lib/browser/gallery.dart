@@ -77,14 +77,18 @@ class _ImageGalleryState extends State<ImageGallery> {
 
   @override
   void dispose() {
+    _stopWatchDir();
+    super.dispose();
+  }
+
+  void _stopWatchDir() {
     _dirSubscription?.cancel();
     _dirSubscription = null;
-    super.dispose();
   }
 
   void _watchDir() {
     // watcher
-    _dirSubscription?.cancel();
+    _stopWatchDir();
     _dirSubscription = Directory(widget.path).watch().listen((event) {
       List<String> selection = [];
       for (var file in _selection) {
@@ -101,6 +105,7 @@ class _ImageGalleryState extends State<ImageGallery> {
 
   @override
   Widget build(BuildContext context) {
+    print('build');
     // get files
     if (_items == null) {
       Preferences prefs = Preferences.of(context);
@@ -135,6 +140,9 @@ class _ImageGalleryState extends State<ImageGallery> {
           return KeyEventResult.handled;
         } else if (PlatformKeyboard.isPaste(event)) {
           _pasteFromClipboard();
+          return KeyEventResult.handled;
+        } else if (PlatformKeyboard.isRefresh(event)) {
+          _refresh();
           return KeyEventResult.handled;
         } else if (PlatformKeyboard.isRotate90CW(event)) {
           _rotateSelection(ImageTransformation.rotate90CW);
@@ -195,20 +203,23 @@ class _ImageGalleryState extends State<ImageGallery> {
                       id: media.path,
                       onMountElement: _elements.add,
                       onUnmountElement: _elements.remove,
-                      child: Thumbnail(
-                        key: media.key,
-                        media: media,
-                        selected: selection.contains(media.path),
-                        rename: _fileBeingRenamed == media.path,
-                        onRenamed: (file, newName) {
-                          _fileBeingRenamed = null;
-                          if (newName != null && newName != '') {
-                            FileUtils.tryRename(file, newName);
-                          }
-                          try {
-                            setState(() {});
-                          } catch (_) {}
-                        },
+                      child: ValueListenableBuilder<int>(
+                        valueListenable: media.updateCounter,
+                        builder: (context, value, child) => Thumbnail(
+                          key: media.key,
+                          media: media,
+                          selected: selection.contains(media.path),
+                          rename: _fileBeingRenamed == media.path,
+                          onRenamed: (file, newName) {
+                            _fileBeingRenamed = null;
+                            if (newName != null && newName != '') {
+                              FileUtils.tryRename(file, newName);
+                            }
+                            try {
+                              setState(() {});
+                            } catch (_) {}
+                          },
+                        ),
                       ),
                     ),
                   ),
@@ -292,6 +303,15 @@ class _ImageGalleryState extends State<ImageGallery> {
               ),
             ),
           );
+  }
+
+  void _refresh() async {
+    for (var item in _items!) {
+      await item.evictFromCache();
+    }
+    setState(() {
+      _items = null;
+    });
   }
 
   void _handleTap() {
@@ -388,7 +408,7 @@ class _ImageGalleryState extends State<ImageGallery> {
   void _selectAll() {
     List<String> selection = [];
     for (var item in _items!) {
-      if (item is File) {
+      if (item.isFile()) {
         selection.add(item.path);
       }
     }
@@ -408,10 +428,18 @@ class _ImageGalleryState extends State<ImageGallery> {
   }
 
   void _rotateSelection(ImageTransformation transformation) async {
+    _stopWatchDir();
     for (var filepath in _selection) {
-      await ImageUtils.transformImage(filepath, transformation);
-      _items!.firstWhere((i) => i.path == filepath).refresh();
+      bool rc = await ImageUtils.transformImage(filepath, transformation);
+      if (rc && _items != null) {
+        for (var item in _items!) {
+          if (item.path == filepath) {
+            item.evictFromCache();
+            break;
+          }
+        }
+      }
     }
-    setState(() {});
+    _watchDir();
   }
 }

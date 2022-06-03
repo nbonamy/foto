@@ -12,7 +12,7 @@
 
 - (NSSize) maxSize;
 
-- (NSBitmapImageRep*) getBitmap;
+- (NSBitmapImageRep*) unscaledBitmapImageRep;
 
 - (BOOL) saveAsJpeg:(NSString*) destination compressed:(float) compression;
 - (BOOL) saveAsPng:(NSString*) destination;

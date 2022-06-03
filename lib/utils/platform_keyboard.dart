@@ -19,6 +19,11 @@ class PlatformKeyboard {
         commandModifierPressed(event);
   }
 
+  static bool isRefresh(RawKeyEvent event) {
+    return event.isKeyPressed(LogicalKeyboardKey.keyR) &&
+        commandModifierPressed(event);
+  }
+
   static bool isPrevious(RawKeyEvent event) {
     return event.isKeyPressed(LogicalKeyboardKey.arrowLeft) ||
         event.isKeyPressed(LogicalKeyboardKey.arrowUp);
