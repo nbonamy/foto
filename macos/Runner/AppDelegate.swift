@@ -45,7 +45,7 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 				
 				// file handler method
 				let fileMethodChannel = FlutterMethodChannel(name: "foto_file_handler/messages", binaryMessenger: flutterController.engine.binaryMessenger)
-				fileMethodChannel.setMethodCallHandler(_methodHandler);
+				fileMethodChannel.setMethodCallHandler(_fileHandler);
 				
 				// file handler event
 				let fileEventChannel = FlutterEventChannel(name: "foto_file_handler/events", binaryMessenger: flutterController.engine.binaryMessenger)
@@ -53,11 +53,11 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 
 				// platform utils method
 				let platformMethodChannel = FlutterMethodChannel(name: "foto_platform_utils/messages", binaryMessenger: flutterController.engine.binaryMessenger)
-				platformMethodChannel.setMethodCallHandler(_methodHandler);
+				platformMethodChannel.setMethodCallHandler(_platformHandler);
 				
 				// image utils method
 				let imageMethodChannel = FlutterMethodChannel(name: "foto_image_utils/messages", binaryMessenger: flutterController.engine.binaryMessenger)
-				imageMethodChannel.setMethodCallHandler(_methodHandler);
+				imageMethodChannel.setMethodCallHandler(_imageHandler);
 				
 			}
 		}
@@ -101,9 +101,17 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 		sink(self._latestFile);
 	}
 	
-	func _methodHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
+	func _fileHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
 		if ("getInitialFile" == call.method) {
 			result(self._initialFile);
+		}
+	}
+	
+	func _platformHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
+		if ("moveToTrash" == call.method) {
+			let filepath = call.arguments as! String;
+			FileUtils.moveItem(toTrash: filepath);
+			result(true);
 		} else if ("getPlatformIcon" == call.method) {
 			let filepath = call.arguments as! String;
 			let image = NSWorkspace.shared.icon(forFile: filepath);
@@ -118,7 +126,11 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 					"png": FlutterStandardTypedData.init(bytes: png!)
 				]);
 			}
-		} else if ("transformImage" == call.method) {
+		}
+	}
+	
+	func _imageHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
+		if ("transformImage" == call.method) {
 			guard let args = call.arguments as? [String:Any] else {return}
 			let filepath = args["filepath"] as? String;
 			let transformation = args["transformation"] as? UInt32;
@@ -132,4 +144,6 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 		}
 	}
 	
+	
 }
+

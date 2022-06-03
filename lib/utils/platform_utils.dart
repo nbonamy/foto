@@ -10,6 +10,10 @@ class PlatformUtils {
   static const MethodChannel _mChannel =
       MethodChannel('foto_platform_utils/messages');
 
+  static Future<void> moveToTrash(String filepath) async {
+    _mChannel.invokeMethod('moveToTrash', filepath);
+  }
+
   static Future<Image?> getPlatformIcon(String filepath) async {
     var data = await _mChannel.invokeMethod('getPlatformIcon', filepath);
     if (data == null) return null;

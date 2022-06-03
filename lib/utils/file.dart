@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:foto/components/dialogs.dart';
+import 'package:foto/utils/platform_utils.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -17,7 +18,7 @@ class FileUtils {
       context: context,
       title: title,
       text: text,
-      isDestructive: true,
+      //isDestructive: true,
       confirmLabel: AppLocalizations.of(context)?.delete,
       onConfirmed: (context) {
         delete(files).then((value) {
@@ -32,11 +33,7 @@ class FileUtils {
   static Future delete(List<String> files) {
     List<Future> futures = [];
     for (var file in files) {
-      if (FileSystemEntity.isDirectorySync(file)) {
-        futures.add(Directory(file).delete());
-      } else if (FileSystemEntity.isFileSync(file)) {
-        futures.add(File(file).delete());
-      }
+      futures.add(PlatformUtils.moveToTrash(file));
     }
     return Future.wait(futures);
   }

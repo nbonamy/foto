@@ -17,13 +17,13 @@
   "view": "View",
   "copy": "Copy",
   "rename": "Rename",
-  "delete": "Delete",
+  "delete": "Move to Trash",
 
   "deleteTitleSingle": "Are you sure you want to delete \"{name}\"?",
   "@deleteTitleSingle": { "placeholders": { "name": {} } },
   "deleteTitleMultiple": "Are you sure you want to delete the {count} selected items?",
   "@deleteTitleMultiple": { "placeholders": { "count": {} } },
-  "deleteText": "{count,plural ,=1{This item} other{{count} items}} will be deleted immediately. You can’t undo this action.",
+  "deleteText": "{count,plural ,=1{This item} other{{count} items}} will be moved to the Trash and can be recovered from there.",
   "@deleteText": { "placeholders": { "count": {} } },
 
   "overwriteConfirm": "Destination file(s) already exists. Do you want to overwrite them?",

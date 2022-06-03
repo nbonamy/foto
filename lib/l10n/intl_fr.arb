@@ -21,7 +21,7 @@
 
   "deleteTitleSingle": "Etes-vous sûr de vouloir supprimer \"{name}\" ?",
   "deleteTitleMultiple": "Etes-vous sûr de vouloir supprimer les {count} éléments sélectionnés ?",
-  "deleteText": "{count,plural ,=1{Cet élément} other{{count} éléments}} vont être supprimés immédiatement. Cette action est irréversible.",
+  "deleteText": "{count,plural ,=1{Cet élément} other{{count} éléments}} vont être déplacés dans la Corbeille.",
   
   "overwriteConfirm": "Les fichiers existent déjà. Voulez-vous les remplacer ?",
 
