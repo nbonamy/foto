@@ -4,9 +4,24 @@
   "yes": "Oui",
   "no": "Non",
   
-  "menuEdit": "Editer",
-  "menuView": "Présentation",
-  "menuWindow": "Fenêtre",
+  "menuFile": "Fichier",
+  "menuFileRefresh": "Rafraîchir",
+  "menuFileRename": "Renommer",
+  
+  "menuEdit": "Edition",
+  "menuEditSelectAll": "Tout sélectionner",
+  "menuEditCopy": "Copier",
+  "menuEditPaste": "Coller",
+  "menuEditDelete": "Déplacer dans la Corbeille",
+
+  "menuImage": "Image",
+  "menuImageView": "Visualiser en plein écran",
+  "menuImageTransform": "Transformations",
+  "menuImageRotate90CW": "Rotation 90° sens horaire",
+  "menuImageRotate90CCW": "Rotation 90° sens antihoraire",
+  "menuImageRotate180": "Rotation 180°",
+  
+  "menuWindow": "Fenêtres",
 
   "favorites": "Favoris",
   "favoritesAdd": "Ajouter aux Favoris",
@@ -14,6 +29,7 @@
   "devices": "Appareils",
   
   "edit": "Editer",
+  "edit_with": "Editer avec {software}",
   "view": "Visualiser",
   "copy": "Copier",
   "rename": "Renommer",

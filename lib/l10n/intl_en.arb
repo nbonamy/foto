@@ -4,8 +4,23 @@
   "yes": "Yes",
   "no": "No",
   
+  "menuFile": "File",
+  "menuFileRefresh": "Refresh",
+  "menuFileRename": "Rename",
+  
   "menuEdit": "Edit",
-  "menuView": "View",
+  "menuEditSelectAll": "Select All",
+  "menuEditCopy": "Copy",
+  "menuEditPaste": "Paste",
+  "menuEditDelete": "Move to Trash",
+
+  "menuImage": "Image",
+  "menuImageView": "View Fullscreen",
+  "menuImageTransform": "Transform",
+  "menuImageRotate90CW": "Rotate 90° CW",
+  "menuImageRotate90CCW": "Rotate 90° CCW",
+  "menuImageRotate180": "Rotate 180°",
+  
   "menuWindow": "Window",
 
   "favorites": "Favorites",
@@ -16,10 +31,6 @@
   "edit": "Edit",
   "edit_with": "Edit with {software}",
   "@edit_with": { "placeholders": { "software": {} } },
-  "view": "View",
-  "copy": "Copy",
-  "rename": "Rename",
-  "delete": "Move to Trash",
 
   "deleteTitleSingle": "Are you sure you want to delete \"{name}\"?",
   "@deleteTitleSingle": { "placeholders": { "name": {} } },

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:foto/model/menu_actions.dart';
 import 'package:foto/model/preferences.dart';
 import 'package:foto/utils/utils.dart';
 import 'package:macos_ui/macos_ui.dart';
@@ -11,10 +12,13 @@ class BrowserContent extends StatefulWidget {
   final bool canNavigateBack;
   final Function navigateToFolder;
   final Function viewImages;
+  final MenuActionStream menuActionStream;
+
   const BrowserContent({
     Key? key,
     required this.path,
     required this.canNavigateBack,
+    required this.menuActionStream,
     required this.navigateToFolder,
     required this.viewImages,
   }) : super(key: key);
@@ -36,6 +40,7 @@ class _BrowserContentState extends State<BrowserContent> {
               navigatorContext: context,
               executeItem: executeItem,
               scrollController: scrollController,
+              menuActionStream: widget.menuActionStream,
             );
           },
         ),

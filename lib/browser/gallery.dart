@@ -7,6 +7,7 @@ import 'package:foto/browser/thumbnail.dart';
 import 'package:foto/components/context_menu.dart' as ctxm;
 import 'package:foto/components/selectable.dart';
 import 'package:foto/model/media.dart';
+import 'package:foto/model/menu_actions.dart';
 import 'package:foto/utils/database.dart';
 import 'package:foto/utils/file.dart';
 import 'package:foto/utils/image_utils.dart';
@@ -23,6 +24,7 @@ class ImageGallery extends StatefulWidget {
   final Function executeItem;
   final BuildContext navigatorContext;
   final ScrollController scrollController;
+  final MenuActionStream menuActionStream;
 
   const ImageGallery({
     Key? key,
@@ -30,6 +32,7 @@ class ImageGallery extends StatefulWidget {
     required this.navigatorContext,
     required this.executeItem,
     required this.scrollController,
+    required this.menuActionStream,
   }) : super(key: key);
 
   @override
@@ -47,6 +50,7 @@ class _ImageGalleryState extends State<ImageGallery> {
   bool _extendSelection = false;
 
   StreamSubscription<FileSystemEvent>? _dirSubscription;
+  StreamSubscription<MenuAction>? _menuSubscription;
 
   final FocusNode _focusNode = FocusNode();
 
@@ -66,6 +70,8 @@ class _ImageGalleryState extends State<ImageGallery> {
     PlatformUtils.bundlePathForIdentifier(photoshopBundleId).then((value) {
       _photoshopPath = value;
     });
+    _menuSubscription =
+        widget.menuActionStream.listen((event) => _onMenuAction(event));
     super.initState();
   }
 
@@ -78,6 +84,7 @@ class _ImageGalleryState extends State<ImageGallery> {
   @override
   void dispose() {
     _stopWatchDir();
+    _menuSubscription?.cancel();
     super.dispose();
   }
 
@@ -113,7 +120,6 @@ class _ImageGalleryState extends State<ImageGallery> {
 
   @override
   Widget build(BuildContext context) {
-    print('build');
     // get files
     if (_items == null) {
       Preferences prefs = Preferences.of(context);
@@ -137,37 +143,6 @@ class _ImageGalleryState extends State<ImageGallery> {
       //  if (hasFocus) debugPrint('gallery');
       //},
       onKey: (_, event) {
-        if (PlatformKeyboard.isSelectAll(event)) {
-          _selectAll();
-          return KeyEventResult.handled;
-        } else if (PlatformKeyboard.isDelete(event) && _selection.isNotEmpty) {
-          FileUtils.confirmDelete(context, _selection);
-          return KeyEventResult.handled;
-        } else if (PlatformKeyboard.isCopy(event)) {
-          _copyToClipboard();
-          return KeyEventResult.handled;
-        } else if (PlatformKeyboard.isPaste(event)) {
-          _pasteFromClipboard();
-          return KeyEventResult.handled;
-        } else if (PlatformKeyboard.isRefresh(event)) {
-          _refresh();
-          return KeyEventResult.handled;
-        } else if (PlatformKeyboard.isRotate90CW(event)) {
-          _rotateSelection(ImageTransformation.rotate90CW);
-          return KeyEventResult.handled;
-        } else if (PlatformKeyboard.isRotate90CCW(event)) {
-          _rotateSelection(ImageTransformation.rotate90CCW);
-          return KeyEventResult.handled;
-          /*} else if (PlatformKeyboard.isEnter(event) &&
-            _selection.length == 1 &&
-            _fileBeingRenamed == null) {
-          setState(() {
-            _fileBeingRenamed = _selection[0];
-          });
-          return KeyEventResult.handled;*/
-        }
-
-        // default
         _extendSelection =
             PlatformKeyboard.selectionExtensionModifierPressed(event);
         return KeyEventResult.ignored;
@@ -250,7 +225,7 @@ class _ImageGalleryState extends State<ImageGallery> {
       menu: ctxm.Menu(
         items: [
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.view,
+            label: AppLocalizations.of(context)!.menuImageView,
             onClick: (_) => _handleDoubleTap(media),
           ),
           ctxm.MenuItem(
@@ -261,22 +236,20 @@ class _ImageGalleryState extends State<ImageGallery> {
               onClick: (_) => PlatformUtils.openFilesWithBundleIdentifier(
                   _selection, photoshopBundleId)),
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.rename,
+            label: AppLocalizations.of(context)!.menuFileRename,
             disabled: _selection.length != 1,
-            onClick: (_) => setState(() {
-              _fileBeingRenamed = media.path;
-            }),
+            onClick: (_) => _rename(media.path),
           ),
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.copy,
+            label: AppLocalizations.of(context)!.menuEditCopy,
             disabled: _selection.isEmpty,
             onClick: (_) => _copyToClipboard(),
           ),
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.delete,
-            onClick: (_) => FileUtils.confirmDelete(context, _selection),
+            label: AppLocalizations.of(context)!.menuEditDelete,
+            onClick: (_) => _delete(_selection),
           ),
         ],
       ),
@@ -311,6 +284,60 @@ class _ImageGalleryState extends State<ImageGallery> {
               ),
             ),
           );
+  }
+
+  void _onMenuAction(MenuAction action) {
+    if (ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    switch (action) {
+      case MenuAction.fileRefresh:
+        _refresh();
+        break;
+      case MenuAction.fileRename:
+        if (_selection.length == 1) {
+          _rename(_selection[0]);
+        }
+        break;
+      case MenuAction.editSelectAll:
+        _selectAll();
+        break;
+      case MenuAction.editCopy:
+        _copyToClipboard();
+        break;
+      case MenuAction.editPaste:
+        _pasteFromClipboard();
+        break;
+      case MenuAction.editDelete:
+        _delete(_selection);
+        break;
+      case MenuAction.imageView:
+        if (_selection.isNotEmpty) {
+          var item = _items?.firstWhere((it) => it.path == _selection[0]);
+          if (item != null) {
+            _handleDoubleTap(item);
+          }
+        } else if (_items != null) {
+          for (var item in _items!) {
+            if (item.isFile()) {
+              _handleDoubleTap(item);
+              break;
+            }
+          }
+        }
+        break;
+      case MenuAction.imageRotate90cw:
+        _rotateSelection(ImageTransformation.rotate90CW);
+        break;
+      case MenuAction.imageRotate90ccw:
+        _rotateSelection(ImageTransformation.rotate90CCW);
+        break;
+      case MenuAction.imageRotate180:
+        _rotateSelection(ImageTransformation.rotate180);
+        break;
+      default:
+        break;
+    }
   }
 
   void _refresh() async {
@@ -413,6 +440,12 @@ class _ImageGalleryState extends State<ImageGallery> {
     return updated;
   }
 
+  void _rename(String path) {
+    setState(() {
+      _fileBeingRenamed = path;
+    });
+  }
+
   void _selectAll() {
     List<String> selection = [];
     for (var item in _items!) {
@@ -426,13 +459,21 @@ class _ImageGalleryState extends State<ImageGallery> {
   }
 
   void _copyToClipboard() {
-    Pasteboard.writeFiles(_selection);
+    if (_selection.isNotEmpty) {
+      Pasteboard.writeFiles(_selection);
+    }
   }
 
   void _pasteFromClipboard() {
     Pasteboard.files().then((files) {
       FileUtils.tryCopy(context, files, widget.path);
     });
+  }
+
+  void _delete(List<String> paths) {
+    if (paths.isNotEmpty) {
+      FileUtils.confirmDelete(context, paths);
+    }
   }
 
   void _rotateSelection(ImageTransformation transformation) async {

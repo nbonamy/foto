@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:foto/model/menu_actions.dart';
 import 'package:foto/utils/file_handler.dart';
 import 'package:foto/utils/media_utils.dart';
 import 'package:foto/model/preferences.dart';
+import 'package:foto/utils/platform_keyboard.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/browser/browser.dart';
@@ -20,6 +23,14 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> with WindowListener {
   bool _startedFromFinder = false;
+  final MenuActionController _menuActionBrowserStream =
+      MenuActionController.broadcast();
+  final MenuActionController _menuActionViewerStream =
+      MenuActionController.broadcast();
+
+  Future<bool> get isViewerActive async {
+    return windowManager.isFullScreen();
+  }
 
   @override
   void initState() {
@@ -54,49 +65,125 @@ class _HomeState extends State<Home> with WindowListener {
   @override
   Widget build(BuildContext context) {
     return PlatformMenuBar(
-      menus: [
-        PlatformMenu(
-          label: AppLocalizations.of(context)!.appName,
-          menus: [
-            const PlatformProvidedMenuItem(
-              type: PlatformProvidedMenuItemType.about,
-            ),
-            const PlatformProvidedMenuItem(
-              type: PlatformProvidedMenuItemType.quit,
-            ),
-          ],
-        ),
-        PlatformMenu(
-          label: AppLocalizations.of(context)!.menuEdit,
-          menus: [
-            //_menuItem('Copy', LogicalKeyboardKey.keyC),
-            //_menuItem('Paste', LogicalKeyboardKey.keyV),
-          ],
-        ),
-        PlatformMenu(
-          label: AppLocalizations.of(context)!.menuView,
-          menus: [
-            const PlatformProvidedMenuItem(
-              type: PlatformProvidedMenuItemType.toggleFullScreen,
-            ),
-          ],
-        ),
-        PlatformMenu(
-          label: AppLocalizations.of(context)!.menuWindow,
-          menus: [
-            const PlatformProvidedMenuItem(
-              type: PlatformProvidedMenuItemType.minimizeWindow,
-            ),
-            const PlatformProvidedMenuItem(
-              type: PlatformProvidedMenuItemType.zoomWindow,
-            ),
-          ],
-        ),
-      ],
+      menus: _getMainMenu(context),
       body: Browser(
         viewImages: viewImages,
+        menuActionStream: _menuActionBrowserStream.stream,
       ),
     );
+  }
+
+  List<MenuItem> _getMainMenu(BuildContext context) {
+    return [
+      PlatformMenu(
+        label: AppLocalizations.of(context)!.appName,
+        menus: [
+          const PlatformProvidedMenuItem(
+            type: PlatformProvidedMenuItemType.about,
+          ),
+          const PlatformProvidedMenuItem(
+            type: PlatformProvidedMenuItemType.quit,
+          ),
+        ],
+      ),
+      PlatformMenu(
+        label: AppLocalizations.of(context)!.menuFile,
+        menus: [
+          PlatformMenuItem(
+            label: AppLocalizations.of(context)!.menuFileRefresh,
+            shortcut: _cmdShortcut(LogicalKeyboardKey.keyR),
+            onSelected: () => _onMenu(MenuAction.fileRefresh),
+          ),
+          PlatformMenuItem(
+            label: AppLocalizations.of(context)!.menuFileRename,
+            //shortcut: const SingleActivator(LogicalKeyboardKey.enter),
+            onSelected: () => _onMenu(MenuAction.fileRename),
+          ),
+        ],
+      ),
+      PlatformMenu(
+        label: AppLocalizations.of(context)!.menuEdit,
+        menus: [
+          PlatformMenuItemGroup(
+            members: [
+              PlatformMenuItem(
+                label: AppLocalizations.of(context)!.menuEditSelectAll,
+                shortcut: _cmdShortcut(LogicalKeyboardKey.keyA),
+                onSelected: () => _onMenu(MenuAction.editSelectAll),
+              ),
+            ],
+          ),
+          PlatformMenuItemGroup(
+            members: [
+              PlatformMenuItem(
+                label: AppLocalizations.of(context)!.menuEditCopy,
+                shortcut: _cmdShortcut(LogicalKeyboardKey.keyC),
+                onSelected: () => _onMenu(MenuAction.editCopy),
+              ),
+              PlatformMenuItem(
+                label: AppLocalizations.of(context)!.menuEditPaste,
+                shortcut: _cmdShortcut(LogicalKeyboardKey.keyV),
+                onSelected: () => _onMenu(MenuAction.editPaste),
+              ),
+              PlatformMenuItem(
+                label: AppLocalizations.of(context)!.menuEditDelete,
+                shortcut: _cmdShortcut(LogicalKeyboardKey.backspace),
+                onSelected: () => _onMenu(MenuAction.editDelete),
+              ),
+            ],
+          ),
+        ],
+      ),
+      PlatformMenu(
+        label: AppLocalizations.of(context)!.menuImage,
+        menus: [
+          PlatformMenuItemGroup(
+            members: [
+              PlatformMenuItem(
+                label: AppLocalizations.of(context)!.menuImageView,
+                onSelected: () => _onMenu(MenuAction.imageView),
+              ),
+            ],
+          ),
+          PlatformMenu(
+            label: AppLocalizations.of(context)!.menuImageTransform,
+            menus: [
+              PlatformMenuItem(
+                label: AppLocalizations.of(context)!.menuImageRotate90CW,
+                shortcut: _cmdShortcut(LogicalKeyboardKey.arrowRight),
+                onSelected: () => _onMenu(MenuAction.imageRotate90cw),
+              ),
+              PlatformMenuItem(
+                label: AppLocalizations.of(context)!.menuImageRotate90CCW,
+                shortcut: _cmdShortcut(LogicalKeyboardKey.arrowLeft),
+                onSelected: () => _onMenu(MenuAction.imageRotate90ccw),
+              ),
+              PlatformMenuItem(
+                label: AppLocalizations.of(context)!.menuImageRotate180,
+                shortcut: _cmdShortcut(LogicalKeyboardKey.arrowDown),
+                onSelected: () => _onMenu(MenuAction.imageRotate180),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ];
+  }
+
+  SingleActivator _cmdShortcut(LogicalKeyboardKey key) {
+    return SingleActivator(
+      key,
+      control: PlatformKeyboard.ctrlIsCommandModifier(),
+      meta: PlatformKeyboard.metaIsCommandModifier(),
+    );
+  }
+
+  void _onMenu(MenuAction action) {
+    isViewerActive.then((active) {
+      MenuActionController controller =
+          active ? _menuActionViewerStream : _menuActionBrowserStream;
+      controller.sink.add(action);
+    });
   }
 
   void viewImage(String image) {
@@ -112,9 +199,11 @@ class _HomeState extends State<Home> with WindowListener {
     Navigator.push(
       context,
       PageRouteBuilder(
+        settings: const RouteSettings(name: '/viewer'),
         pageBuilder: (_, __, ___) => ImageViewer(
           images: images,
           start: startIndex,
+          menuActionStream: _menuActionViewerStream.stream,
           exit: closeViewer,
         ),
         transitionDuration: const Duration(seconds: 0),

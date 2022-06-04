@@ -4,26 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class PlatformKeyboard {
-  static bool isSelectAll(RawKeyEvent event) {
-    return event.isKeyPressed(LogicalKeyboardKey.keyA) &&
-        commandModifierPressed(event);
-  }
-
-  static bool isCopy(RawKeyEvent event) {
-    return event.isKeyPressed(LogicalKeyboardKey.keyC) &&
-        commandModifierPressed(event);
-  }
-
-  static bool isPaste(RawKeyEvent event) {
-    return event.isKeyPressed(LogicalKeyboardKey.keyV) &&
-        commandModifierPressed(event);
-  }
-
-  static bool isRefresh(RawKeyEvent event) {
-    return event.isKeyPressed(LogicalKeyboardKey.keyR) &&
-        commandModifierPressed(event);
-  }
-
   static bool isPrevious(RawKeyEvent event) {
     return (event.isKeyPressed(LogicalKeyboardKey.arrowLeft) ||
             event.isKeyPressed(LogicalKeyboardKey.arrowUp)) &&
@@ -36,23 +16,8 @@ class PlatformKeyboard {
         !commandModifierPressed(event);
   }
 
-  static bool isDelete(RawKeyEvent event) {
-    return event.isKeyPressed(LogicalKeyboardKey.backspace) &&
-        commandModifierPressed(event);
-  }
-
   static bool isEscape(RawKeyEvent event) {
     return event.physicalKey == PhysicalKeyboardKey.escape;
-  }
-
-  static bool isRotate90CW(RawKeyEvent event) {
-    return event.isKeyPressed(LogicalKeyboardKey.arrowRight) &&
-        commandModifierPressed(event);
-  }
-
-  static bool isRotate90CCW(RawKeyEvent event) {
-    return event.isKeyPressed(LogicalKeyboardKey.arrowLeft) &&
-        commandModifierPressed(event);
   }
 
   static bool isEnter(RawKeyEvent event) {

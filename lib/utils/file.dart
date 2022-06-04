@@ -19,7 +19,7 @@ class FileUtils {
       title: title,
       text: text,
       //isDestructive: true,
-      confirmLabel: AppLocalizations.of(context)?.delete,
+      confirmLabel: AppLocalizations.of(context)?.menuEditDelete,
       onConfirmed: (context) {
         delete(files).then((value) {
           Navigator.of(context).pop(true);

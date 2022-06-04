@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:foto/model/menu_actions.dart';
 import 'package:foto/utils/file.dart';
 import 'package:foto/utils/image_utils.dart';
 import 'package:foto/utils/platform_keyboard.dart';
@@ -14,11 +16,13 @@ import 'package:photo_view/photo_view.dart';
 class ImageViewer extends StatefulWidget {
   final List<String> images;
   final int start;
+  final MenuActionStream menuActionStream;
   final Function exit;
   const ImageViewer({
     Key? key,
     required this.images,
     required this.start,
+    required this.menuActionStream,
     required this.exit,
   }) : super(key: key);
 
@@ -35,6 +39,7 @@ class _ImageViewerState extends State<ImageViewer>
   late PhotoViewController _controller;
   late AnimationController _scaleAnimationController;
   Animation<double>? _scaleAnimation;
+  StreamSubscription<MenuAction>? _menuSubscription;
 
   String get currentImage {
     return widget.images[_index];
@@ -48,6 +53,8 @@ class _ImageViewerState extends State<ImageViewer>
       ..addListener(() {
         _controller.scale = _scaleAnimation!.value;
       });
+    _menuSubscription =
+        widget.menuActionStream.listen((event) => _onMenuAction(event));
     super.initState();
   }
 
@@ -56,6 +63,12 @@ class _ImageViewerState extends State<ImageViewer>
     _preload(_index - 1);
     _preload(_index + 1);
     super.didChangeDependencies();
+  }
+
+  @override
+  void dispose() {
+    _menuSubscription?.cancel();
+    super.dispose();
   }
 
   void _resetState({bool invalidateOnly = false}) {
@@ -87,9 +100,9 @@ class _ImageViewerState extends State<ImageViewer>
       autofocus: true,
       focusNode: _focusNode,
       debugLabel: 'viewer',
-      onFocusChange: (hasFocus) {
-        debugPrint('viewer ${hasFocus ? "on" : "off"}');
-      },
+      //onFocusChange: (hasFocus) {
+      //  debugPrint('viewer ${hasFocus ? "on" : "off"}');
+      //},
       onKey: (_, event) => _onKey(event),
       child: Container(
         color: Colors.black,
@@ -168,6 +181,28 @@ class _ImageViewerState extends State<ImageViewer>
     }
   }
 
+  void _onMenuAction(MenuAction action) {
+    if (ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    switch (action) {
+      case MenuAction.editDelete:
+        _confirmDelete();
+        break;
+      case MenuAction.imageRotate90cw:
+        _rotateImage(ImageTransformation.rotate90CW);
+        break;
+      case MenuAction.imageRotate90ccw:
+        _rotateImage(ImageTransformation.rotate90CCW);
+        break;
+      case MenuAction.imageRotate180:
+        _rotateImage(ImageTransformation.rotate180);
+        break;
+      default:
+        break;
+    }
+  }
+
   KeyEventResult _onKey(RawKeyEvent event) {
     if (event.isKeyPressed(LogicalKeyboardKey.minus) ||
         event.isKeyPressed(LogicalKeyboardKey.numpadSubtract)) {
@@ -196,15 +231,6 @@ class _ImageViewerState extends State<ImageViewer>
       return KeyEventResult.handled;
     } else if (event.isKeyPressed(LogicalKeyboardKey.keyA)) {
       _toggleOverlay();
-      return KeyEventResult.handled;
-    } else if (PlatformKeyboard.isRotate90CW(event)) {
-      _rotateImage(ImageTransformation.rotate90CW);
-      return KeyEventResult.handled;
-    } else if (PlatformKeyboard.isRotate90CCW(event)) {
-      _rotateImage(ImageTransformation.rotate90CCW);
-      return KeyEventResult.handled;
-    } else if (PlatformKeyboard.isDelete(event)) {
-      _confirmDelete();
       return KeyEventResult.handled;
     } else if (PlatformKeyboard.isEnter(event)) {
       _exit(false);
@@ -277,7 +303,7 @@ class _ImageViewerState extends State<ImageViewer>
 
   void _confirmDelete() {
     FileUtils.confirmDelete(context, [currentImage]).then((deleted) {
-      if (deleted) {
+      if (deleted !=null && deleted) {
         // remove
         widget.images.removeAt(_index);
         if (widget.images.isEmpty) {

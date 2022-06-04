@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:foto/browser/content.dart';
+import 'package:foto/model/menu_actions.dart';
 import 'package:foto/browser/sidebar.dart';
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
@@ -9,12 +10,14 @@ import 'package:foto/utils/paths.dart';
 import 'package:macos_ui/macos_ui.dart';
 
 class Browser extends StatefulWidget {
+  final Function viewImages;
+  final MenuActionStream menuActionStream;
+
   const Browser({
     Key? key,
     required this.viewImages,
+    required this.menuActionStream,
   }) : super(key: key);
-
-  final Function viewImages;
 
   @override
   State<Browser> createState() => _BrowserState();
@@ -56,6 +59,7 @@ class _BrowserState extends State<Browser> {
         return BrowserContent(
           path: HistoryModel.of(context).top,
           canNavigateBack: false,
+          menuActionStream: widget.menuActionStream,
           navigateToFolder: _navigateToFolder,
           viewImages: widget.viewImages,
         );
@@ -84,6 +88,7 @@ class _BrowserState extends State<Browser> {
           pageBuilder: (_, __, ___) => BrowserContent(
             path: history.top,
             canNavigateBack: true,
+            menuActionStream: widget.menuActionStream,
             navigateToFolder: _navigateToFolder,
             viewImages: widget.viewImages,
           ),
