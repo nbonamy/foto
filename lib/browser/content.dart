@@ -13,6 +13,7 @@ class BrowserContent extends StatefulWidget {
   final Function navigateToFolder;
   final Function viewImages;
   final MenuActionStream menuActionStream;
+  final List<String>? initialSelection;
 
   const BrowserContent({
     Key? key,
@@ -21,6 +22,7 @@ class BrowserContent extends StatefulWidget {
     required this.menuActionStream,
     required this.navigateToFolder,
     required this.viewImages,
+    this.initialSelection,
   }) : super(key: key);
 
   @override
@@ -41,6 +43,7 @@ class _BrowserContentState extends State<BrowserContent> {
               executeItem: executeItem,
               scrollController: scrollController,
               menuActionStream: widget.menuActionStream,
+              initialSelection: widget.initialSelection,
             );
           },
         ),

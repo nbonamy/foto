@@ -8,6 +8,7 @@ import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
 import 'package:foto/utils/paths.dart';
 import 'package:macos_ui/macos_ui.dart';
+import 'package:path/path.dart' as p;
 
 class Browser extends StatefulWidget {
   final Function viewImages;
@@ -20,10 +21,10 @@ class Browser extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<Browser> createState() => _BrowserState();
+  State<Browser> createState() => BrowserState();
 }
 
-class _BrowserState extends State<Browser> {
+class BrowserState extends State<Browser> {
   BuildContext? _navigatorContext;
 
   @override
@@ -77,6 +78,16 @@ class _BrowserState extends State<Browser> {
     }
   }
 
+  void resetHistoryWithFile(String filepath) {
+    String folder = p.dirname(filepath);
+    HistoryModel.of(context).reset(folder);
+    Navigator.pushAndRemoveUntil(
+      _navigatorContext!,
+      _getContentRoute(initialSelection: [filepath]),
+      (route) => false,
+    );
+  }
+
   void _onHistoryChange() {
     HistoryModel history = HistoryModel.of(context);
     if (history.lastChangeIsPop) {
@@ -84,19 +95,25 @@ class _BrowserState extends State<Browser> {
     } else {
       Navigator.push(
         _navigatorContext!,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => BrowserContent(
-            path: history.top,
-            canNavigateBack: true,
-            menuActionStream: widget.menuActionStream,
-            navigateToFolder: _navigateToFolder,
-            viewImages: widget.viewImages,
-          ),
-          transitionDuration: const Duration(seconds: 0),
-          reverseTransitionDuration: const Duration(seconds: 0),
-        ),
+        _getContentRoute(),
       );
     }
+  }
+
+  PageRoute _getContentRoute({String? path, List<String>? initialSelection}) {
+    HistoryModel history = HistoryModel.of(context);
+    return PageRouteBuilder(
+      pageBuilder: (_, __, ___) => BrowserContent(
+        path: path ?? history.top,
+        canNavigateBack: history.get.length > 1,
+        menuActionStream: widget.menuActionStream,
+        initialSelection: initialSelection,
+        navigateToFolder: _navigateToFolder,
+        viewImages: widget.viewImages,
+      ),
+      transitionDuration: const Duration(seconds: 0),
+      reverseTransitionDuration: const Duration(seconds: 0),
+    );
   }
 
   void _initLocation(context) {

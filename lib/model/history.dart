@@ -27,6 +27,15 @@ class HistoryModel extends ChangeNotifier {
     await _load();
   }
 
+  void reset(String location, {bool notify = false}) {
+    _history.clear();
+    _history.add(location);
+    if (notify) {
+      notifyListeners();
+    }
+    _save();
+  }
+
   void push(String location, bool notify) {
     if (top != location) {
       _lastChangeIsPop = false;

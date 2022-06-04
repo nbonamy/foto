@@ -22,6 +22,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with WindowListener {
+  GlobalKey<BrowserState> _keyBrowser = GlobalKey();
   bool _startedFromFinder = false;
   final MenuActionController _menuActionBrowserStream =
       MenuActionController.broadcast();
@@ -67,6 +68,7 @@ class _HomeState extends State<Home> with WindowListener {
     return PlatformMenuBar(
       menus: _getMainMenu(context),
       body: Browser(
+        key: _keyBrowser,
         viewImages: viewImages,
         menuActionStream: _menuActionBrowserStream.stream,
       ),
@@ -91,7 +93,7 @@ class _HomeState extends State<Home> with WindowListener {
         menus: [
           PlatformMenuItem(
             label: AppLocalizations.of(context)!.menuFileRefresh,
-            shortcut: _cmdShortcut(LogicalKeyboardKey.keyR),
+            shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.keyR),
             onSelected: () => _onMenu(MenuAction.fileRefresh),
           ),
           PlatformMenuItem(
@@ -108,7 +110,7 @@ class _HomeState extends State<Home> with WindowListener {
             members: [
               PlatformMenuItem(
                 label: AppLocalizations.of(context)!.menuEditSelectAll,
-                shortcut: _cmdShortcut(LogicalKeyboardKey.keyA),
+                shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.keyA),
                 onSelected: () => _onMenu(MenuAction.editSelectAll),
               ),
             ],
@@ -117,17 +119,17 @@ class _HomeState extends State<Home> with WindowListener {
             members: [
               PlatformMenuItem(
                 label: AppLocalizations.of(context)!.menuEditCopy,
-                shortcut: _cmdShortcut(LogicalKeyboardKey.keyC),
+                shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.keyC),
                 onSelected: () => _onMenu(MenuAction.editCopy),
               ),
               PlatformMenuItem(
                 label: AppLocalizations.of(context)!.menuEditPaste,
-                shortcut: _cmdShortcut(LogicalKeyboardKey.keyV),
+                shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.keyV),
                 onSelected: () => _onMenu(MenuAction.editPaste),
               ),
               PlatformMenuItem(
                 label: AppLocalizations.of(context)!.menuEditDelete,
-                shortcut: _cmdShortcut(LogicalKeyboardKey.backspace),
+                shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.backspace),
                 onSelected: () => _onMenu(MenuAction.editDelete),
               ),
             ],
@@ -150,17 +152,17 @@ class _HomeState extends State<Home> with WindowListener {
             menus: [
               PlatformMenuItem(
                 label: AppLocalizations.of(context)!.menuImageRotate90CW,
-                shortcut: _cmdShortcut(LogicalKeyboardKey.arrowRight),
+                shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.arrowRight),
                 onSelected: () => _onMenu(MenuAction.imageRotate90cw),
               ),
               PlatformMenuItem(
                 label: AppLocalizations.of(context)!.menuImageRotate90CCW,
-                shortcut: _cmdShortcut(LogicalKeyboardKey.arrowLeft),
+                shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.arrowLeft),
                 onSelected: () => _onMenu(MenuAction.imageRotate90ccw),
               ),
               PlatformMenuItem(
                 label: AppLocalizations.of(context)!.menuImageRotate180,
-                shortcut: _cmdShortcut(LogicalKeyboardKey.arrowDown),
+                shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.arrowDown),
                 onSelected: () => _onMenu(MenuAction.imageRotate180),
               ),
             ],
@@ -168,14 +170,6 @@ class _HomeState extends State<Home> with WindowListener {
         ],
       ),
     ];
-  }
-
-  SingleActivator _cmdShortcut(LogicalKeyboardKey key) {
-    return SingleActivator(
-      key,
-      control: PlatformKeyboard.ctrlIsCommandModifier(),
-      meta: PlatformKeyboard.metaIsCommandModifier(),
-    );
   }
 
   void _onMenu(MenuAction action) {
@@ -215,11 +209,20 @@ class _HomeState extends State<Home> with WindowListener {
 
   void closeViewer({String? current, bool? quit = false}) {
     windowManager.setFullScreen(false);
-    if (quit == true && _startedFromFinder == true) {
-      SystemNavigator.pop();
-    } else {
-      Navigator.pop(context);
+    if (_startedFromFinder) {
+      _startedFromFinder = false;
+      if (quit == true) {
+        SystemNavigator.pop();
+        return;
+      } else if (current != null) {
+        Navigator.pop(context);
+        _keyBrowser.currentState?.resetHistoryWithFile(current);
+        return;
+      }
     }
+
+    // default
+    Navigator.pop(context);
   }
 
   @override

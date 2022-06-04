@@ -25,6 +25,7 @@ class ImageGallery extends StatefulWidget {
   final BuildContext navigatorContext;
   final ScrollController scrollController;
   final MenuActionStream menuActionStream;
+  final List<String>? initialSelection;
 
   const ImageGallery({
     Key? key,
@@ -33,6 +34,7 @@ class ImageGallery extends StatefulWidget {
     required this.executeItem,
     required this.scrollController,
     required this.menuActionStream,
+    this.initialSelection,
   }) : super(key: key);
 
   @override
@@ -64,6 +66,7 @@ class _ImageGalleryState extends State<ImageGallery> {
   @override
   void initState() {
     _watchDir();
+    _selection = widget.initialSelection ?? [];
     Preferences.of(context).addListener(() {
       _items = null;
     });
