@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/gestures.dart';
@@ -59,9 +58,13 @@ class _ImageViewerState extends State<ImageViewer>
     super.didChangeDependencies();
   }
 
-  void _resetState() {
+  void _resetState({bool invalidateOnly = false}) {
+    if (invalidateOnly && _imageProvider != null) {
+      _imageProvider?.invalidate();
+    } else {
+      _imageProvider = null;
+    }
     _fitScale = null;
-    _imageProvider = null;
     _initController();
   }
 
@@ -76,15 +79,9 @@ class _ImageViewerState extends State<ImageViewer>
     });
   }
 
-  void _prepareImage() {
-    _imageProvider = ImageFile(File(currentImage));
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (_imageProvider == null) {
-      _prepareImage();
-    }
+    _imageProvider ??= ImageFile(currentImage);
 
     return Focus(
       autofocus: true,
@@ -234,8 +231,7 @@ class _ImageViewerState extends State<ImageViewer>
   }
 
   Future<void> _preload(int index) {
-    return precacheImage(
-        FileImage(File(widget.images[_cycleIndex(index)])), context);
+    return precacheImage(ImageFile(widget.images[_cycleIndex(index)]), context);
   }
 
   void _previous() {
@@ -274,7 +270,7 @@ class _ImageViewerState extends State<ImageViewer>
   void _rotateImage(ImageTransformation transformation) async {
     bool rc = await ImageUtils.transformImage(currentImage, transformation);
     if (rc) {
-      _resetState();
+      _resetState(invalidateOnly: true);
       setState(() {});
     }
   }
