@@ -15,9 +15,11 @@ class FotoDialog {
     required DialogCallback onConfirmed,
     DialogCallback? onCancel,
     bool isDestructive = false,
+    Color? barrierColor,
   }) {
     return showMacosAlertDialog(
       context: context,
+      barrierColor: barrierColor,
       builder: (context) => MacosAlertDialog(
         appIcon: Image.asset(
           'assets/img/foto.png',

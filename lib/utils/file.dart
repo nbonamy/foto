@@ -7,7 +7,11 @@ import 'package:path/path.dart' as p;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FileUtils {
-  static Future confirmDelete(BuildContext context, List<String> files) {
+  static Future confirmDelete(
+    BuildContext context,
+    List<String> files, {
+    Color? barrierColor,
+  }) {
     var t = AppLocalizations.of(context)!;
     String title = files.length == 1
         ? t.deleteTitleSingle(p.basename(files[0]))
@@ -16,6 +20,7 @@ class FileUtils {
 
     return FotoDialog.confirm(
       context: context,
+      barrierColor: barrierColor,
       title: title,
       text: text,
       //isDestructive: true,

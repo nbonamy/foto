@@ -302,8 +302,12 @@ class _ImageViewerState extends State<ImageViewer>
   }
 
   void _confirmDelete() {
-    FileUtils.confirmDelete(context, [currentImage]).then((deleted) {
-      if (deleted !=null && deleted) {
+    FileUtils.confirmDelete(
+      context,
+      [currentImage],
+      barrierColor: Colors.black.withOpacity(0.6),
+    ).then((deleted) {
+      if (deleted != null && deleted) {
         // remove
         widget.images.removeAt(_index);
         if (widget.images.isEmpty) {
