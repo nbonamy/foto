@@ -5,8 +5,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:foto/utils/file.dart';
+import 'package:foto/utils/image_utils.dart';
 import 'package:foto/utils/platform_keyboard.dart';
 import 'package:foto/model/preferences.dart';
+import 'package:foto/viewer/image.dart';
 import 'package:foto/viewer/overlay.dart';
 import 'package:photo_view/photo_view.dart';
 
@@ -30,9 +32,14 @@ class _ImageViewerState extends State<ImageViewer>
   late int _index;
   double? _fitScale;
   final FocusNode _focusNode = FocusNode();
+  ImageFile? _imageProvider;
   late PhotoViewController _controller;
   late AnimationController _scaleAnimationController;
   Animation<double>? _scaleAnimation;
+
+  String get currentImage {
+    return widget.images[_index];
+  }
 
   @override
   void initState() {
@@ -54,6 +61,7 @@ class _ImageViewerState extends State<ImageViewer>
 
   void _resetState() {
     _fitScale = null;
+    _imageProvider = null;
     _initController();
   }
 
@@ -68,8 +76,16 @@ class _ImageViewerState extends State<ImageViewer>
     });
   }
 
+  void _prepareImage() {
+    _imageProvider = ImageFile(File(currentImage));
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_imageProvider == null) {
+      _prepareImage();
+    }
+
     return Focus(
       autofocus: true,
       focusNode: _focusNode,
@@ -96,9 +112,9 @@ class _ImageViewerState extends State<ImageViewer>
                 child: GestureDetector(
                   onDoubleTap: () => _exit(false),
                   child: PhotoView(
-                    key: Key(widget.images[_index]),
+                    key: Key(_imageProvider.hashCode.toString()),
                     controller: _controller,
-                    imageProvider: FileImage(File(widget.images[_index])),
+                    imageProvider: _imageProvider,
                     initialScale: _fitScale ?? PhotoViewComputedScale.contained,
                     maxScale: _fitScale == null ? 1.0 : null,
                     //minScale: PhotoViewComputedScale.contained * 0.8,
@@ -110,7 +126,7 @@ class _ImageViewerState extends State<ImageViewer>
             StreamBuilder<PhotoViewControllerValue>(
               stream: _controller.outputStateStream,
               builder: (context, snapshot) => InfoOverlay(
-                image: widget.images[_index],
+                image: currentImage,
                 scale: snapshot.hasError ? null : snapshot.data?.scale,
               ),
             ),
@@ -184,6 +200,12 @@ class _ImageViewerState extends State<ImageViewer>
     } else if (event.isKeyPressed(LogicalKeyboardKey.keyA)) {
       _toggleOverlay();
       return KeyEventResult.handled;
+    } else if (PlatformKeyboard.isRotate90CW(event)) {
+      _rotateImage(ImageTransformation.rotate90CW);
+      return KeyEventResult.handled;
+    } else if (PlatformKeyboard.isRotate90CCW(event)) {
+      _rotateImage(ImageTransformation.rotate90CCW);
+      return KeyEventResult.handled;
     } else if (PlatformKeyboard.isDelete(event)) {
       _confirmDelete();
       return KeyEventResult.handled;
@@ -201,7 +223,7 @@ class _ImageViewerState extends State<ImageViewer>
   void _exit(bool quit) {
     widget.exit(
       quit: quit,
-      current: widget.images.isEmpty ? null : widget.images[_index],
+      current: widget.images.isEmpty ? null : currentImage,
     );
   }
 
@@ -211,8 +233,9 @@ class _ImageViewerState extends State<ImageViewer>
     return index;
   }
 
-  void _preload(int index) {
-    precacheImage(FileImage(File(widget.images[_cycleIndex(index)])), context);
+  Future<void> _preload(int index) {
+    return precacheImage(
+        FileImage(File(widget.images[_cycleIndex(index)])), context);
   }
 
   void _previous() {
@@ -248,8 +271,16 @@ class _ImageViewerState extends State<ImageViewer>
     setState(() {});
   }
 
+  void _rotateImage(ImageTransformation transformation) async {
+    bool rc = await ImageUtils.transformImage(currentImage, transformation);
+    if (rc) {
+      _resetState();
+      setState(() {});
+    }
+  }
+
   void _confirmDelete() {
-    FileUtils.confirmDelete(context, [widget.images[_index]]).then((deleted) {
+    FileUtils.confirmDelete(context, [currentImage]).then((deleted) {
       if (deleted) {
         // remove
         widget.images.removeAt(_index);

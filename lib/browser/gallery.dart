@@ -90,6 +90,14 @@ class _ImageGalleryState extends State<ImageGallery> {
     // watcher
     _stopWatchDir();
     _dirSubscription = Directory(widget.path).watch().listen((event) {
+      // first evict modified images
+      if (_items != null) {
+        for (var item in _items!) {
+          item.checkForModification();
+        }
+      }
+
+      // now restore selection with still existing files
       List<String> selection = [];
       for (var file in _selection) {
         if (File(file).existsSync()) {

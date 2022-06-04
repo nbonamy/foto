@@ -67,6 +67,20 @@ class MediaItem {
     return Key('$path-${modificationDate.millisecondsSinceEpoch}');
   }
 
+  void checkForModification() {
+    if (isFile()) {
+      File file = File(path);
+      if (file.existsSync()) {
+        FileStat stats = file.statSync();
+        if (stats.modified != modificationDate) {
+          creationDate = stats.changed;
+          modificationDate = stats.modified;
+          evictFromCache();
+        }
+      }
+    }
+  }
+
   Future<void> evictFromCache() async {
     if (isFile()) {
       await thumbnail?.image.evict();
