@@ -79,18 +79,22 @@ class FileUtils {
     return Future.wait(futures);
   }
 
-  static bool tryRename(
+  static String? tryRename(
     String originalName,
     String newName,
   ) {
-    if (!newName.contains('/')) {
-      newName = p.join(p.dirname(originalName), newName);
-    }
-    if (File(newName).existsSync()) {
-      return false;
-    } else {
-      File(originalName).rename(newName);
-      return true;
+    try {
+      if (!newName.contains('/')) {
+        newName = p.join(p.dirname(originalName), newName);
+      }
+      if (File(newName).existsSync()) {
+        return null;
+      } else {
+        File(originalName).renameSync(newName);
+        return newName;
+      }
+    } catch (_) {
+      return null;
     }
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
+import 'package:foto/model/selection.dart';
 import 'package:foto/utils/platform_keyboard.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:foto/model/preferences.dart';
@@ -78,6 +79,9 @@ class FotoApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => favoritesModel,
         ),
+        ChangeNotifierProvider(
+          create: (_) => SelectionModel(),
+        )
       ],
       builder: (context, _) {
         final appTheme = context.watch<AppTheme>();

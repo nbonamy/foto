@@ -2,8 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/model/menu_actions.dart';
 import 'package:foto/model/preferences.dart';
+import 'package:foto/model/selection.dart';
 import 'package:foto/utils/utils.dart';
 import 'package:macos_ui/macos_ui.dart';
+import 'package:provider/provider.dart';
 
 import 'gallery.dart';
 
@@ -46,6 +48,20 @@ class _BrowserContentState extends State<BrowserContent> {
               initialSelection: widget.initialSelection,
             );
           },
+        ),
+        ResizablePane(
+          minWidth: 180,
+          startWidth: 200,
+          windowBreakpoint: 700,
+          resizableSide: ResizableSide.left,
+          builder: (_, __) => Consumer<SelectionModel>(
+            builder: (_, selection, __) {
+              return Center(
+                child: Text(
+                    (selection.get.length == 1) ? selection.get.first : ''),
+              );
+            },
+          ),
         ),
       ],
     );

@@ -3,11 +3,13 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:foto/browser/thumbnail.dart';
 import 'package:foto/components/context_menu.dart' as ctxm;
 import 'package:foto/components/selectable.dart';
 import 'package:foto/model/media.dart';
 import 'package:foto/model/menu_actions.dart';
+import 'package:foto/model/selection.dart';
 import 'package:foto/utils/database.dart';
 import 'package:foto/utils/file.dart';
 import 'package:foto/utils/image_utils.dart';
@@ -18,6 +20,7 @@ import 'package:foto/utils/platform_utils.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:path/path.dart' as p;
+import 'package:provider/provider.dart';
 
 class ImageGallery extends StatefulWidget {
   final String path;
@@ -48,7 +51,6 @@ class _ImageGalleryState extends State<ImageGallery> {
   String? _fileBeingRenamed;
 
   final _elements = <SelectableElement>{};
-  List<String> _selection = [];
   bool _extendSelection = false;
 
   StreamSubscription<FileSystemEvent>? _dirSubscription;
@@ -63,25 +65,50 @@ class _ImageGalleryState extends State<ImageGallery> {
   static const String photoshopBundleId = 'com.adobe.Photoshop';
   String? _photoshopPath;
 
-  @override
-  void initState() {
-    _watchDir();
-    _selection = widget.initialSelection ?? [];
-    Preferences.of(context).addListener(() {
-      _items = null;
-    });
-    PlatformUtils.bundlePathForIdentifier(photoshopBundleId).then((value) {
-      _photoshopPath = value;
-    });
-    _menuSubscription =
-        widget.menuActionStream.listen((event) => _onMenuAction(event));
-    super.initState();
-  }
-
   String? get photoshopName {
     return _photoshopPath == null
         ? null
         : p.basenameWithoutExtension(_photoshopPath!);
+  }
+
+  @override
+  void initState() {
+    _watchDir();
+    _initSelection();
+    _findPhotoshop();
+    _subscribeToMenu();
+    _subscribeToPreferences();
+    super.initState();
+  }
+
+  void _findPhotoshop() {
+    PlatformUtils.bundlePathForIdentifier(photoshopBundleId).then((value) {
+      _photoshopPath = value;
+    });
+  }
+
+  void _subscribeToPreferences() {
+    Preferences.of(context).addListener(() {
+      _items = null;
+    });
+  }
+
+  void _subscribeToMenu() {
+    _menuSubscription =
+        widget.menuActionStream.listen((event) => _onMenuAction(event));
+  }
+
+  void _initSelection() {
+    if (widget.initialSelection != null) {
+      SelectionModel.of(context).set(
+        widget.initialSelection!,
+        notify: false,
+      );
+    } else {
+      SelectionModel.of(context).clear(
+        notify: false,
+      );
+    }
   }
 
   @override
@@ -109,14 +136,14 @@ class _ImageGalleryState extends State<ImageGallery> {
 
       // now restore selection with still existing files
       List<String> selection = [];
-      for (var file in _selection) {
+      for (var file in SelectionModel.of(context).get) {
         if (File(file).existsSync()) {
           selection.add(file);
         }
       }
       setState(() {
         _items = null;
-        _selection = selection;
+        SelectionModel.of(context).set(selection);
       });
     });
   }
@@ -134,9 +161,6 @@ class _ImageGalleryState extends State<ImageGallery> {
       );
     }
 
-    // merge selections
-    var selection = _mergeSelections(_selection, _dragSelection);
-
     // focus for keyboard listener
     return Focus(
       focusNode: _focusNode,
@@ -146,6 +170,19 @@ class _ImageGalleryState extends State<ImageGallery> {
       //  if (hasFocus) debugPrint('gallery');
       //},
       onKey: (_, event) {
+        if (_fileBeingRenamed == null) {
+          if (event.isKeyPressed(LogicalKeyboardKey.arrowRight) &&
+              !PlatformKeyboard.commandModifierPressed(event)) {
+            _selectNext();
+            return KeyEventResult.handled;
+          }
+          if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft) &&
+              !PlatformKeyboard.commandModifierPressed(event)) {
+            _selectPrevious();
+            return KeyEventResult.handled;
+          }
+        }
+
         _extendSelection =
             PlatformKeyboard.selectionExtensionModifierPressed(event);
         return KeyEventResult.ignored;
@@ -158,59 +195,60 @@ class _ImageGalleryState extends State<ImageGallery> {
         behavior: HitTestBehavior.translucent,
         child: Stack(
           children: [
-            GridView.extent(
-              shrinkWrap: true,
-              controller: widget.scrollController,
-              maxCrossAxisExtent: Thumbnail.thumbnailWidth(),
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              padding: const EdgeInsets.all(16),
-              childAspectRatio: Thumbnail.aspectRatio(),
-              children: _items!.map<Widget>((media) {
-                return GestureDetector(
-                  onTapDown: (_) {
-                    _focusNode.requestFocus();
-                    setState(() {
-                      if (!_extendSelection) {
-                        _selection = [];
-                      }
-                      _selection.add(media.path);
-                      _fileBeingRenamed = null;
-                    });
-                  },
-                  onDoubleTap: () {
-                    _focusNode.requestFocus();
-                    _handleDoubleTap(media);
-                  },
-                  child: _getContextMenu(
-                    context,
-                    media: media,
-                    child: Selectable(
-                      id: media.path,
-                      onMountElement: _elements.add,
-                      onUnmountElement: _elements.remove,
-                      child: ValueListenableBuilder<int>(
-                        valueListenable: media.updateCounter,
-                        builder: (context, value, child) => Thumbnail(
-                          key: media.key,
-                          media: media,
-                          selected: selection.contains(media.path),
-                          rename: _fileBeingRenamed == media.path,
-                          onRenamed: (file, newName) {
-                            _fileBeingRenamed = null;
-                            if (newName != null && newName != '') {
-                              FileUtils.tryRename(file, newName);
-                            }
-                            try {
-                              setState(() {});
-                            } catch (_) {}
-                          },
+            Consumer<SelectionModel>(
+              builder: (context, selectionModel, child) {
+                // merge selections
+                var selection =
+                    _mergeSelections(selectionModel.get, _dragSelection);
+
+                return GridView.extent(
+                  shrinkWrap: true,
+                  controller: widget.scrollController,
+                  maxCrossAxisExtent: Thumbnail.thumbnailWidth(),
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  padding: const EdgeInsets.all(16),
+                  childAspectRatio: Thumbnail.aspectRatio(),
+                  children: _items!.map<Widget>((media) {
+                    return GestureDetector(
+                      onTapDown: (_) {
+                        _focusNode.requestFocus();
+                        setState(() {
+                          if (_extendSelection) {
+                            selectionModel.add(media.path);
+                          } else {
+                            selectionModel.set([media.path]);
+                          }
+                          _fileBeingRenamed = null;
+                        });
+                      },
+                      onDoubleTap: () {
+                        _focusNode.requestFocus();
+                        _handleDoubleTap(media);
+                      },
+                      child: _getContextMenu(
+                        context,
+                        media: media,
+                        child: Selectable(
+                          id: media.path,
+                          onMountElement: _elements.add,
+                          onUnmountElement: _elements.remove,
+                          child: ValueListenableBuilder<int>(
+                            valueListenable: media.updateCounter,
+                            builder: (context, value, child) => Thumbnail(
+                              key: media.key,
+                              media: media,
+                              selected: selection.contains(media.path),
+                              rename: _fileBeingRenamed == media.path,
+                              onRenamed: _onFileRenamed,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  }).toList(),
                 );
-              }).toList(),
+              },
             ),
             _getSelectionRect(),
           ],
@@ -224,6 +262,7 @@ class _ImageGalleryState extends State<ImageGallery> {
     required MediaItem media,
     required Widget child,
   }) {
+    Selection selection = SelectionModel.of(context).get;
     return ctxm.ContextMenu(
       menu: ctxm.Menu(
         items: [
@@ -237,29 +276,30 @@ class _ImageGalleryState extends State<ImageGallery> {
                   : AppLocalizations.of(context)!.edit_with(photoshopName!),
               disabled: _photoshopPath == null,
               onClick: (_) => PlatformUtils.openFilesWithBundleIdentifier(
-                  _selection, photoshopBundleId)),
+                  SelectionModel.of(context).get, photoshopBundleId)),
           ctxm.MenuItem(
             label: AppLocalizations.of(context)!.menuFileRename,
-            disabled: _selection.length != 1,
+            disabled: selection.length != 1,
             onClick: (_) => _rename(media.path),
           ),
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
             label: AppLocalizations.of(context)!.menuEditCopy,
-            disabled: _selection.isEmpty,
+            disabled: selection.isEmpty,
             onClick: (_) => _copyToClipboard(),
           ),
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
             label: AppLocalizations.of(context)!.menuEditDelete,
-            onClick: (_) => _delete(_selection),
+            onClick: (_) => _delete(SelectionModel.of(context).get),
           ),
         ],
       ),
       onBeforeShowMenu: () {
-        if (_selection.contains(media.path) == false) {
+        SelectionModel selectionModel = SelectionModel.of(context);
+        if (selectionModel.contains(media.path) == false) {
           setState(() {
-            _selection = [media.path];
+            selectionModel.set([media.path]);
           });
           return true;
         }
@@ -293,13 +333,14 @@ class _ImageGalleryState extends State<ImageGallery> {
     if (ModalRoute.of(context)?.isCurrent != true) {
       return;
     }
+    Selection selection = SelectionModel.of(context).get;
     switch (action) {
       case MenuAction.fileRefresh:
         _refresh();
         break;
       case MenuAction.fileRename:
-        if (_selection.length == 1) {
-          _rename(_selection[0]);
+        if (selection.length == 1) {
+          _rename(selection[0]);
         }
         break;
       case MenuAction.editSelectAll:
@@ -312,11 +353,11 @@ class _ImageGalleryState extends State<ImageGallery> {
         _pasteFromClipboard();
         break;
       case MenuAction.editDelete:
-        _delete(_selection);
+        _delete(selection);
         break;
       case MenuAction.imageView:
-        if (_selection.isNotEmpty) {
-          var item = _items?.firstWhere((it) => it.path == _selection[0]);
+        if (selection.isNotEmpty) {
+          var item = _items?.firstWhere((it) => it.path == selection[0]);
           if (item != null) {
             _handleDoubleTap(item);
           }
@@ -355,7 +396,7 @@ class _ImageGalleryState extends State<ImageGallery> {
   void _handleTap() {
     _focusNode.requestFocus();
     setState(() {
-      _selection = [];
+      SelectionModel.of(context).clear();
       _fileBeingRenamed = null;
     });
   }
@@ -364,9 +405,10 @@ class _ImageGalleryState extends State<ImageGallery> {
     if (!media.isFile()) {
       widget.executeItem(folder: media.path);
     } else {
-      if (!_selection.contains(media.path)) {
+      Selection selection = SelectionModel.of(context).get;
+      if (!selection.contains(media.path)) {
         setState(() {
-          _selection = [media.path];
+          SelectionModel.of(context).set([media.path]);
         });
       }
       List<String> images =
@@ -391,7 +433,7 @@ class _ImageGalleryState extends State<ImageGallery> {
 
     setState(() {
       if (_extendSelection == false) {
-        _selection = [];
+        SelectionModel.of(context).clear();
       }
       _dragSelectOrig = details.localPosition;
       _dragSelectRect = rc;
@@ -424,7 +466,8 @@ class _ImageGalleryState extends State<ImageGallery> {
       return;
     }
     setState(() {
-      _selection = _mergeSelections(_selection, _dragSelection);
+      SelectionModel selectionModel = SelectionModel.of(context);
+      selectionModel.set(_mergeSelections(selectionModel.get, _dragSelection));
       _dragSelectOrig = null;
       _dragSelectRect = null;
       _dragSelection = [];
@@ -443,10 +486,53 @@ class _ImageGalleryState extends State<ImageGallery> {
     return updated;
   }
 
+  int _selectionIndex() {
+    SelectionModel selectionModel = SelectionModel.of(context);
+    if (selectionModel.get.length != 1) {
+      return -1;
+    } else {
+      return _items!.indexWhere((item) => item.path == selectionModel.get[0]);
+    }
+  }
+
+  void _selectNext() {
+    if (_items != null) {
+      int index = _selectionIndex();
+      index = min(index + 1, _items!.length - 1);
+      SelectionModel.of(context).set([_items![index].path]);
+    }
+  }
+
+  void _selectPrevious() {
+    if (_items != null) {
+      int index = _selectionIndex();
+      index = max(index - 1, 0);
+      SelectionModel.of(context).set([_items![index].path]);
+    }
+  }
+
   void _rename(String path) {
     setState(() {
       _fileBeingRenamed = path;
     });
+  }
+
+  void _onFileRenamed(file, newName) {
+    // we are just asked to end editing
+    if (newName == null) {
+      setState(() {
+        _fileBeingRenamed = null;
+      });
+      return;
+    }
+
+    // now do it
+    if (newName != '') {
+      String? newPath = FileUtils.tryRename(file, newName);
+      if (newPath != null) {
+        SelectionModel.of(context).set([newPath], notify: false);
+      }
+    }
   }
 
   void _selectAll() {
@@ -457,13 +543,14 @@ class _ImageGalleryState extends State<ImageGallery> {
       }
     }
     setState(() {
-      _selection = selection;
+      SelectionModel.of(context).set(selection);
     });
   }
 
   void _copyToClipboard() {
-    if (_selection.isNotEmpty) {
-      Pasteboard.writeFiles(_selection);
+    Selection selection = SelectionModel.of(context).get;
+    if (selection.isNotEmpty) {
+      Pasteboard.writeFiles(selection);
     }
   }
 
@@ -481,7 +568,8 @@ class _ImageGalleryState extends State<ImageGallery> {
 
   void _rotateSelection(ImageTransformation transformation) async {
     _stopWatchDir();
-    for (var filepath in _selection) {
+    Selection selection = SelectionModel.of(context).get;
+    for (var filepath in selection) {
       bool rc = await ImageUtils.transformImage(filepath, transformation);
       if (rc && _items != null) {
         for (var item in _items!) {

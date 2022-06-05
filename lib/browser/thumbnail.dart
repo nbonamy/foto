@@ -63,7 +63,8 @@ class _ThumbnailState extends State<Thumbnail> {
     if (oldWidget.rename && !widget.rename) {
       String label = widget.media.title;
       if (_editController.text != label) {
-        widget.onRenamed(widget.media.path, _editController.text);
+        String newFilename = _editController.text;
+        widget.onRenamed(widget.media.path, newFilename);
       }
       _editController.selection = const TextSelection.collapsed(offset: 0);
     } else if (!oldWidget.rename && widget.rename) {

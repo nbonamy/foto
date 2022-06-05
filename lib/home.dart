@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:foto/model/menu_actions.dart';
+import 'package:foto/model/selection.dart';
 import 'package:foto/utils/file_handler.dart';
 import 'package:foto/utils/media_utils.dart';
 import 'package:foto/model/preferences.dart';
@@ -21,7 +22,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with WindowListener {
-  GlobalKey<BrowserState> _keyBrowser = GlobalKey();
+  final GlobalKey<BrowserState> _keyBrowser = GlobalKey();
   bool _startedFromFinder = false;
   final MenuActionController _menuActionBrowserStream =
       MenuActionController.broadcast();
@@ -228,6 +229,14 @@ class _HomeState extends State<Home> with WindowListener {
         Navigator.pop(context);
         _keyBrowser.currentState?.resetHistoryWithFile(current);
         return;
+      }
+    }
+
+    // selection
+    if (quit == false && current != null) {
+      SelectionModel selectionModel = SelectionModel.of(context);
+      if (selectionModel.get.length == 1) {
+        selectionModel.set([current], notify: true);
       }
     }
 
