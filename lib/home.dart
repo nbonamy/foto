@@ -142,6 +142,7 @@ class _HomeState extends State<Home> with WindowListener {
             members: [
               PlatformMenuItem(
                 label: AppLocalizations.of(context)!.menuImageView,
+                shortcut: const SingleActivator(LogicalKeyboardKey.enter),
                 onSelected: () => _onMenu(MenuAction.imageView),
               ),
             ],
