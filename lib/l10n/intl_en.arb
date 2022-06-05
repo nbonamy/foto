@@ -21,6 +21,9 @@
   "menuImageRotate90CCW": "Rotate 90° CCW",
   "menuImageRotate180": "Rotate 180°",
   
+  "menuView": "View",
+  "menuViewInspector": "Toggle Inspector",
+  
   "menuWindow": "Window",
 
   "favorites": "Favorites",

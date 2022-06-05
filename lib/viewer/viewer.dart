@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/gestures.dart';
@@ -9,9 +10,13 @@ import 'package:foto/utils/file.dart';
 import 'package:foto/utils/image_utils.dart';
 import 'package:foto/utils/platform_keyboard.dart';
 import 'package:foto/model/preferences.dart';
+import 'package:foto/utils/utils.dart';
 import 'package:foto/viewer/image.dart';
 import 'package:foto/viewer/overlay.dart';
+import 'package:image_size_getter/file_input.dart';
+import 'package:image_size_getter/image_size_getter.dart' as imsg;
 import 'package:photo_view/photo_view.dart';
+import 'package:window_manager/window_manager.dart';
 
 class ImageViewer extends StatefulWidget {
   final List<String> images;
@@ -31,9 +36,10 @@ class ImageViewer extends StatefulWidget {
 }
 
 class _ImageViewerState extends State<ImageViewer>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WindowListener {
   late int _index;
   double? _fitScale;
+  double? _fillScale;
   final FocusNode _focusNode = FocusNode();
   ImageFile? _imageProvider;
   late PhotoViewController _controller;
@@ -53,6 +59,7 @@ class _ImageViewerState extends State<ImageViewer>
       ..addListener(() {
         _controller.scale = _scaleAnimation!.value;
       });
+    windowManager.addListener(this);
     _menuSubscription =
         widget.menuActionStream.listen((event) => _onMenuAction(event));
     super.initState();
@@ -78,6 +85,7 @@ class _ImageViewerState extends State<ImageViewer>
       _imageProvider = null;
     }
     _fitScale = null;
+    _fillScale = null;
     _initController();
   }
 
@@ -94,7 +102,11 @@ class _ImageViewerState extends State<ImageViewer>
 
   @override
   Widget build(BuildContext context) {
+    // update based on last data
     _imageProvider ??= ImageFile(currentImage);
+    if (_fitScale != null && _fillScale == null) {
+      _calcFitFillScales();
+    }
 
     return Focus(
       autofocus: true,
@@ -147,7 +159,7 @@ class _ImageViewerState extends State<ImageViewer>
   }
 
   void _setScale(double scale, {bool animate = true}) {
-    if (animate) {
+    if (animate && _controller.scale != null) {
       _scaleAnimation = Tween<double>(
         begin: _controller.scale,
         end: scale,
@@ -178,6 +190,12 @@ class _ImageViewerState extends State<ImageViewer>
   void _fit() {
     if (_fitScale != null) {
       _setScale(_fitScale!);
+    }
+  }
+
+  void _fill() {
+    if (_fillScale != null) {
+      _setScale(_fillScale!);
     }
   }
 
@@ -219,6 +237,10 @@ class _ImageViewerState extends State<ImageViewer>
     } else if (event.isKeyPressed(LogicalKeyboardKey.slash) ||
         event.isKeyPressed(LogicalKeyboardKey.numpadDivide)) {
       _fit();
+      return KeyEventResult.handled;
+    } else if (event.isKeyPressed(LogicalKeyboardKey.period) ||
+        event.isKeyPressed(LogicalKeyboardKey.numpadComma)) {
+      _fill();
       return KeyEventResult.handled;
     } else if (PlatformKeyboard.isPrevious(event)) {
       _previous();
@@ -321,6 +343,31 @@ class _ImageViewerState extends State<ImageViewer>
             setState(() {});
           }
         }
+      }
+    });
+  }
+
+  Future<void> _calcFitFillScales() async {
+    Rect screenBounds = await windowManager.getBounds();
+    imsg.Size imageSize =
+        imsg.ImageSizeGetter.getSize(FileInput(File(currentImage)));
+    _fitScale = Utils.scaleForContained(screenBounds.size,
+        Size(imageSize.width.toDouble(), imageSize.height.toDouble()));
+    _fillScale = Utils.scaleForCovering(screenBounds.size,
+        Size(imageSize.width.toDouble(), imageSize.height.toDouble()));
+  }
+
+  @override
+  void onWindowResized() {
+    double? currentScale = _controller.scale;
+    bool isFitted = currentScale != null && currentScale == _fitScale;
+    bool isFilled = currentScale != null && currentScale == _fillScale;
+    _calcFitFillScales().then((_) {
+      if (currentScale == null) {
+      } else if (isFitted) {
+        _fit();
+      } else if (isFilled) {
+        _fill();
       }
     });
   }

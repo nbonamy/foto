@@ -6,7 +6,6 @@ import 'package:foto/model/menu_actions.dart';
 import 'package:foto/utils/file_handler.dart';
 import 'package:foto/utils/media_utils.dart';
 import 'package:foto/model/preferences.dart';
-import 'package:foto/utils/platform_keyboard.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/browser/browser.dart';
@@ -166,6 +165,16 @@ class _HomeState extends State<Home> with WindowListener {
                 onSelected: () => _onMenu(MenuAction.imageRotate180),
               ),
             ],
+          ),
+        ],
+      ),
+      PlatformMenu(
+        label: AppLocalizations.of(context)!.menuView,
+        menus: [
+          PlatformMenuItem(
+            label: AppLocalizations.of(context)!.menuViewInspector,
+            shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.keyI),
+            onSelected: () => _onMenu(MenuAction.viewInspector),
           ),
         ],
       ),

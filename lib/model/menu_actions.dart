@@ -18,6 +18,7 @@ enum MenuAction {
   imageRotate90cw,
   imageRotate90ccw,
   imageRotate180,
+  viewInspector,
 }
 
 class MenuUtils {

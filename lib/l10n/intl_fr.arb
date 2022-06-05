@@ -21,6 +21,9 @@
   "menuImageRotate90CCW": "Rotation 90° sens antihoraire",
   "menuImageRotate180": "Rotation 180°",
   
+  "menuView": "Affichage",
+  "menuViewInspector": "Basculer Inspecteur",
+
   "menuWindow": "Fenêtres",
 
   "favorites": "Favoris",
