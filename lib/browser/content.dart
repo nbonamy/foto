@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:foto/browser/inspector.dart';
 import 'package:foto/model/menu_actions.dart';
 import 'package:foto/model/preferences.dart';
-import 'package:foto/model/selection.dart';
 import 'package:foto/utils/utils.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:provider/provider.dart';
@@ -34,36 +34,43 @@ class BrowserContent extends StatefulWidget {
 class _BrowserContentState extends State<BrowserContent> {
   @override
   Widget build(BuildContext context) {
-    return MacosScaffold(
-      toolBar: buildToolbar(),
-      children: [
-        ContentArea(
-          builder: (context, scrollController) {
-            return ImageGallery(
-              path: widget.path,
-              navigatorContext: context,
-              executeItem: executeItem,
-              scrollController: scrollController,
-              menuActionStream: widget.menuActionStream,
-              initialSelection: widget.initialSelection,
-            );
-          },
-        ),
-        ResizablePane(
-          minWidth: 180,
-          startWidth: 200,
-          windowBreakpoint: 700,
-          resizableSide: ResizableSide.left,
-          builder: (_, __) => Consumer<SelectionModel>(
-            builder: (_, selection, __) {
-              return Center(
-                child: Text(
-                    (selection.get.length == 1) ? selection.get.first : ''),
+    return Consumer<Preferences>(
+      builder: (_, prefs, __) {
+        // start with content area
+        List<Widget> widgets = [
+          ContentArea(
+            builder: (context, scrollController) {
+              return ImageGallery(
+                path: widget.path,
+                navigatorContext: context,
+                executeItem: executeItem,
+                scrollController: scrollController,
+                menuActionStream: widget.menuActionStream,
+                initialSelection: widget.initialSelection,
               );
             },
-          ),
-        ),
-      ],
+          )
+        ];
+
+        // resizable panel depends on prefs
+        if (prefs.showInspector) {
+          widgets.add(
+            ResizablePane(
+              minWidth: 180,
+              startWidth: 250,
+              windowBreakpoint: 700,
+              resizableSide: ResizableSide.left,
+              builder: (_, __) => const Inspector(),
+            ),
+          );
+        }
+
+        // done
+        return MacosScaffold(
+          toolBar: buildToolbar(),
+          children: widgets,
+        );
+      },
     );
   }
 
@@ -107,6 +114,18 @@ class _BrowserContentState extends State<BrowserContent> {
             setState(() {});
           },
           label: prefs.showFolders ? 'Hide Folders' : 'Show Folders',
+          showLabel: true,
+        ),
+        ToolBarIconButton(
+          icon: MacosIcon(prefs.showInspector
+              ? CupertinoIcons.info_circle
+              : CupertinoIcons.info_circle_fill),
+          onPressed: () {
+            prefs.showInspector = !prefs.showInspector;
+            prefs.notifyListeners();
+            setState(() {});
+          },
+          label: prefs.showInspector ? 'Hide Inspector' : 'Show Inspector',
           showLabel: true,
         ),
         ToolBarPullDownButton(

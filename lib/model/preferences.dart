@@ -31,6 +31,10 @@ class Preferences extends ChangeNotifier {
     return true;
   }
 
+  static bool get defaultShowInspector {
+    return false;
+  }
+
   static Preferences of(BuildContext context) {
     return Provider.of<Preferences>(context, listen: false);
   }
@@ -83,6 +87,15 @@ class Preferences extends ChangeNotifier {
 
   set showFolders(bool show) {
     _prefs.setBool('browser.show_folders', show);
+  }
+
+  bool get showInspector {
+    return _prefs.getBool('browser.show_inspector') ??
+        Preferences.defaultShowInspector;
+  }
+
+  set showInspector(bool show) {
+    _prefs.setBool('browser.show_inspector', show);
   }
 
   Rect get windowBounds {
