@@ -239,14 +239,12 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
                       child: GestureDetector(
                         onTapDown: (_) {
                           _focusNode.requestFocus();
-                          setState(() {
-                            if (_extendSelection) {
-                              selectionModel.add(media.path);
-                            } else {
-                              selectionModel.set([media.path]);
-                            }
-                            _fileBeingRenamed = null;
-                          });
+                          _fileBeingRenamed = null;
+                          if (_extendSelection) {
+                            selectionModel.add(media.path);
+                          } else {
+                            selectionModel.set([media.path]);
+                          }
                         },
                         onDoubleTap: () {
                           _focusNode.requestFocus();

@@ -171,7 +171,7 @@ class _BrowserTreeState extends State<BrowserTree> {
         size: 16,
       ),
       iconPadding: 16,
-      verticalSpacing: 4,
+      verticalSpacing: 2.5,
       parentLabelOverflow: TextOverflow.ellipsis,
       labelOverflow: TextOverflow.ellipsis,
     );
