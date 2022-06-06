@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/gestures.dart';
@@ -13,8 +12,6 @@ import 'package:foto/model/preferences.dart';
 import 'package:foto/utils/utils.dart';
 import 'package:foto/viewer/image.dart';
 import 'package:foto/viewer/overlay.dart';
-import 'package:image_size_getter/file_input.dart';
-import 'package:image_size_getter/image_size_getter.dart' as imsg;
 import 'package:photo_view/photo_view.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -73,6 +70,7 @@ class _ImageViewerState extends State<ImageViewer>
   @override
   void dispose() {
     cancelMenuSubscription();
+    windowManager.removeListener(this);
     super.dispose();
   }
 
@@ -348,12 +346,9 @@ class _ImageViewerState extends State<ImageViewer>
 
   Future<void> _calcFitFillScales() async {
     Rect screenBounds = await windowManager.getBounds();
-    imsg.Size imageSize =
-        imsg.ImageSizeGetter.getSize(FileInput(File(currentImage)));
-    _fitScale = Utils.scaleForContained(screenBounds.size,
-        Size(imageSize.width.toDouble(), imageSize.height.toDouble()));
-    _fillScale = Utils.scaleForCovering(screenBounds.size,
-        Size(imageSize.width.toDouble(), imageSize.height.toDouble()));
+    SizeInt imageSize = Utils.imageSize(currentImage);
+    _fitScale = Utils.scaleForContained(screenBounds.size, imageSize.toSize());
+    _fillScale = Utils.scaleForCovering(screenBounds.size, imageSize.toSize());
   }
 
   @override

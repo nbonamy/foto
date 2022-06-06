@@ -5,8 +5,6 @@ import 'package:exif/exif.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/model/selection.dart';
 import 'package:foto/utils/utils.dart';
-import 'package:image_size_getter/file_input.dart';
-import 'package:image_size_getter/image_size_getter.dart' as imsg;
 import 'package:intl/intl.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -37,7 +35,7 @@ class Inspector extends StatefulWidget {
 class _InspectorState extends State<Inspector> {
   String? _currentFile;
   FileStat? _fileStats;
-  imsg.Size? _imageSize;
+  SizeInt? _imageSize;
   Map<String, IfdTag>? _exifData;
   late SelectionModel _selectionModel;
 
@@ -170,7 +168,7 @@ class _InspectorState extends State<Inspector> {
       _currentFile = selection[0];
       File file = File(_currentFile!);
       _fileStats = await file.stat();
-      _imageSize = imsg.ImageSizeGetter.getSize(FileInput(file));
+      _imageSize = Utils.imageSize(_currentFile!);
       _exifData = await readExifFromBytes(file.readAsBytesSync());
     }
     setState(() {});

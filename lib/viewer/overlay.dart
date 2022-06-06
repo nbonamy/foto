@@ -7,8 +7,7 @@ import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:foto/model/preferences.dart';
-import 'package:image_size_getter/file_input.dart';
-import 'package:image_size_getter/image_size_getter.dart';
+import 'package:foto/utils/utils.dart';
 import 'package:intl/intl.dart';
 
 class InfoOverlay extends StatefulWidget {
@@ -27,7 +26,7 @@ class InfoOverlay extends StatefulWidget {
 
 class _InfoOverlayState extends State<InfoOverlay> {
   File? _file;
-  Size? _size;
+  SizeInt? _imageSize;
   Map<String, IfdTag>? _exif;
 
   @override
@@ -44,7 +43,7 @@ class _InfoOverlayState extends State<InfoOverlay> {
 
   void _loadInfo() {
     _file = File(widget.image);
-    _size = ImageSizeGetter.getSize(FileInput(_file!));
+    _imageSize = Utils.imageSize(widget.image);
     readExifFromFile(_file!).then((value) => setState(() {
           _exif = value;
         }));
@@ -66,22 +65,12 @@ class _InfoOverlayState extends State<InfoOverlay> {
         ),
       );
     }
-    if (_size != null) {
+    if (_imageSize != null) {
       if (prefs.overlayLevel == OverlayLevel.image ||
           prefs.overlayLevel == OverlayLevel.exif) {
-        var width = _size!.width;
-        var height = _size!.height;
         var size = filesize(_file?.lengthSync());
-        if (_exif?.containsKey('Image Orientation') == true) {
-          int? orientation = _exif?['Image Orientation']?.values.firstAsInt();
-          if (orientation != null && orientation >= 5 && orientation <= 8) {
-            int swap = width;
-            width = height;
-            height = swap;
-          }
-        }
         texts.add(Text(
-          '${width}x${height} pixels${widget.scale != null ? ' (Zoom x${widget.scale?.toStringAsFixed(4)})' : ''}, ${size}',
+          '${_imageSize!.width} x ${_imageSize!.height} pixels${widget.scale != null ? ' (Zoom x${widget.scale?.toStringAsFixed(4)})' : ''}, ${size}',
           style: textStyle,
         ));
       }
