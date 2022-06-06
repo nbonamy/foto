@@ -170,9 +170,9 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
     );
   }
 
-  void _setSortCriteria(SortCriteria sortType) {
+  void _setSortCriteria(SortCriteria sortCriteria) {
     Preferences prefs = Preferences.of(context);
-    prefs.sortCriteria = SortCriteria.chronological;
+    prefs.sortCriteria = sortCriteria;
     prefs.notifyListeners();
     setState(() {});
   }
