@@ -105,7 +105,7 @@ class _BrowserContentState extends State<BrowserContent> {
           : null,
       actions: [
         ToolBarIconButton(
-          icon: MacosIcon(prefs.showFolders
+          icon: MacosIcon(prefs.showFolders || true
               ? CupertinoIcons.folder
               : CupertinoIcons.folder_fill),
           onPressed: () {
@@ -117,7 +117,7 @@ class _BrowserContentState extends State<BrowserContent> {
           showLabel: true,
         ),
         ToolBarIconButton(
-          icon: MacosIcon(prefs.showInspector
+          icon: MacosIcon(prefs.showInspector || true
               ? CupertinoIcons.info_circle
               : CupertinoIcons.info_circle_fill),
           onPressed: () {
