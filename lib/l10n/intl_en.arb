@@ -44,5 +44,30 @@
 
   "overwriteConfirm": "Destination file(s) already exists. Do you want to overwrite them?",
 
+  "exifFileName": "Filename",
+  "exifFileSize": "File size",
+  "exifCreationDate": "Taken on",
+  "exifImageSize": "Dimensions",
+  "exifOrientation": "Orientation",
+  "exifSceneType": "Scene Type",
+  "exifCaptureType": "Capture Type",
+  "exifExposureMode": "Exposure Mode",
+  "exifExposureTime": "Exposure",
+  "exifFNumber": "F-Number",
+  "exifFocalLength": "Focal Length",
+  "exifISORating": "ISO Rating",
+  "exifExposureBias": "Exposure Bias",
+  "exifFlashMode": "Flash",
+  "exifWhiteBalance": "White balance",
+  "exifBrightness": "Brightness",
+  "exifContrast": "Contrast",
+  "exifSaturation": "Saturation",
+  "exifSharpness": "Sharpness",
+  "exifCameraMake": "Camera Make",
+  "exifCameraModel": "Camera Model",
+  "exifColorModel": "Color Model",
+  "exifProfileName": "Profile Name",
+  
   "appName": "foto"
+
 }

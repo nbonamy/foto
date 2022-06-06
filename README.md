@@ -11,11 +11,11 @@ Currently only developed and tested for MacOS.
 - [x] Photo viewer with zoom
 - [ ] Exif cache database
 - [ ] Black background
-- [ ] Selection info palette
+- [x] Selection info palette
 - File operations:
   - [x] delete
   - [x] clipboard
-  - [ ] rename
+  - [x] rename
   - [ ] move
 - Folder operations
   - [x] delete
@@ -23,7 +23,7 @@ Currently only developed and tested for MacOS.
   - [ ] rename
   - [ ] move
 - Image manipulations
-  - [ ] rotations
+  - [x] rotations
   - [ ] resize
   - [ ] convert
 - [ ] Set as wallpaper

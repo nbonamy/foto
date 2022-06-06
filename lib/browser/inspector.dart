@@ -8,6 +8,7 @@ import 'package:foto/utils/utils.dart';
 import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart' as imsg;
 import 'package:intl/intl.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class InspectorValue {
   final String name;
@@ -54,49 +55,60 @@ class _InspectorState extends State<Inspector> {
 
   @override
   Widget build(BuildContext context) {
+    // check
     if (_currentFile == null) {
       return Container();
     }
 
+    // needed
+    AppLocalizations t = AppLocalizations.of(context)!;
+
     // rows
     List<InspectorValue> data = [];
-    data.add(InspectorValue('Filename', Utils.pathTitle(_currentFile)!));
-    data.add(
-        InspectorValue('File size', _fileStats?.size.readableFileSize() ?? ''));
-    data.add(InspectorValue('Taken on', _getExifTag('EXIF DateTimeOriginal')));
+    data.add(InspectorValue(t.exifFileName, Utils.pathTitle(_currentFile)!));
     data.add(InspectorValue(
-        'Dimensions',
+        t.exifFileSize, _fileStats?.size.readableFileSize() ?? ''));
+    data.add(InspectorValue(
+        t.exifCreationDate, _getExifTag('EXIF DateTimeOriginal')));
+    data.add(InspectorValue(
+        t.exifImageSize,
         _imageSize == null
             ? ''
             : '${_imageSize?.width} x ${_imageSize?.height}'));
-    data.add(InspectorValue('Orientation', _getExifTag('Image Orientation')));
-    data.add(InspectorValue('Scene Type', _getExifTag('EXIF SceneType')));
     data.add(
-        InspectorValue('Capture Type', _getExifTag('EXIF SceneCaptureType')));
-    data.add(InspectorValue('Exposure Mode', _getExifTag('EXIF ExposureMode')));
+        InspectorValue(t.exifOrientation, _getExifTag('Image Orientation')));
+    data.add(InspectorValue(t.exifSceneType, _getExifTag('EXIF SceneType')));
     data.add(InspectorValue(
-        'Exposure', _getExifTag('EXIF ExposureTime', suffix: ' s')));
+        t.exifCaptureType, _getExifTag('EXIF SceneCaptureType')));
     data.add(
-        InspectorValue('F-Number', _getExifTag('EXIF FNumber', prefix: 'f')));
+        InspectorValue(t.exifExposureMode, _getExifTag('EXIF ExposureMode')));
     data.add(InspectorValue(
-        'Focal Length', _getExifTag('EXIF FocalLength', suffix: ' mm')));
-    data.add(InspectorValue('ISO Rating', _getExifTag('EXIF ISOSpeedRatings')));
+        t.exifExposureTime, _getExifTag('EXIF ExposureTime', suffix: ' s')));
     data.add(InspectorValue(
-        'Exposure Bias', _getExifTag('EXIF ExposureBiasValue', suffix: ' EV')));
-    data.add(InspectorValue('Flash', _getExifTag('EXIF Flash')));
-    data.add(InspectorValue('White balance', _getExifTag('EXIF WhiteBalance')));
-    data.add(InspectorValue('Brightness', _getExifTag('EXIF BrightnessValue')));
-    data.add(InspectorValue('Contrast', _getExifTag('EXIF Contrast')));
-    data.add(InspectorValue('Saturation', _getExifTag('EXIF Saturation')));
-    data.add(InspectorValue('Sharpness', _getExifTag('EXIF Sharpness')));
-    data.add(InspectorValue('Camera Make', _getExifTag('Image Make')));
-    data.add(InspectorValue('Camera Model', _getExifTag('Image Model')));
-    data.add(InspectorValue('Color Model', _getExifTag('EXIF ColorSpace')));
-    data.add(InspectorValue('Profile Name', _getExifTag('')));
+        t.exifFNumber, _getExifTag('EXIF FNumber', prefix: 'f')));
+    data.add(InspectorValue(
+        t.exifFocalLength, _getExifTag('EXIF FocalLength', suffix: ' mm')));
+    data.add(
+        InspectorValue(t.exifISORating, _getExifTag('EXIF ISOSpeedRatings')));
+    data.add(InspectorValue(t.exifExposureBias,
+        _getExifTag('EXIF ExposureBiasValue', suffix: ' EV')));
+    data.add(InspectorValue(t.exifFlashMode, _getExifTag('EXIF Flash')));
+    data.add(
+        InspectorValue(t.exifWhiteBalance, _getExifTag('EXIF WhiteBalance')));
+    data.add(
+        InspectorValue(t.exifBrightness, _getExifTag('EXIF BrightnessValue')));
+    data.add(InspectorValue(t.exifContrast, _getExifTag('EXIF Contrast')));
+    data.add(InspectorValue(t.exifSaturation, _getExifTag('EXIF Saturation')));
+    data.add(InspectorValue(t.exifSharpness, _getExifTag('EXIF Sharpness')));
+    data.add(InspectorValue(t.exifCameraMake, _getExifTag('Image Make')));
+    data.add(InspectorValue(t.exifCameraModel, _getExifTag('Image Model')));
+    data.add(InspectorValue(t.exifColorModel, _getExifTag('EXIF ColorSpace')));
+    data.add(InspectorValue(t.exifProfileName, _getExifTag('')));
 
     // convert to rows
     List<TableRow> rows = [];
     for (var value in data) {
+      if (value.value == '') continue;
       rows.add(const TableRow(children: [
         SizedBox(height: 4),
         SizedBox(height: 4),

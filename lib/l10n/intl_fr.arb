@@ -44,5 +44,29 @@
   
   "overwriteConfirm": "Les fichiers existent déjà. Voulez-vous les remplacer ?",
 
+  "exifFileName": "Nom du fichier",
+  "exifFileSize": "Taille du fichier",
+  "exifCreationDate": "Date de capture",
+  "exifImageSize": "Dimensions",
+  "exifOrientation": "Orientation",
+  "exifSceneType": "Type de ccène",
+  "exifCaptureType": "Type de capture",
+  "exifExposureMode": "Mode d'exposition",
+  "exifExposureTime": "Exposition ",
+  "exifFNumber": "Nombre F",
+  "exifFocalLength": "Longueur focale",
+  "exifISORating": "Vitesse ISO",
+  "exifExposureBias": "Biais d'exposition",
+  "exifFlashMode": "Flash",
+  "exifWhiteBalance": "Balance des blancs",
+  "exifBrightness": "Luminosité",
+  "exifContrast": "Contraste",
+  "exifSaturation": "Saturation",
+  "exifSharpness": "Netteté",
+  "exifCameraMake": "Marque appareil",
+  "exifCameraModel": "Modèle appareil",
+  "exifColorModel": "Modèle couleur",
+  "exifProfileName": "Nom profil",
+  
   "appName": "foto"
 }
