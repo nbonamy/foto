@@ -33,10 +33,14 @@
   
   "edit": "Editer",
   "edit_with": "Editer avec {software}",
-  "view": "Visualiser",
-  "copy": "Copier",
-  "rename": "Renommer",
-  "delete": "Déplacer dans la Corbeille",
+
+  "toolbarToggleFolders": "Afficher les dossiers",
+  "toolbarToggleInspector": "Afficher les informations",
+
+  "sortTitle": "Ordre d'affichage",
+  "sortCriteriaAlphabetical": "Alphabétique",
+  "sortCriteriaChronological": "Chronologique",
+  "sortOrderReverse": "Order inversé",
 
   "deleteTitleSingle": "Etes-vous sûr de vouloir supprimer \"{name}\" ?",
   "deleteTitleMultiple": "Etes-vous sûr de vouloir supprimer les {count} éléments sélectionnés ?",

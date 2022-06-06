@@ -6,6 +6,7 @@ import 'package:foto/model/preferences.dart';
 import 'package:foto/utils/utils.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'gallery.dart';
 
@@ -31,7 +32,19 @@ class BrowserContent extends StatefulWidget {
   State<BrowserContent> createState() => _BrowserContentState();
 }
 
-class _BrowserContentState extends State<BrowserContent> {
+class _BrowserContentState extends State<BrowserContent> with MenuHandler {
+  @override
+  void initState() {
+    initMenuSubscription(widget.menuActionStream);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    cancelMenuSubscription();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<Preferences>(
@@ -74,6 +87,17 @@ class _BrowserContentState extends State<BrowserContent> {
     );
   }
 
+  @override
+  void onMenuAction(MenuAction action) {
+    switch (action) {
+      case MenuAction.viewInspector:
+        _toggleInspector();
+        break;
+      default:
+        break;
+    }
+  }
+
   void executeItem({
     String? folder,
     List<String>? images,
@@ -105,68 +129,72 @@ class _BrowserContentState extends State<BrowserContent> {
           : null,
       actions: [
         ToolBarIconButton(
-          icon: MacosIcon(prefs.showFolders || true
-              ? CupertinoIcons.folder
-              : CupertinoIcons.folder_fill),
-          onPressed: () {
-            prefs.showFolders = !prefs.showFolders;
-            prefs.notifyListeners();
-            setState(() {});
-          },
-          label: prefs.showFolders ? 'Hide Folders' : 'Show Folders',
+          icon: const MacosIcon(CupertinoIcons.folder),
+          onPressed: _toggleShowFolders,
+          label: AppLocalizations.of(context)!.toolbarToggleFolders,
           showLabel: true,
         ),
         ToolBarIconButton(
-          icon: MacosIcon(prefs.showInspector || true
-              ? CupertinoIcons.info_circle
-              : CupertinoIcons.info_circle_fill),
-          onPressed: () {
-            prefs.showInspector = !prefs.showInspector;
-            prefs.notifyListeners();
-            setState(() {});
-          },
-          label: prefs.showInspector ? 'Hide Inspector' : 'Show Inspector',
+          icon: const MacosIcon(CupertinoIcons.info_circle),
+          onPressed: _toggleInspector,
+          label: AppLocalizations.of(context)!.toolbarToggleInspector,
           showLabel: true,
         ),
         ToolBarPullDownButton(
-          label: 'Actions',
+          label: AppLocalizations.of(context)!.sortTitle,
           icon: CupertinoIcons.sort_down_circle,
-          tooltipMessage: 'Sort',
+          tooltipMessage: AppLocalizations.of(context)!.sortTitle,
           items: [
             MacosPulldownMenuItem(
-              label: 'Alphabetical',
+              label: AppLocalizations.of(context)!.sortCriteriaAlphabetical,
               title: Text(
-                  '${(prefs.sortType == SortType.alphabetical) ? tickOnPrefix : tickOffPrefix} Sort Alphabetical'),
-              onTap: () {
-                prefs.sortType = SortType.alphabetical;
-                prefs.notifyListeners();
-                setState(() {});
-              },
+                  '${(prefs.sortCriteria == SortCriteria.alphabetical) ? tickOnPrefix : tickOffPrefix} Sort Alphabetical'),
+              onTap: () => _setSortCriteria(SortCriteria.alphabetical),
             ),
             MacosPulldownMenuItem(
-              label: 'Chronological',
+              label: AppLocalizations.of(context)!.sortCriteriaChronological,
               title: Text(
-                  '${(prefs.sortType == SortType.chronological) ? tickOnPrefix : tickOffPrefix} Sort Chronological'),
-              onTap: () {
-                prefs.sortType = SortType.chronological;
-                prefs.notifyListeners();
-                setState(() {});
-              },
+                  '${(prefs.sortCriteria == SortCriteria.chronological) ? tickOnPrefix : tickOffPrefix} Sort Chronological'),
+              onTap: () => _setSortCriteria(SortCriteria.chronological),
             ),
             const MacosPulldownMenuDivider(),
             MacosPulldownMenuItem(
-              label: 'Reverse.',
+              label: AppLocalizations.of(context)!.sortOrderReverse,
               title: Text(
                   '${prefs.sortReversed ? tickOnPrefix : tickOffPrefix} Reverse Order'),
-              onTap: () {
-                prefs.sortReversed = !prefs.sortReversed;
-                prefs.notifyListeners();
-                setState(() {});
-              },
+              onTap: _toggleSortOrder,
             ),
           ],
         ),
       ],
     );
+  }
+
+  void _setSortCriteria(SortCriteria sortType) {
+    Preferences prefs = Preferences.of(context);
+    prefs.sortCriteria = SortCriteria.chronological;
+    prefs.notifyListeners();
+    setState(() {});
+  }
+
+  void _toggleSortOrder() {
+    Preferences prefs = Preferences.of(context);
+    prefs.sortReversed = !prefs.sortReversed;
+    prefs.notifyListeners();
+    setState(() {});
+  }
+
+  void _toggleShowFolders() {
+    Preferences prefs = Preferences.of(context);
+    prefs.showFolders = !prefs.showFolders;
+    prefs.notifyListeners();
+    setState(() {});
+  }
+
+  void _toggleInspector() {
+    Preferences prefs = Preferences.of(context);
+    prefs.showInspector = !prefs.showInspector;
+    prefs.notifyListeners();
+    setState(() {});
   }
 }

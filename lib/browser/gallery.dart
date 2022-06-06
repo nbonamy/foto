@@ -45,7 +45,7 @@ class ImageGallery extends StatefulWidget {
   State<StatefulWidget> createState() => _ImageGalleryState();
 }
 
-class _ImageGalleryState extends State<ImageGallery> {
+class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   final MediaDb _mediaDb = MediaDb();
 
   List<MediaItem>? _items;
@@ -55,7 +55,6 @@ class _ImageGalleryState extends State<ImageGallery> {
   bool _extendSelection = false;
 
   StreamSubscription<FileSystemEvent>? _dirSubscription;
-  StreamSubscription<MenuAction>? _menuSubscription;
 
   final FocusNode _focusNode = FocusNode();
   late AutoScrollController _autoScrollController;
@@ -98,8 +97,7 @@ class _ImageGalleryState extends State<ImageGallery> {
   }
 
   void _subscribeToMenu() {
-    _menuSubscription =
-        widget.menuActionStream.listen((event) => _onMenuAction(event));
+    initMenuSubscription(widget.menuActionStream);
   }
 
   void _subscribeToSelection() {
@@ -138,7 +136,7 @@ class _ImageGalleryState extends State<ImageGallery> {
   @override
   void dispose() {
     _stopWatchDir();
-    _menuSubscription?.cancel();
+    cancelMenuSubscription();
     super.dispose();
   }
 
@@ -180,7 +178,7 @@ class _ImageGalleryState extends State<ImageGallery> {
       _items = MediaUtils.getMediaFiles(
         widget.path,
         includeDirs: prefs.showFolders,
-        sortType: prefs.sortType,
+        sortType: prefs.sortCriteria,
         sortReversed: prefs.sortReversed,
       );
     }
@@ -358,7 +356,8 @@ class _ImageGalleryState extends State<ImageGallery> {
           );
   }
 
-  void _onMenuAction(MenuAction action) {
+  @override
+  void onMenuAction(MenuAction action) {
     if (ModalRoute.of(context)?.isCurrent != true) {
       return;
     }

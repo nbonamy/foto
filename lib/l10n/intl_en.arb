@@ -35,6 +35,14 @@
   "edit_with": "Edit with {software}",
   "@edit_with": { "placeholders": { "software": {} } },
 
+  "toolbarToggleFolders": "Toggle Folders",
+  "toolbarToggleInspector": "Toggle Inspector",
+
+  "sortTitle": "Display Order",
+  "sortCriteriaAlphabetical": "Alphabetical",
+  "sortCriteriaChronological": "Chronological",
+  "sortOrderReverse": "Reverse",
+
   "deleteTitleSingle": "Are you sure you want to delete \"{name}\"?",
   "@deleteTitleSingle": { "placeholders": { "name": {} } },
   "deleteTitleMultiple": "Are you sure you want to delete the {count} selected items?",

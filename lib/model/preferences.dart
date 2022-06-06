@@ -9,7 +9,7 @@ enum OverlayLevel {
   exif,
 }
 
-enum SortType {
+enum SortCriteria {
   alphabetical,
   chronological,
 }
@@ -19,8 +19,8 @@ class Preferences extends ChangeNotifier {
     return OverlayLevel.image;
   }
 
-  static SortType get defaultSortType {
-    return SortType.chronological;
+  static SortCriteria get defaultSortCriteria {
+    return SortCriteria.chronological;
   }
 
   static bool get defaultSortReversed {
@@ -61,14 +61,14 @@ class Preferences extends ChangeNotifier {
     _prefs.setInt('viewer.overlayLevel', level.index);
   }
 
-  SortType get sortType {
-    final type =
-        _prefs.getInt('browser.sort.type') ?? Preferences.defaultSortType.index;
-    return SortType.values[type];
+  SortCriteria get sortCriteria {
+    final type = _prefs.getInt('browser.sort.criteria') ??
+        Preferences.defaultSortCriteria.index;
+    return SortCriteria.values[type];
   }
 
-  set sortType(SortType type) {
-    _prefs.setInt('browser.sort.type', type.index);
+  set sortCriteria(SortCriteria type) {
+    _prefs.setInt('browser.sort.criteria', type.index);
   }
 
   bool get sortReversed {

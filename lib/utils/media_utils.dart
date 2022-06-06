@@ -24,7 +24,7 @@ class MediaUtils {
   static List<MediaItem> getMediaFiles(
     String? path, {
     required bool includeDirs,
-    SortType sortType = SortType.chronological,
+    SortCriteria sortType = SortCriteria.chronological,
     bool sortReversed = false,
   }) {
     try {
@@ -57,10 +57,10 @@ class MediaUtils {
         } else if (b.isDir() && !a.isDir()) {
           return 1;
         } else {
-          if (sortType == SortType.alphabetical) {
+          if (sortType == SortCriteria.alphabetical) {
             return (sortReversed ? -1 : 1) *
                 a.path.toLowerCase().compareTo(b.path.toLowerCase());
-          } else if (sortType == SortType.chronological) {
+          } else if (sortType == SortCriteria.chronological) {
             return (sortReversed ? -1 : 1) *
                 a.creationDate.compareTo(b.creationDate);
           } else {

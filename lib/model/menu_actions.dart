@@ -30,3 +30,19 @@ class MenuUtils {
     );
   }
 }
+
+mixin MenuHandler {
+  StreamSubscription<MenuAction>? _menuSubscription;
+
+  void initMenuSubscription(MenuActionStream stream) {
+    _menuSubscription = stream.listen((event) => onMenuAction(event));
+  }
+
+  void cancelMenuSubscription() {
+    _menuSubscription?.cancel();
+  }
+
+  void onMenuAction(MenuAction action) {
+    throw Exception(['Not implemented. You need to override.']);
+  }
+}

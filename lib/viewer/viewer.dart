@@ -36,7 +36,7 @@ class ImageViewer extends StatefulWidget {
 }
 
 class _ImageViewerState extends State<ImageViewer>
-    with TickerProviderStateMixin, WindowListener {
+    with TickerProviderStateMixin, WindowListener, MenuHandler {
   late int _index;
   double? _fitScale;
   double? _fillScale;
@@ -45,7 +45,6 @@ class _ImageViewerState extends State<ImageViewer>
   late PhotoViewController _controller;
   late AnimationController _scaleAnimationController;
   Animation<double>? _scaleAnimation;
-  StreamSubscription<MenuAction>? _menuSubscription;
 
   String get currentImage {
     return widget.images[_index];
@@ -54,14 +53,13 @@ class _ImageViewerState extends State<ImageViewer>
   @override
   void initState() {
     _resetState();
+    initMenuSubscription(widget.menuActionStream);
     _index = _cycleIndex(widget.start);
     _scaleAnimationController = AnimationController(vsync: this)
       ..addListener(() {
         _controller.scale = _scaleAnimation!.value;
       });
     windowManager.addListener(this);
-    _menuSubscription =
-        widget.menuActionStream.listen((event) => _onMenuAction(event));
     super.initState();
   }
 
@@ -74,7 +72,7 @@ class _ImageViewerState extends State<ImageViewer>
 
   @override
   void dispose() {
-    _menuSubscription?.cancel();
+    cancelMenuSubscription();
     super.dispose();
   }
 
@@ -199,7 +197,8 @@ class _ImageViewerState extends State<ImageViewer>
     }
   }
 
-  void _onMenuAction(MenuAction action) {
+  @override
+  void onMenuAction(MenuAction action) {
     if (ModalRoute.of(context)?.isCurrent != true) {
       return;
     }

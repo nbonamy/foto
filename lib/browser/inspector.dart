@@ -39,17 +39,19 @@ class _InspectorState extends State<Inspector> {
   FileStat? _fileStats;
   imsg.Size? _imageSize;
   Map<String, IfdTag>? _exifData;
+  late SelectionModel _selectionModel;
 
   @override
   void initState() {
     super.initState();
-    SelectionModel.of(context).addListener(_onSelectionChange);
+    _selectionModel = SelectionModel.of(context);
+    _selectionModel.addListener(_onSelectionChange);
     _onSelectionChange();
   }
 
   @override
   void dispose() {
-    SelectionModel.of(context).removeListener(_onSelectionChange);
+    _selectionModel.removeListener(_onSelectionChange);
     super.dispose();
   }
 
