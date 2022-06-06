@@ -21,6 +21,7 @@ import 'package:pasteboard/pasteboard.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
+import 'package:scroll_to_index/scroll_to_index.dart';
 
 class ImageGallery extends StatefulWidget {
   final String path;
@@ -57,6 +58,7 @@ class _ImageGalleryState extends State<ImageGallery> {
   StreamSubscription<MenuAction>? _menuSubscription;
 
   final FocusNode _focusNode = FocusNode();
+  late AutoScrollController _autoScrollController;
 
   Offset? _dragSelectOrig;
   Rect? _dragSelectRect;
@@ -77,7 +79,9 @@ class _ImageGalleryState extends State<ImageGallery> {
     _initSelection();
     _findPhotoshop();
     _subscribeToMenu();
+    _subscribeToSelection();
     _subscribeToPreferences();
+    _initAutoScrollController();
     super.initState();
   }
 
@@ -98,6 +102,18 @@ class _ImageGalleryState extends State<ImageGallery> {
         widget.menuActionStream.listen((event) => _onMenuAction(event));
   }
 
+  void _subscribeToSelection() {
+    SelectionModel.of(context).addListener(() {
+      Selection selection = SelectionModel.of(context).get;
+      if (selection.length == 1) {
+        int index = _items!.indexWhere((it) => it.path == selection[0]);
+        if (index != -1) {
+          _autoScrollController.scrollToIndex(index);
+        }
+      }
+    });
+  }
+
   void _initSelection() {
     if (widget.initialSelection != null) {
       SelectionModel.of(context).set(
@@ -109,6 +125,14 @@ class _ImageGalleryState extends State<ImageGallery> {
         notify: false,
       );
     }
+  }
+
+  void _initAutoScrollController() {
+    _autoScrollController = AutoScrollController(
+      viewportBoundaryGetter: () =>
+          Rect.fromLTRB(0, 0, 0, MediaQuery.of(context).padding.bottom),
+      axis: Axis.vertical,
+    );
   }
 
   @override
@@ -203,44 +227,49 @@ class _ImageGalleryState extends State<ImageGallery> {
 
                 return GridView.extent(
                   shrinkWrap: true,
-                  controller: widget.scrollController,
+                  controller: _autoScrollController,
                   maxCrossAxisExtent: Thumbnail.thumbnailWidth(),
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
                   padding: const EdgeInsets.all(16),
                   childAspectRatio: Thumbnail.aspectRatio(),
                   children: _items!.map<Widget>((media) {
-                    return GestureDetector(
-                      onTapDown: (_) {
-                        _focusNode.requestFocus();
-                        setState(() {
-                          if (_extendSelection) {
-                            selectionModel.add(media.path);
-                          } else {
-                            selectionModel.set([media.path]);
-                          }
-                          _fileBeingRenamed = null;
-                        });
-                      },
-                      onDoubleTap: () {
-                        _focusNode.requestFocus();
-                        _handleDoubleTap(media);
-                      },
-                      child: _getContextMenu(
-                        context,
-                        media: media,
-                        child: Selectable(
-                          id: media.path,
-                          onMountElement: _elements.add,
-                          onUnmountElement: _elements.remove,
-                          child: ValueListenableBuilder<int>(
-                            valueListenable: media.updateCounter,
-                            builder: (context, value, child) => Thumbnail(
-                              key: media.key,
-                              media: media,
-                              selected: selection.contains(media.path),
-                              rename: _fileBeingRenamed == media.path,
-                              onRenamed: _onFileRenamed,
+                    return AutoScrollTag(
+                      key: Key(media.path),
+                      index: _items!.indexOf(media),
+                      controller: _autoScrollController,
+                      child: GestureDetector(
+                        onTapDown: (_) {
+                          _focusNode.requestFocus();
+                          setState(() {
+                            if (_extendSelection) {
+                              selectionModel.add(media.path);
+                            } else {
+                              selectionModel.set([media.path]);
+                            }
+                            _fileBeingRenamed = null;
+                          });
+                        },
+                        onDoubleTap: () {
+                          _focusNode.requestFocus();
+                          _handleDoubleTap(media);
+                        },
+                        child: _getContextMenu(
+                          context,
+                          media: media,
+                          child: Selectable(
+                            id: media.path,
+                            onMountElement: _elements.add,
+                            onUnmountElement: _elements.remove,
+                            child: ValueListenableBuilder<int>(
+                              valueListenable: media.updateCounter,
+                              builder: (context, value, child) => Thumbnail(
+                                key: media.key,
+                                media: media,
+                                selected: selection.contains(media.path),
+                                rename: _fileBeingRenamed == media.path,
+                                onRenamed: _onFileRenamed,
+                              ),
                             ),
                           ),
                         ),
@@ -500,6 +529,8 @@ class _ImageGalleryState extends State<ImageGallery> {
       int index = _selectionIndex();
       index = min(index + 1, _items!.length - 1);
       SelectionModel.of(context).set([_items![index].path]);
+      _autoScrollController.scrollToIndex(index,
+          preferPosition: AutoScrollPosition.middle);
     }
   }
 
@@ -508,6 +539,8 @@ class _ImageGalleryState extends State<ImageGallery> {
       int index = _selectionIndex();
       index = max(index - 1, 0);
       SelectionModel.of(context).set([_items![index].path]);
+      _autoScrollController.scrollToIndex(index,
+          preferPosition: AutoScrollPosition.middle);
     }
   }
 

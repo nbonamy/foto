@@ -236,7 +236,7 @@ class _HomeState extends State<Home> with WindowListener {
     if (quit == false && current != null) {
       SelectionModel selectionModel = SelectionModel.of(context);
       if (selectionModel.get.length == 1) {
-        selectionModel.set([current], notify: true);
+        selectionModel.set([current]);
       }
     }
 
