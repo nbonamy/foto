@@ -84,10 +84,10 @@ class _InspectorState extends State<Inspector> {
         InspectorValue(t.exifExposureMode, _getExifTag('EXIF ExposureMode')));
     data.add(InspectorValue(
         t.exifExposureTime, _getExifTag('EXIF ExposureTime', suffix: ' s')));
-    data.add(InspectorValue(
-        t.exifFNumber, _getExifTag('EXIF FNumber', prefix: 'f')));
-    data.add(InspectorValue(
-        t.exifFocalLength, _getExifTag('EXIF FocalLength', suffix: ' mm')));
+    data.add(InspectorValue(t.exifFNumber,
+        _getExifTag('EXIF FNumber', parseRatio: true, prefix: 'f')));
+    data.add(InspectorValue(t.exifFocalLength,
+        _getExifTag('EXIF FocalLength', parseRatio: true, suffix: ' mm')));
     data.add(
         InspectorValue(t.exifISORating, _getExifTag('EXIF ISOSpeedRatings')));
     data.add(InspectorValue(t.exifExposureBias,
@@ -96,7 +96,7 @@ class _InspectorState extends State<Inspector> {
     data.add(
         InspectorValue(t.exifWhiteBalance, _getExifTag('EXIF WhiteBalance')));
     data.add(
-        InspectorValue(t.exifBrightness, _getExifTag('EXIF BrightnessValue')));
+        InspectorValue(t.exifBrightness, _getExifTag('EXIF BrightnessValue', parseRatio: true)));
     data.add(InspectorValue(t.exifContrast, _getExifTag('EXIF Contrast')));
     data.add(InspectorValue(t.exifSaturation, _getExifTag('EXIF Saturation')));
     data.add(InspectorValue(t.exifSharpness, _getExifTag('EXIF Sharpness')));
@@ -174,8 +174,10 @@ class _InspectorState extends State<Inspector> {
     setState(() {});
   }
 
-  String _getExifTag(String tag, {String prefix = '', String suffix = ''}) {
+  String _getExifTag(String tag,
+      {bool parseRatio = false, String prefix = '', String suffix = ''}) {
     String? value = _exifData?[tag]?.toString();
+    if (parseRatio) value = Utils.parseExifRatio(value);
     return value == null ? '' : '$prefix$value$suffix';
   }
 }

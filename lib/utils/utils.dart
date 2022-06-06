@@ -48,4 +48,20 @@ class Utils {
 
     return max(screenWidth / imageWidth, screenHeight / imageHeight);
   }
+
+  static String? parseExifRatio(String? exifValue) {
+    if (exifValue == null) return null;
+    List<String> values = exifValue.split('/');
+    if (values.length != 2) {
+      return exifValue;
+    }
+    try {
+      int num = int.parse(values[0]);
+      int den = int.parse(values[1]);
+      double ratio = num / den;
+      return ratio.toStringAsFixed(1);
+    } catch (e) {
+      return exifValue;
+    }
+  }
 }

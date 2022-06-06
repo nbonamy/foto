@@ -93,13 +93,13 @@ class _InfoOverlayState extends State<InfoOverlay> {
           exifInfo += '${exposureTime} sec. ';
         }
         if (fNumber != null) {
-          exifInfo += 'f/${_parseRatio(fNumber)} ';
+          exifInfo += 'f/${Utils.parseExifRatio(fNumber)} ';
         }
         if (isoSpeedRatings != null) {
           exifInfo += 'ISO${isoSpeedRatings} ';
         }
         if (focalLength != null) {
-          exifInfo += '${_parseRatio(focalLength)}mm';
+          exifInfo += '${Utils.parseExifRatio(focalLength)}mm';
         }
         if (exifInfo.trim().isNotEmpty) {
           texts.add(Text(exifInfo.trim(), style: textStyle));
@@ -120,21 +120,5 @@ class _InfoOverlayState extends State<InfoOverlay> {
         children: texts,
       ),
     );
-  }
-
-  String? _parseRatio(String? exifValue) {
-    if (exifValue == null) return null;
-    List<String> values = exifValue.split('/');
-    if (values.length != 2) {
-      return exifValue;
-    }
-    try {
-      int num = int.parse(values[0]);
-      int den = int.parse(values[1]);
-      double ratio = num / den;
-      return ratio.toStringAsFixed(1);
-    } catch (e) {
-      return exifValue;
-    }
   }
 }
