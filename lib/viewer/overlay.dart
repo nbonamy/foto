@@ -84,22 +84,25 @@ class _InfoOverlayState extends State<InfoOverlay> {
         }
 
         // picture info
-        String? exposureTime = _exif?['EXIF ExposureTime']?.printable;
-        String? fNumber = _exif?['EXIF FNumber']?.printable;
-        String? isoSpeedRatings = _exif?['EXIF ISOSpeedRatings']?.printable;
-        String? focalLength = _exif?['EXIF FocalLength']?.printable;
+        IfdTag? exposureTime = _exif?['EXIF ExposureTime'];
+        IfdTag? fNumber = _exif?['EXIF FNumber'];
+        IfdTag? isoSpeedRatings = _exif?['EXIF ISOSpeedRatings'];
+        IfdTag? focalLength = _exif?['EXIF FocalLength'];
         String exifInfo = '';
         if (exposureTime != null) {
-          exifInfo += '${exposureTime} sec. ';
+          exifInfo += Utils.formatExifValue(exposureTime, suffix: ' sec. ');
         }
         if (fNumber != null) {
-          exifInfo += 'f/${Utils.parseExifRatio(fNumber)} ';
+          exifInfo += Utils.formatExifValue(fNumber,
+              parseRatio: true, prefix: 'f/', suffix: ' ');
         }
         if (isoSpeedRatings != null) {
-          exifInfo += 'ISO${isoSpeedRatings} ';
+          exifInfo += Utils.formatExifValue(isoSpeedRatings,
+              prefix: 'ISO', suffix: ' ');
         }
         if (focalLength != null) {
-          exifInfo += '${Utils.parseExifRatio(focalLength)}mm';
+          exifInfo += Utils.formatExifValue(focalLength,
+              parseRatio: true, suffix: 'mm');
         }
         if (exifInfo.trim().isNotEmpty) {
           texts.add(Text(exifInfo.trim(), style: textStyle));

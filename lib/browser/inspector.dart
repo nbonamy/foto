@@ -95,8 +95,8 @@ class _InspectorState extends State<Inspector> {
     data.add(InspectorValue(t.exifFlashMode, _getExifTag('EXIF Flash')));
     data.add(
         InspectorValue(t.exifWhiteBalance, _getExifTag('EXIF WhiteBalance')));
-    data.add(
-        InspectorValue(t.exifBrightness, _getExifTag('EXIF BrightnessValue', parseRatio: true)));
+    data.add(InspectorValue(t.exifBrightness,
+        _getExifTag('EXIF BrightnessValue', parseRatio: true)));
     data.add(InspectorValue(t.exifContrast, _getExifTag('EXIF Contrast')));
     data.add(InspectorValue(t.exifSaturation, _getExifTag('EXIF Saturation')));
     data.add(InspectorValue(t.exifSharpness, _getExifTag('EXIF Sharpness')));
@@ -176,8 +176,17 @@ class _InspectorState extends State<Inspector> {
 
   String _getExifTag(String tag,
       {bool parseRatio = false, String prefix = '', String suffix = ''}) {
-    String? value = _exifData?[tag]?.toString();
-    if (parseRatio) value = Utils.parseExifRatio(value);
-    return value == null ? '' : '$prefix$value$suffix';
+    IfdTag? exifTag = _exifData?[tag];
+    if (exifTag == null) {
+      return '';
+    }
+
+    // default
+    return Utils.formatExifValue(
+      exifTag,
+      parseRatio: parseRatio,
+      prefix: prefix,
+      suffix: suffix,
+    );
   }
 }

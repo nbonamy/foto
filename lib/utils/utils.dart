@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:exif/exif.dart';
 import 'package:flutter/material.dart';
 import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
@@ -49,19 +50,19 @@ class Utils {
     return max(screenWidth / imageWidth, screenHeight / imageHeight);
   }
 
-  static String? parseExifRatio(String? exifValue) {
-    if (exifValue == null) return null;
-    List<String> values = exifValue.split('/');
-    if (values.length != 2) {
-      return exifValue;
+  static String formatExifValue(IfdTag exifTag,
+      {bool parseRatio = false, String prefix = '', String suffix = ''}) {
+    // get default value
+    String value = exifTag.printable;
+
+    // ratios
+    if (parseRatio && exifTag.values is IfdRatios) {
+      Ratio ratio = exifTag.values.toList()[0];
+      double num = ratio.numerator.toDouble() / ratio.denominator.toDouble();
+      value = num.toStringAsFixed(1);
     }
-    try {
-      int num = int.parse(values[0]);
-      int den = int.parse(values[1]);
-      double ratio = num / den;
-      return ratio.toStringAsFixed(1);
-    } catch (e) {
-      return exifValue;
-    }
+
+    // done
+    return '$prefix$value$suffix';
   }
 }
