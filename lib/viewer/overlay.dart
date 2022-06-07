@@ -1,6 +1,7 @@
 // ignore_for_file: unnecessary_brace_in_string_interps
 
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:exif/exif.dart';
 import 'package:filesize/filesize.dart';
@@ -54,6 +55,9 @@ class _InfoOverlayState extends State<InfoOverlay> {
     Preferences prefs = Preferences.of(context);
     TextStyle textStyle = const TextStyle(
       color: Color.fromARGB(255, 92, 202, 71),
+      fontFeatures: [
+        FontFeature.tabularFigures(),
+      ],
     );
 
     List<Widget> texts = [];
