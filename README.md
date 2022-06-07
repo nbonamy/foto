@@ -19,7 +19,7 @@ Currently only developed and tested for MacOS.
   - [ ] move
 - Folder operations
   - [x] delete
-  - [ ] clipboard
+  - [x] clipboard
   - [ ] rename
   - [ ] move
 - Image manipulations

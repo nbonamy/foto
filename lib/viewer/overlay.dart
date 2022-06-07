@@ -115,7 +115,7 @@ class _InfoOverlayState extends State<InfoOverlay> {
     }
 
     if (texts.isEmpty) {
-      return Container();
+      return const SizedBox();
     }
 
     return Container(

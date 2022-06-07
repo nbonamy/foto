@@ -357,12 +357,14 @@ class _ImageViewerState extends State<ImageViewer>
     bool isFitted = currentScale != null && currentScale == _fitScale;
     bool isFilled = currentScale != null && currentScale == _fillScale;
     _calcFitFillScales().then((_) {
-      if (currentScale == null) {
-      } else if (isFitted) {
-        _fit();
-      } else if (isFilled) {
-        _fill();
-      }
+      setState(() {
+        if (currentScale == null) {
+        } else if (isFitted) {
+          _fit();
+        } else if (isFilled) {
+          _fill();
+        }
+      });
     });
   }
 }

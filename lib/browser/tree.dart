@@ -64,38 +64,39 @@ class _BrowserTreeState extends State<BrowserTree> {
 
   @override
   Widget build(BuildContext context) {
-    Widget tree = _treeViewController != null
-        ? Consumer3<AppTheme, HistoryModel, FavoritesModel>(
+    Widget tree = _treeViewController == null
+        ? const SizedBox()
+        : Consumer3<AppTheme, HistoryModel, FavoritesModel>(
             builder: (context, theme, history, favorites, child) {
-            return Material(
-              type: MaterialType.transparency,
-              child: TreeView(
-                controller: _treeViewController!,
-                theme: _getTreeTheme(context, theme),
-                allowParentSelect: true,
-                shrinkWrap: true,
-                nodeBuilder: (context, node) {
-                  return ctxm.ContextMenu(
-                    menu: _buildMenu(favorites, node),
-                    child: _buildNodeLabel(
-                      _treeViewController!,
-                      node,
-                      _getTreeTheme(context, theme),
-                    ),
-                  );
-                },
-                onNodeTap: (key) {
-                  _focusNode.requestFocus();
-                  updateSelectedPath(history, key);
-                },
-                onExpansionChanged: (key, state) {
-                  _focusNode.requestFocus();
-                  expandPath(key, state);
-                },
-              ),
-            );
-          })
-        : Container();
+              return Material(
+                type: MaterialType.transparency,
+                child: TreeView(
+                  controller: _treeViewController!,
+                  theme: _getTreeTheme(context, theme),
+                  allowParentSelect: true,
+                  shrinkWrap: true,
+                  nodeBuilder: (context, node) {
+                    return ctxm.ContextMenu(
+                      menu: _buildMenu(favorites, node),
+                      child: _buildNodeLabel(
+                        _treeViewController!,
+                        node,
+                        _getTreeTheme(context, theme),
+                      ),
+                    );
+                  },
+                  onNodeTap: (key) {
+                    _focusNode.requestFocus();
+                    updateSelectedPath(history, key);
+                  },
+                  onExpansionChanged: (key, state) {
+                    _focusNode.requestFocus();
+                    expandPath(key, state);
+                  },
+                ),
+              );
+            },
+          );
 
     return Container(
       padding: const EdgeInsets.symmetric(

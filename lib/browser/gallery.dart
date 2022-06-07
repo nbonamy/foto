@@ -228,7 +228,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
                 return FutureBuilder(
                     future: _getItems(),
                     builder: (context, snapshot) {
-                      if (_items == null) return Container();
+                      if (_items == null) return const SizedBox();
                       return GridView.extent(
                         shrinkWrap: true,
                         controller: _autoScrollController,
@@ -344,7 +344,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
 
   Widget _getSelectionRect() {
     return _dragSelectRect == null
-        ? Container()
+        ? const SizedBox()
         : Positioned(
             left: _dragSelectRect?.left,
             top: _dragSelectRect?.top,

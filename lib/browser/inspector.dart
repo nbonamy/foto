@@ -57,7 +57,7 @@ class _InspectorState extends State<Inspector> {
   Widget build(BuildContext context) {
     // check
     if (_currentFile == null) {
-      return Container();
+      return const SizedBox();
     }
 
     // needed
