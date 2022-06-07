@@ -25,6 +25,7 @@ import 'package:scroll_to_index/scroll_to_index.dart';
 
 class ImageGallery extends StatefulWidget {
   final String path;
+  final MediaDb mediaDb;
   final Function executeItem;
   final BuildContext navigatorContext;
   final ScrollController scrollController;
@@ -34,6 +35,7 @@ class ImageGallery extends StatefulWidget {
   const ImageGallery({
     Key? key,
     required this.path,
+    required this.mediaDb,
     required this.navigatorContext,
     required this.executeItem,
     required this.scrollController,
@@ -46,8 +48,6 @@ class ImageGallery extends StatefulWidget {
 }
 
 class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
-  final MediaDb _mediaDb = MediaDb();
-
   List<MediaItem>? _items;
   String? _fileBeingRenamed;
 
@@ -170,19 +170,21 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     });
   }
 
+  Future<List<MediaItem>> _getItems() async {
+    Preferences prefs = Preferences.of(context);
+    _items = _items ??
+        await MediaUtils.getMediaFiles(
+          widget.mediaDb,
+          widget.path,
+          includeDirs: prefs.showFolders,
+          sortCriteria: prefs.sortCriteria,
+          sortReversed: prefs.sortReversed,
+        );
+    return _items!;
+  }
+
   @override
   Widget build(BuildContext context) {
-    // get files
-    if (_items == null) {
-      Preferences prefs = Preferences.of(context);
-      _items = MediaUtils.getMediaFiles(
-        widget.path,
-        includeDirs: prefs.showFolders,
-        sortType: prefs.sortCriteria,
-        sortReversed: prefs.sortReversed,
-      );
-    }
-
     // focus for keyboard listener
     return Focus(
       focusNode: _focusNode,
@@ -223,56 +225,62 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
                 var selection =
                     _mergeSelections(selectionModel.get, _dragSelection);
 
-                return GridView.extent(
-                  shrinkWrap: true,
-                  controller: _autoScrollController,
-                  maxCrossAxisExtent: Thumbnail.thumbnailWidth(),
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  padding: const EdgeInsets.all(16),
-                  childAspectRatio: Thumbnail.aspectRatio(),
-                  children: _items!.map<Widget>((media) {
-                    return AutoScrollTag(
-                      key: Key(media.path),
-                      index: _items!.indexOf(media),
-                      controller: _autoScrollController,
-                      child: GestureDetector(
-                        onTapDown: (_) {
-                          _focusNode.requestFocus();
-                          _fileBeingRenamed = null;
-                          if (_extendSelection) {
-                            selectionModel.add(media.path);
-                          } else {
-                            selectionModel.set([media.path]);
-                          }
-                        },
-                        onDoubleTap: () {
-                          _focusNode.requestFocus();
-                          _handleDoubleTap(media);
-                        },
-                        child: _getContextMenu(
-                          context,
-                          media: media,
-                          child: Selectable(
-                            id: media.path,
-                            onMountElement: _elements.add,
-                            onUnmountElement: _elements.remove,
-                            child: ValueListenableBuilder<int>(
-                              valueListenable: media.updateCounter,
-                              builder: (context, value, child) => Thumbnail(
-                                key: media.key,
+                return FutureBuilder(
+                    future: _getItems(),
+                    builder: (context, snapshot) {
+                      if (_items == null) return Container();
+                      return GridView.extent(
+                        shrinkWrap: true,
+                        controller: _autoScrollController,
+                        maxCrossAxisExtent: Thumbnail.thumbnailWidth(),
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                        padding: const EdgeInsets.all(16),
+                        childAspectRatio: Thumbnail.aspectRatio(),
+                        children: _items!.map<Widget>((media) {
+                          return AutoScrollTag(
+                            key: Key(media.path),
+                            index: _items!.indexOf(media),
+                            controller: _autoScrollController,
+                            child: GestureDetector(
+                              onTapDown: (_) {
+                                _focusNode.requestFocus();
+                                _fileBeingRenamed = null;
+                                if (_extendSelection) {
+                                  selectionModel.add(media.path);
+                                } else {
+                                  selectionModel.set([media.path]);
+                                }
+                              },
+                              onDoubleTap: () {
+                                _focusNode.requestFocus();
+                                _handleDoubleTap(media);
+                              },
+                              child: _getContextMenu(
+                                context,
                                 media: media,
-                                selected: selection.contains(media.path),
-                                rename: _fileBeingRenamed == media.path,
-                                onRenamed: _onFileRenamed,
+                                child: Selectable(
+                                  id: media.path,
+                                  onMountElement: _elements.add,
+                                  onUnmountElement: _elements.remove,
+                                  child: ValueListenableBuilder<int>(
+                                    valueListenable: media.updateCounter,
+                                    builder: (context, value, child) =>
+                                        Thumbnail(
+                                      key: media.key,
+                                      media: media,
+                                      selected: selection.contains(media.path),
+                                      rename: _fileBeingRenamed == media.path,
+                                      onRenamed: _onFileRenamed,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                );
+                          );
+                        }).toList(),
+                      );
+                    });
               },
             ),
             _getSelectionRect(),

@@ -21,14 +21,22 @@ class MediaItem {
     }
   }
 
-  static MediaItem forFile(String filepath) {
+  static MediaItem forFile(
+    String filepath, {
+    DateTime? creationDate,
+    DateTime? modificationDate,
+  }) {
     File file = File(filepath);
-    FileStat stats = file.statSync();
+    if (creationDate == null || modificationDate == null) {
+      FileStat stats = file.statSync();
+      creationDate = creationDate ?? stats.changed;
+      modificationDate = modificationDate ?? stats.modified;
+    }
     return MediaItem(
       path: filepath,
       entityType: FileSystemEntityType.file,
-      creationDate: stats.changed,
-      modificationDate: stats.modified,
+      creationDate: creationDate,
+      modificationDate: modificationDate,
       thumbnail: _fileThumbnail(file),
     );
   }

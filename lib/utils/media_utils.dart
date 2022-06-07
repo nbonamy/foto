@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:foto/model/media.dart';
 import 'package:foto/model/preferences.dart';
+import 'package:foto/utils/database.dart';
 import 'package:path/path.dart' as p;
 
 class MediaUtils {
@@ -21,12 +22,13 @@ class MediaUtils {
         MediaUtils._excludedFilenames.contains(basename);
   }
 
-  static List<MediaItem> getMediaFiles(
+  static Future<List<MediaItem>> getMediaFiles(
+    MediaDb? mediaDb,
     String? path, {
     required bool includeDirs,
-    SortCriteria sortType = SortCriteria.chronological,
+    SortCriteria sortCriteria = SortCriteria.chronological,
     bool sortReversed = false,
-  }) {
+  }) async {
     try {
       // null
       if (path == null) {
@@ -36,7 +38,7 @@ class MediaUtils {
       // get files
       final dir = Directory(path);
       List<FileSystemEntity> entities = dir.listSync(recursive: false);
-      List<MediaItem> filtered = entities.where((entity) {
+      List<FileSystemEntity> filtered = entities.where((entity) {
         if (MediaUtils.shouldExcludeFileOrDir(entity.path)) {
           return false;
         } else if (entity is Directory) {
@@ -46,10 +48,21 @@ class MediaUtils {
         } else {
           return false;
         }
-      }).map<MediaItem>((entity) {
-        return MediaItem.forEntity(entity);
       }).toList();
-      filtered.sort((a, b) {
+
+      // now convert to media items using database
+      List<MediaItem> items = [];
+      for (var entity in filtered) {
+        if (mediaDb != null) {
+          MediaItem mediaItem = await mediaDb.get(entity.path);
+          items.add(mediaItem);
+        } else {
+          items.add(MediaItem.forEntity(entity));
+        }
+      }
+
+      // now sort
+      items.sort((a, b) {
         if (a.isDir() && b.isDir()) {
           return a.path.toLowerCase().compareTo(b.path.toLowerCase());
         } else if (a.isDir() && !b.isDir()) {
@@ -57,10 +70,10 @@ class MediaUtils {
         } else if (b.isDir() && !a.isDir()) {
           return 1;
         } else {
-          if (sortType == SortCriteria.alphabetical) {
+          if (sortCriteria == SortCriteria.alphabetical) {
             return (sortReversed ? -1 : 1) *
                 a.path.toLowerCase().compareTo(b.path.toLowerCase());
-          } else if (sortType == SortCriteria.chronological) {
+          } else if (sortCriteria == SortCriteria.chronological) {
             return (sortReversed ? -1 : 1) *
                 a.creationDate.compareTo(b.creationDate);
           } else {
@@ -68,7 +81,9 @@ class MediaUtils {
           }
         }
       });
-      return filtered;
+
+      // done
+      return items;
     } catch (e) {
       debugPrint(e.toString());
       return [];

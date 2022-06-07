@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:foto/browser/inspector.dart';
 import 'package:foto/model/menu_actions.dart';
 import 'package:foto/model/preferences.dart';
+import 'package:foto/utils/database.dart';
 import 'package:foto/utils/utils.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'gallery.dart';
 
 class BrowserContent extends StatefulWidget {
+  final MediaDb mediaDb;
   final String path;
   final bool canNavigateBack;
   final Function navigateToFolder;
@@ -20,6 +22,7 @@ class BrowserContent extends StatefulWidget {
 
   const BrowserContent({
     Key? key,
+    required this.mediaDb,
     required this.path,
     required this.canNavigateBack,
     required this.menuActionStream,
@@ -55,6 +58,7 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
             builder: (context, scrollController) {
               return ImageGallery(
                 path: widget.path,
+                mediaDb: widget.mediaDb,
                 navigatorContext: context,
                 executeItem: executeItem,
                 scrollController: scrollController,

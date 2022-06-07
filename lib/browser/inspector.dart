@@ -69,6 +69,8 @@ class _InspectorState extends State<Inspector> {
     data.add(InspectorValue(
         t.exifFileSize, _fileStats?.size.readableFileSize() ?? ''));
     data.add(InspectorValue(
+        t.exifCreationDate, _fileStats?.changed.toString() ?? ''));
+    data.add(InspectorValue(
         t.exifCreationDate, _getExifTag('EXIF DateTimeOriginal')));
     data.add(InspectorValue(
         t.exifImageSize,

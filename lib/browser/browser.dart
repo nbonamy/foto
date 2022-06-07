@@ -6,6 +6,7 @@ import 'package:foto/model/menu_actions.dart';
 import 'package:foto/browser/sidebar.dart';
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
+import 'package:foto/utils/database.dart';
 import 'package:foto/utils/paths.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:path/path.dart' as p;
@@ -26,6 +27,7 @@ class Browser extends StatefulWidget {
 
 class BrowserState extends State<Browser> {
   BuildContext? _navigatorContext;
+  final MediaDb _mediaDb = MediaDb();
 
   @override
   void initState() {
@@ -58,6 +60,7 @@ class BrowserState extends State<Browser> {
       child: CupertinoTabView(builder: (context) {
         _navigatorContext = context;
         return BrowserContent(
+          mediaDb: _mediaDb,
           path: HistoryModel.of(context).top,
           canNavigateBack: false,
           menuActionStream: widget.menuActionStream,
@@ -104,6 +107,7 @@ class BrowserState extends State<Browser> {
     HistoryModel history = HistoryModel.of(context);
     return PageRouteBuilder(
       pageBuilder: (_, __, ___) => BrowserContent(
+        mediaDb: _mediaDb,
         path: path ?? history.top,
         canNavigateBack: history.get.length > 1,
         menuActionStream: widget.menuActionStream,

@@ -50,7 +50,8 @@
 
   "exifFileName": "Nom du fichier",
   "exifFileSize": "Taille du fichier",
-  "exifCreationDate": "Date de capture",
+  "exifCreationDate": "Date de création",
+  "exifCaptureDate": "Date de capture",
   "exifImageSize": "Dimensions",
   "exifOrientation": "Orientation",
   "exifSceneType": "Type de ccène",

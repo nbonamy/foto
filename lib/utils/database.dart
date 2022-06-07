@@ -1,17 +1,12 @@
 import 'dart:io';
 
-import 'package:flutter/widgets.dart';
 import 'package:foto/model/media.dart';
 import 'package:foto/utils/image_utils.dart';
-import 'package:foto/utils/paths.dart';
-import 'package:foto/utils/utils.dart';
 
 class MediaDb {
   static final Map<String, MediaItem> _cache = {};
 
-  Future<MediaItem?> _get(String filepath) async {
-    return null;
-
+  Future<MediaItem> get(String filepath) async {
     FileSystemEntityType entityType = await FileSystemEntity.type(filepath);
     if (entityType != FileSystemEntityType.file) {
       return MediaItem.forFolder(filepath);
@@ -29,19 +24,11 @@ class MediaDb {
     // get other data
     DateTime creationDate = await ImageUtils.getCreationDate(filepath);
 
-    // thumbnail
-    Image thumbnail = Image.file(
-      File(filepath),
-      height: 160,
-    );
-
     // create info
-    MediaItem info = MediaItem(
-      path: filepath,
-      entityType: entityType,
-      modificationDate: lastModified,
+    MediaItem info = MediaItem.forFile(
+      filepath,
       creationDate: creationDate,
-      thumbnail: thumbnail,
+      modificationDate: lastModified,
     );
 
     // store and return

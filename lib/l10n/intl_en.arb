@@ -54,7 +54,8 @@
 
   "exifFileName": "Filename",
   "exifFileSize": "File size",
-  "exifCreationDate": "Taken on",
+  "exifCreationDate": "Creation date",
+  "exifCaptureDate": "Taken on",
   "exifImageSize": "Dimensions",
   "exifOrientation": "Orientation",
   "exifSceneType": "Scene Type",
