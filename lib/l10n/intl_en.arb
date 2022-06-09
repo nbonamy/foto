@@ -35,6 +35,7 @@
   "edit_with": "Edit with {software}",
   "@edit_with": { "placeholders": { "software": {} } },
 
+  "toolbarToggleSidebar": "Toggle Sidebar",
   "toolbarToggleFolders": "Toggle Folders",
   "toolbarToggleInspector": "Toggle Inspector",
 

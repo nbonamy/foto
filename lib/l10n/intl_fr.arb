@@ -34,6 +34,7 @@
   "edit": "Editer",
   "edit_with": "Editer avec {software}",
 
+  "toolbarToggleSidebar": "Afficher la barre latérale",
   "toolbarToggleFolders": "Afficher les dossiers",
   "toolbarToggleInspector": "Afficher les informations",
 

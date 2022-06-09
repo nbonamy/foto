@@ -133,16 +133,22 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
           : null,
       actions: [
         ToolBarIconButton(
+          icon: const MacosIcon(CupertinoIcons.sidebar_left),
+          onPressed: _toggleSidebar,
+          label: AppLocalizations.of(context)!.toolbarToggleFolders,
+          showLabel: false,
+        ),
+        ToolBarIconButton(
           icon: const MacosIcon(CupertinoIcons.folder),
           onPressed: _toggleShowFolders,
           label: AppLocalizations.of(context)!.toolbarToggleFolders,
-          showLabel: true,
+          showLabel: false,
         ),
         ToolBarIconButton(
           icon: const MacosIcon(CupertinoIcons.info_circle),
           onPressed: _toggleInspector,
           label: AppLocalizations.of(context)!.toolbarToggleInspector,
-          showLabel: true,
+          showLabel: false,
         ),
         ToolBarPullDownButton(
           label: AppLocalizations.of(context)!.sortTitle,
@@ -186,6 +192,10 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
     prefs.sortReversed = !prefs.sortReversed;
     prefs.notifyListeners();
     setState(() {});
+  }
+
+  void _toggleSidebar() {
+    MacosWindowScope.of(context).toggleSidebar();
   }
 
   void _toggleShowFolders() {
