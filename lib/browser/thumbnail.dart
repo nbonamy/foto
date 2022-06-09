@@ -17,10 +17,6 @@ class Thumbnail extends StatefulWidget {
         _ThumbnailState.thumbnailPadding;
   }
 
-  static double aspectRatio() {
-    return _ThumbnailState.thumbnailWidth / thumbnailHeight();
-  }
-
   final MediaItem media;
   final bool selected;
   final bool rename;

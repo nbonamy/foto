@@ -242,15 +242,19 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
                     future: _getItems(),
                     builder: (context, snapshot) {
                       if (_items == null) return const SizedBox();
-                      return GridView.extent(
+                      return GridView.builder(
                         shrinkWrap: true,
                         controller: _autoScrollController,
-                        maxCrossAxisExtent: Thumbnail.thumbnailWidth(),
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: 16,
                         padding: const EdgeInsets.all(16),
-                        childAspectRatio: Thumbnail.aspectRatio(),
-                        children: _items!.map<Widget>((media) {
+                        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: Thumbnail.thumbnailWidth(),
+                          mainAxisExtent: Thumbnail.thumbnailHeight(),
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                        ),
+                        itemCount: _items?.length,
+                        itemBuilder: (context, index) {
+                          MediaItem media = _items![index];
                           return AutoScrollTag(
                             key: Key(media.path),
                             index: _items!.indexOf(media),
@@ -291,7 +295,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
                               ),
                             ),
                           );
-                        }).toList(),
+                        },
                       );
                     });
               },
