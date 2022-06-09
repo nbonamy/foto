@@ -51,6 +51,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   List<MediaItem>? _items;
   String? _fileBeingRenamed;
 
+  late SelectionModel _selectionModel;
   final _elements = <SelectableElement>{};
   bool _extendSelection = false;
 
@@ -101,15 +102,8 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   }
 
   void _subscribeToSelection() {
-    SelectionModel.of(context).addListener(() {
-      Selection selection = SelectionModel.of(context).get;
-      if (selection.length == 1) {
-        int index = _items!.indexWhere((it) => it.path == selection[0]);
-        if (index != -1) {
-          _autoScrollController.scrollToIndex(index);
-        }
-      }
-    });
+    _selectionModel = SelectionModel.of(context);
+    _selectionModel.addListener(_onSelectionChange);
   }
 
   void _initSelection() {
@@ -137,6 +131,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   void dispose() {
     _stopWatchDir();
     cancelMenuSubscription();
+    _selectionModel.removeListener(_onSelectionChange);
     super.dispose();
   }
 
@@ -168,6 +163,16 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
         SelectionModel.of(context).set(selection);
       });
     });
+  }
+
+  void _onSelectionChange() {
+    Selection selection = _selectionModel.get;
+    if (_items != null && selection.length == 1) {
+      int index = _items!.indexWhere((it) => it.path == selection[0]);
+      if (index != -1) {
+        _autoScrollController.scrollToIndex(index);
+      }
+    }
   }
 
   Future<List<MediaItem>> _getItems() async {
