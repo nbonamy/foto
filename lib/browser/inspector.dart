@@ -55,7 +55,7 @@ class _InspectorState extends State<Inspector> {
     // rows
     List<InspectorValue> data = [];
     data.add(InspectorValue(t.exifFileName, Utils.pathTitle(_currentFile)!));
-    data.add(InspectorValue(t.exifFileSize, filesize(_fileStats?.size)));
+    data.add(InspectorValue(t.exifFileSize, _fileStats?.size == null ? '' : filesize(_fileStats?.size)));
     data.add(InspectorValue(
         t.exifCreationDate, _fileStats?.changed.toString() ?? ''));
     data.add(InspectorValue(
