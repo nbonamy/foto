@@ -4,7 +4,7 @@ import 'package:foto/model/media.dart';
 import 'package:foto/utils/image_utils.dart';
 
 class MediaDb {
-  static final Map<String, MediaItem> _cache = {};
+  final Map<String, MediaItem> _cache = {};
 
   Future<MediaItem> get(String filepath) async {
     FileSystemEntityType entityType = await FileSystemEntity.type(filepath);

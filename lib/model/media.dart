@@ -10,6 +10,8 @@ class MediaItem {
   final FileSystemEntityType entityType;
   DateTime creationDate;
   DateTime modificationDate;
+  SizeInt? imageSize;
+  int? fileSize;
   Image? thumbnail;
   final ValueNotifier<int> updateCounter = ValueNotifier<int>(0);
 
@@ -27,16 +29,18 @@ class MediaItem {
     DateTime? modificationDate,
   }) {
     File file = File(filepath);
+    FileStat stats = file.statSync();
     if (creationDate == null || modificationDate == null) {
-      FileStat stats = file.statSync();
       creationDate = creationDate ?? stats.changed;
       modificationDate = modificationDate ?? stats.modified;
     }
     return MediaItem(
       path: filepath,
       entityType: FileSystemEntityType.file,
+      fileSize: stats.size,
       creationDate: creationDate,
       modificationDate: modificationDate,
+      imageSize: Utils.imageSize(filepath),
       thumbnail: _fileThumbnail(file),
     );
   }
@@ -54,8 +58,10 @@ class MediaItem {
   MediaItem({
     required this.path,
     required this.entityType,
+    this.fileSize,
     required this.modificationDate,
     required this.creationDate,
+    this.imageSize,
     this.thumbnail,
   });
 

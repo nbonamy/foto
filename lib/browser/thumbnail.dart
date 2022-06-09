@@ -1,3 +1,4 @@
+import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:foto/model/media.dart';
@@ -87,12 +88,38 @@ class _ThumbnailState extends State<Thumbnail> {
         child: textField,
       );
     }
+
+    String tooltip = widget.media.title;
+    if (widget.media.imageSize != null) {
+      tooltip +=
+          '\n${widget.media.imageSize!.width} x ${widget.media.imageSize!.height}';
+    }
+    if (widget.media.fileSize != null) {
+      tooltip += '\n${filesize(widget.media.fileSize)}';
+    }
+
     return SizedBox(
       width: thumbnailWidth,
       height: Thumbnail.thumbnailHeight(),
       child: Column(
         children: [
-          _getThumbnailImage(),
+          Tooltip(
+            message: tooltip,
+            waitDuration: const Duration(seconds: 1),
+            padding: const EdgeInsets.symmetric(
+              vertical: 2,
+              horizontal: 4,
+            ),
+            decoration: BoxDecoration(
+                color: const Color.fromARGB(255, 226, 221, 228),
+                border: Border.all(
+                    color: const Color.fromARGB(255, 198, 198, 198), width: 1)),
+            textStyle: const TextStyle(
+              color: Colors.black,
+              fontSize: 11,
+            ),
+            child: _getThumbnailImage(),
+          ),
           textField,
         ],
       ),

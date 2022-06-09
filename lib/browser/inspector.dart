@@ -1,11 +1,10 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:exif/exif.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/model/selection.dart';
 import 'package:foto/utils/utils.dart';
-import 'package:intl/intl.dart';
+import 'package:filesize/filesize.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class InspectorValue {
@@ -13,16 +12,6 @@ class InspectorValue {
   final String value;
 
   InspectorValue(this.name, this.value);
-}
-
-extension FileFormatter on num {
-  String readableFileSize({bool base1024 = true}) {
-    final base = base1024 ? 1024 : 1000;
-    if (this <= 0) return '0';
-    final units = ['B', 'kB', 'MB', 'GB', 'TB'];
-    int digitGroups = (log(this) / log(base)).round();
-    return '${NumberFormat('#,##0.#').format(this / pow(base, digitGroups))} ${units[digitGroups]}';
-  }
 }
 
 class Inspector extends StatefulWidget {
@@ -67,7 +56,7 @@ class _InspectorState extends State<Inspector> {
     List<InspectorValue> data = [];
     data.add(InspectorValue(t.exifFileName, Utils.pathTitle(_currentFile)!));
     data.add(InspectorValue(
-        t.exifFileSize, _fileStats?.size.readableFileSize() ?? ''));
+        t.exifFileSize, filesize(_fileStats?.size)));
     data.add(InspectorValue(
         t.exifCreationDate, _fileStats?.changed.toString() ?? ''));
     data.add(InspectorValue(
