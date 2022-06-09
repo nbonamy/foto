@@ -55,8 +55,7 @@ class _InspectorState extends State<Inspector> {
     // rows
     List<InspectorValue> data = [];
     data.add(InspectorValue(t.exifFileName, Utils.pathTitle(_currentFile)!));
-    data.add(InspectorValue(
-        t.exifFileSize, filesize(_fileStats?.size)));
+    data.add(InspectorValue(t.exifFileSize, filesize(_fileStats?.size)));
     data.add(InspectorValue(
         t.exifCreationDate, _fileStats?.changed.toString() ?? ''));
     data.add(InspectorValue(
@@ -151,16 +150,20 @@ class _InspectorState extends State<Inspector> {
   }
 
   void _onSelectionChange() async {
-    Selection selection = SelectionModel.of(context).get;
-    if (selection.length != 1) {
+    try {
+      Selection selection = SelectionModel.of(context).get;
+      if (selection.length != 1) {
+        _currentFile = null;
+        _exifData = null;
+      } else {
+        _currentFile = selection[0];
+        File file = File(_currentFile!);
+        _fileStats = await file.stat();
+        _imageSize = Utils.imageSize(_currentFile!);
+        _exifData = await readExifFromBytes(file.readAsBytesSync());
+      }
+    } catch (_) {
       _currentFile = null;
-      _exifData = null;
-    } else {
-      _currentFile = selection[0];
-      File file = File(_currentFile!);
-      _fileStats = await file.stat();
-      _imageSize = Utils.imageSize(_currentFile!);
-      _exifData = await readExifFromBytes(file.readAsBytesSync());
     }
     setState(() {});
   }
