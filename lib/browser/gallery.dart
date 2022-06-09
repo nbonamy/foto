@@ -51,6 +51,8 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   List<MediaItem>? _items;
   String? _fileBeingRenamed;
 
+  late Preferences _preferences;
+
   late SelectionModel _selectionModel;
   final _elements = <SelectableElement>{};
   bool _extendSelection = false;
@@ -73,15 +75,19 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
         : p.basenameWithoutExtension(_photoshopPath!);
   }
 
+  Selection get selection {
+    return _selectionModel.get;
+  }
+
   @override
   void initState() {
     _watchDir();
-    _initSelection();
     _findPhotoshop();
     _subscribeToMenu();
     _subscribeToSelection();
     _subscribeToPreferences();
     _initAutoScrollController();
+    _initSelection();
     super.initState();
   }
 
@@ -92,9 +98,8 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   }
 
   void _subscribeToPreferences() {
-    Preferences.of(context).addListener(() {
-      _items = null;
-    });
+    _preferences = Preferences.of(context);
+    _preferences.addListener(_onPrefsChange);
   }
 
   void _subscribeToMenu() {
@@ -108,12 +113,12 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
 
   void _initSelection() {
     if (widget.initialSelection != null) {
-      SelectionModel.of(context).set(
+      _selectionModel.set(
         widget.initialSelection!,
         notify: false,
       );
     } else {
-      SelectionModel.of(context).clear(
+      _selectionModel.clear(
         notify: false,
       );
     }
@@ -131,6 +136,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   void dispose() {
     _stopWatchDir();
     cancelMenuSubscription();
+    _preferences.removeListener(_onPrefsChange);
     _selectionModel.removeListener(_onSelectionChange);
     super.dispose();
   }
@@ -153,20 +159,23 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
 
       // now restore selection with still existing files
       List<String> selection = [];
-      for (var file in SelectionModel.of(context).get) {
+      for (var file in selection) {
         if (File(file).existsSync()) {
           selection.add(file);
         }
       }
       setState(() {
         _items = null;
-        SelectionModel.of(context).set(selection);
+        _selectionModel.set(selection);
       });
     });
   }
 
+  void _onPrefsChange() {
+    _items = null;
+  }
+
   void _onSelectionChange() {
-    Selection selection = _selectionModel.get;
     if (_items != null && selection.length == 1) {
       int index = _items!.indexWhere((it) => it.path == selection[0]);
       if (index != -1) {
@@ -176,14 +185,13 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   }
 
   Future<List<MediaItem>> _getItems() async {
-    Preferences prefs = Preferences.of(context);
     _items = _items ??
         await MediaUtils.getMediaFiles(
           widget.mediaDb,
           widget.path,
-          includeDirs: prefs.showFolders,
-          sortCriteria: prefs.sortCriteria,
-          sortReversed: prefs.sortReversed,
+          includeDirs: _preferences.showFolders,
+          sortCriteria: _preferences.sortCriteria,
+          sortReversed: _preferences.sortReversed,
         );
     return _items!;
   }
@@ -300,7 +308,6 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     required MediaItem media,
     required Widget child,
   }) {
-    Selection selection = SelectionModel.of(context).get;
     return ctxm.ContextMenu(
       menu: ctxm.Menu(
         items: [
@@ -314,7 +321,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
                   : AppLocalizations.of(context)!.edit_with(photoshopName!),
               disabled: _photoshopPath == null,
               onClick: (_) => PlatformUtils.openFilesWithBundleIdentifier(
-                  SelectionModel.of(context).get, photoshopBundleId)),
+                  selection, photoshopBundleId)),
           ctxm.MenuItem(
             label: AppLocalizations.of(context)!.menuFileRename,
             disabled: selection.length != 1,
@@ -329,12 +336,12 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
             label: AppLocalizations.of(context)!.menuEditDelete,
-            onClick: (_) => _delete(SelectionModel.of(context).get),
+            onClick: (_) => _delete(selection),
           ),
         ],
       ),
       onBeforeShowMenu: () {
-        SelectionModel selectionModel = SelectionModel.of(context);
+        SelectionModel selectionModel = _selectionModel;
         if (selectionModel.contains(media.path) == false) {
           setState(() {
             selectionModel.set([media.path]);
@@ -372,7 +379,6 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     if (ModalRoute.of(context)?.isCurrent != true) {
       return;
     }
-    Selection selection = SelectionModel.of(context).get;
     switch (action) {
       case MenuAction.fileRefresh:
         _refresh();
@@ -435,7 +441,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   void _handleTap() {
     _focusNode.requestFocus();
     setState(() {
-      SelectionModel.of(context).clear();
+      _selectionModel.clear();
       _fileBeingRenamed = null;
     });
   }
@@ -444,10 +450,9 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     if (!media.isFile()) {
       widget.executeItem(folder: media.path);
     } else {
-      Selection selection = SelectionModel.of(context).get;
       if (!selection.contains(media.path)) {
         setState(() {
-          SelectionModel.of(context).set([media.path]);
+          _selectionModel.set([media.path]);
         });
       }
       List<String> images =
@@ -472,7 +477,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
 
     setState(() {
       if (_extendSelection == false) {
-        SelectionModel.of(context).clear();
+        _selectionModel.clear();
       }
       _dragSelectOrig = details.localPosition;
       _dragSelectRect = rc;
@@ -505,7 +510,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
       return;
     }
     setState(() {
-      SelectionModel selectionModel = SelectionModel.of(context);
+      SelectionModel selectionModel = _selectionModel;
       selectionModel.set(_mergeSelections(selectionModel.get, _dragSelection));
       _dragSelectOrig = null;
       _dragSelectRect = null;
@@ -526,7 +531,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   }
 
   int _selectionIndex() {
-    SelectionModel selectionModel = SelectionModel.of(context);
+    SelectionModel selectionModel = _selectionModel;
     if (selectionModel.get.length != 1) {
       return -1;
     } else {
@@ -538,7 +543,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     if (_items != null) {
       int index = _selectionIndex();
       index = min(index + 1, _items!.length - 1);
-      SelectionModel.of(context).set([_items![index].path]);
+      _selectionModel.set([_items![index].path]);
       _autoScrollController.scrollToIndex(index,
           preferPosition: AutoScrollPosition.middle);
     }
@@ -548,7 +553,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     if (_items != null) {
       int index = _selectionIndex();
       index = max(index - 1, 0);
-      SelectionModel.of(context).set([_items![index].path]);
+      _selectionModel.set([_items![index].path]);
       _autoScrollController.scrollToIndex(index,
           preferPosition: AutoScrollPosition.middle);
     }
@@ -573,7 +578,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     if (newName != '') {
       String? newPath = FileUtils.tryRename(file, newName);
       if (newPath != null) {
-        SelectionModel.of(context).set([newPath], notify: false);
+        _selectionModel.set([newPath], notify: false);
       }
     }
   }
@@ -586,12 +591,11 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
       }
     }
     setState(() {
-      SelectionModel.of(context).set(selection);
+      _selectionModel.set(selection);
     });
   }
 
   void _copyToClipboard() {
-    Selection selection = SelectionModel.of(context).get;
     if (selection.isNotEmpty) {
       Pasteboard.writeFiles(selection);
     }
@@ -611,7 +615,6 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
 
   void _rotateSelection(ImageTransformation transformation) async {
     _stopWatchDir();
-    Selection selection = SelectionModel.of(context).get;
     for (var filepath in selection) {
       bool rc = await ImageUtils.transformImage(filepath, transformation);
       if (rc && _items != null) {
