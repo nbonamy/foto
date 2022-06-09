@@ -184,14 +184,14 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
     Preferences prefs = Preferences.of(context);
     prefs.sortCriteria = sortCriteria;
     prefs.notifyListeners();
-    setState(() {});
+    //setState(() {});
   }
 
   void _toggleSortOrder() {
     Preferences prefs = Preferences.of(context);
     prefs.sortReversed = !prefs.sortReversed;
     prefs.notifyListeners();
-    setState(() {});
+    //setState(() {});
   }
 
   void _toggleSidebar() {
@@ -202,13 +202,13 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
     Preferences prefs = Preferences.of(context);
     prefs.showFolders = !prefs.showFolders;
     prefs.notifyListeners();
-    setState(() {});
+    //setState(() {});
   }
 
   void _toggleInspector() {
     Preferences prefs = Preferences.of(context);
     prefs.showInspector = !prefs.showInspector;
     prefs.notifyListeners();
-    setState(() {});
+    //setState(() {});
   }
 }
