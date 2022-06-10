@@ -6,13 +6,16 @@ import 'package:flutter/services.dart';
 class PlatformKeyboard {
   static bool isPrevious(RawKeyEvent event) {
     return (event.isKeyPressed(LogicalKeyboardKey.arrowLeft) ||
-            event.isKeyPressed(LogicalKeyboardKey.arrowUp)) &&
+            event.isKeyPressed(LogicalKeyboardKey.arrowUp) ||
+            event.isKeyPressed(LogicalKeyboardKey.bracketLeft)) &&
         !commandModifierPressed(event);
   }
 
   static bool isNext(RawKeyEvent event) {
     return (event.isKeyPressed(LogicalKeyboardKey.arrowRight) ||
-            event.isKeyPressed(LogicalKeyboardKey.arrowDown)) &&
+            event.isKeyPressed(LogicalKeyboardKey.arrowDown) ||
+            event.isKeyPressed(LogicalKeyboardKey.space) ||
+            event.isKeyPressed(LogicalKeyboardKey.bracketRight)) &&
         !commandModifierPressed(event);
   }
 
