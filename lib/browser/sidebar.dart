@@ -3,13 +3,14 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:foto/browser/tree.dart';
-import 'package:foto/model/favorites.dart';
-import 'package:foto/model/history.dart';
-import 'package:foto/utils/paths.dart';
-import 'package:foto/utils/utils.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
+
+import '../model/favorites.dart';
+import '../model/history.dart';
+import '../utils/paths.dart';
+import '../utils/utils.dart';
+import 'tree.dart';
 
 class RootNode {
   final String? _title;
@@ -216,8 +217,7 @@ class _SidebarState extends State<BrowserSidebar> {
     }
 
     // devices
-    sidebarContent
-        .add(Section(title: AppLocalizations.of(context)!.devices));
+    sidebarContent.add(Section(title: AppLocalizations.of(context)!.devices));
     for (var device in _devices) {
       sidebarContent.add(
         BrowserTree(

@@ -1,17 +1,18 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/services.dart';
-import 'package:foto/model/menu_actions.dart';
-import 'package:foto/model/selection.dart';
-import 'package:foto/utils/file_handler.dart';
-import 'package:foto/utils/media_utils.dart';
-import 'package:foto/model/preferences.dart';
-import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
-import 'package:foto/browser/browser.dart';
-import 'package:foto/viewer/viewer.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:window_manager/window_manager.dart';
+
+import 'browser/browser.dart';
+import 'model/menu_actions.dart';
+import 'model/preferences.dart';
+import 'model/selection.dart';
+import 'utils/file_handler.dart';
+import 'utils/media_utils.dart';
+import 'viewer/viewer.dart';
 
 class Home extends StatefulWidget {
   final List<String> args;

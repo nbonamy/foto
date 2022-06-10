@@ -1,15 +1,16 @@
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
-import 'package:foto/browser/content.dart';
-import 'package:foto/model/menu_actions.dart';
-import 'package:foto/browser/sidebar.dart';
-import 'package:foto/model/favorites.dart';
-import 'package:foto/model/history.dart';
-import 'package:foto/utils/database.dart';
-import 'package:foto/utils/paths.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:path/path.dart' as p;
+
+import '../model/favorites.dart';
+import '../model/history.dart';
+import '../model/menu_actions.dart';
+import '../utils/database.dart';
+import '../utils/paths.dart';
+import 'content.dart';
+import 'sidebar.dart';
 
 class Browser extends StatefulWidget {
   final Function viewImages;

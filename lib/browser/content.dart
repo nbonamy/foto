@@ -1,15 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:foto/browser/inspector.dart';
-import 'package:foto/model/menu_actions.dart';
-import 'package:foto/model/preferences.dart';
-import 'package:foto/utils/database.dart';
-import 'package:foto/utils/utils.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import '../model/menu_actions.dart';
+import '../model/preferences.dart';
+import '../utils/database.dart';
+import '../utils/utils.dart';
 import 'gallery.dart';
+import 'inspector.dart';
 
 class BrowserContent extends StatefulWidget {
   final MediaDb mediaDb;

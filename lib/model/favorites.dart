@@ -2,9 +2,10 @@ import 'dart:collection';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:foto/utils/paths.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../utils/paths.dart';
 
 class FavoritesModel extends ChangeNotifier {
   final List<String> _favorites = [];

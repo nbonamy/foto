@@ -1,18 +1,20 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:foto/components/context_menu.dart' as ctxm;
-import 'package:foto/components/theme.dart';
-import 'package:foto/model/favorites.dart';
-import 'package:foto/model/history.dart';
-import 'package:foto/utils/file.dart';
-import 'package:foto/utils/media_utils.dart';
-import 'package:foto/utils/paths.dart';
-import 'package:foto/utils/utils.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_treeview/flutter_treeview.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+import '../components/context_menu.dart' as ctxm;
+import '../components/theme.dart';
+import '../model/favorites.dart';
+import '../model/history.dart';
+import '../utils/file.dart';
+import '../utils/media_utils.dart';
+import '../utils/paths.dart';
+import '../utils/utils.dart';
 
 class BrowserTree extends StatefulWidget {
   const BrowserTree({

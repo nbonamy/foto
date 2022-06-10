@@ -1,9 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:foto/browser/thumbnail.dart';
-import 'package:foto/utils/paths.dart';
-import 'package:foto/utils/utils.dart';
+
+import '../browser/thumbnail.dart';
+import '../utils/paths.dart';
+import '../utils/utils.dart';
 
 class MediaItem {
   final String path;

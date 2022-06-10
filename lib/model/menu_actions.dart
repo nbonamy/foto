@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:foto/utils/platform_keyboard.dart';
+
+import '../utils/platform_keyboard.dart';
 
 typedef MenuActionController = StreamController<MenuAction>;
 typedef MenuActionStream = Stream<MenuAction>;

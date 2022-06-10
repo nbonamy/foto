@@ -1,10 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:foto/components/dialogs.dart';
-import 'package:foto/utils/platform_utils.dart';
-import 'package:path/path.dart' as p;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:path/path.dart' as p;
+
+import '../components/dialogs.dart';
+import 'platform_utils.dart';
 
 class FileUtils {
   static Future confirmDelete(

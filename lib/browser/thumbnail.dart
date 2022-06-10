@@ -1,9 +1,10 @@
 import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:foto/model/media.dart';
-import 'package:foto/utils/utils.dart';
 import 'package:macos_ui/macos_ui.dart';
+
+import '../model/media.dart';
+import '../utils/utils.dart';
 
 class Thumbnail extends StatefulWidget {
   static double thumbnailWidth() {

@@ -1,11 +1,12 @@
 import 'dart:io';
 
 import 'package:exif/exif.dart';
-import 'package:flutter/material.dart';
-import 'package:foto/model/selection.dart';
-import 'package:foto/utils/utils.dart';
 import 'package:filesize/filesize.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+import '../model/selection.dart';
+import '../utils/utils.dart';
 
 class InspectorValue {
   final String name;
@@ -55,7 +56,8 @@ class _InspectorState extends State<Inspector> {
     // rows
     List<InspectorValue> data = [];
     data.add(InspectorValue(t.exifFileName, Utils.pathTitle(_currentFile)!));
-    data.add(InspectorValue(t.exifFileSize, _fileStats?.size == null ? '' : filesize(_fileStats?.size)));
+    data.add(InspectorValue(t.exifFileSize,
+        _fileStats?.size == null ? '' : filesize(_fileStats?.size)));
     data.add(InspectorValue(
         t.exifCreationDate, _fileStats?.changed.toString() ?? ''));
     data.add(InspectorValue(

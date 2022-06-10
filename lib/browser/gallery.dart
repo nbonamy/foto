@@ -4,24 +4,25 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:foto/browser/thumbnail.dart';
-import 'package:foto/components/context_menu.dart' as ctxm;
-import 'package:foto/components/selectable.dart';
-import 'package:foto/model/media.dart';
-import 'package:foto/model/menu_actions.dart';
-import 'package:foto/model/selection.dart';
-import 'package:foto/utils/database.dart';
-import 'package:foto/utils/file.dart';
-import 'package:foto/utils/image_utils.dart';
-import 'package:foto/utils/media_utils.dart';
-import 'package:foto/utils/platform_keyboard.dart';
-import 'package:foto/model/preferences.dart';
-import 'package:foto/utils/platform_utils.dart';
-import 'package:pasteboard/pasteboard.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
+
+import '../components/context_menu.dart' as ctxm;
+import '../components/selectable.dart';
+import '../model/media.dart';
+import '../model/menu_actions.dart';
+import '../model/preferences.dart';
+import '../model/selection.dart';
+import '../utils/database.dart';
+import '../utils/file.dart';
+import '../utils/image_utils.dart';
+import '../utils/media_utils.dart';
+import '../utils/platform_keyboard.dart';
+import '../utils/platform_utils.dart';
+import 'thumbnail.dart';
 
 class ImageGallery extends StatefulWidget {
   final String path;

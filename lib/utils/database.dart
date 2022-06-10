@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:foto/model/media.dart';
-import 'package:foto/utils/image_utils.dart';
+import '../model/media.dart';
+import 'image_utils.dart';
 
 class MediaDb {
   final Map<String, MediaItem> _cache = {};

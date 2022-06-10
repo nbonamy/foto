@@ -1,10 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:foto/model/media.dart';
-import 'package:foto/model/preferences.dart';
-import 'package:foto/utils/database.dart';
 import 'package:path/path.dart' as p;
+
+import '../model/media.dart';
+import '../model/preferences.dart';
+import 'database.dart';
 
 class MediaUtils {
   static String getExtension(String file) {

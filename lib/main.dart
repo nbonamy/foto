@@ -1,17 +1,18 @@
-import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:foto/model/favorites.dart';
-import 'package:foto/model/history.dart';
-import 'package:foto/model/selection.dart';
-import 'package:foto/utils/platform_keyboard.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:foto/model/preferences.dart';
-import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:provider/provider.dart';
-import 'package:foto/home.dart';
-import 'package:foto/components/theme.dart';
+import 'package:window_manager/window_manager.dart';
+
+import 'components/theme.dart';
+import 'home.dart';
+import 'model/favorites.dart';
+import 'model/history.dart';
+import 'model/preferences.dart';
+import 'model/selection.dart';
+import 'utils/platform_keyboard.dart';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
