@@ -4,6 +4,22 @@ Image browser and viewer written in Flutter.
 
 Currently only developed and tested for MacOS.
 
+![foto](img/screenshot.jpg)
+
+
+## Instructions
+
+```
+flutter pub get
+flutter run -d macos
+```
+
+To build in Release mode and install in your Applications folder:
+
+```
+make deploy
+```
+
 ## TODO
 
 - [x] Favorites ordering
