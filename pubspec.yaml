@@ -44,4 +44,4 @@ flutter:
   assets:
     - assets/img/
     - assets/img/folders/
-  #  - assets/i18n/
+    # - assets/i18n/
