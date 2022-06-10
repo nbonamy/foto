@@ -185,9 +185,11 @@ packages:
   macos_ui:
     dependency: "direct main"
     description:
-      path: "../GitHub/macos_ui"
-      relative: true
-    source: path
+      path: "."
+      ref: HEAD
+      resolved-ref: d1e5682c002283fdc042240b98666d46a5c26bc7
+      url: "https://github.com/nbonamy/macos_ui"
+    source: git
     version: "1.4.1+1"
   matcher:
     dependency: transitive

@@ -23,7 +23,8 @@ dependencies:
   image_size_getter: ^2.1.1
   intl: any
   macos_ui:
-    path: ../GitHub/macos_ui
+    git:
+      url: https://github.com/nbonamy/macos_ui
   pasteboard: ^0.0.3
   path: ^1.8.1
   photo_view: ^0.14.0
