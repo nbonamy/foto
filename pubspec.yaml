@@ -15,7 +15,9 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  contextual_menu: ^0.1.1
+  contextual_menu:
+    git:
+      url: https://github.com/nbonamy/contextual_menu
   cupertino_icons: ^1.0.2
   exif: ^3.1.1
   filesize: ^2.0.1

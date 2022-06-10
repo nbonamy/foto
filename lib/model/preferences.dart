@@ -35,6 +35,10 @@ class Preferences extends ChangeNotifier {
     return false;
   }
 
+  static int get defaultSlideshowDurationMs {
+    return 3000;
+  }
+
   static Preferences of(BuildContext context) {
     return Provider.of<Preferences>(context, listen: false);
   }
@@ -96,6 +100,14 @@ class Preferences extends ChangeNotifier {
 
   set showInspector(bool show) {
     _prefs.setBool('browser.show_inspector', show);
+  }
+
+  int get slideshowDurationMs {
+    return _prefs.getInt('viewer.slideshow_duration') ?? Preferences.defaultSlideshowDurationMs;
+  }
+
+  set slideshowDurationMs(int durationMs) {
+    _prefs.setInt('viewer.slideshow_duration', durationMs);
   }
 
   Rect get windowBounds {

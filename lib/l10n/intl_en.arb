@@ -77,7 +77,22 @@
   "exifCameraModel": "Camera Model",
   "exifColorModel": "Color Model",
   "exifProfileName": "Profile Name",
-  
+
+  "viewerStartSlideShow": "Start Slideshow",
+  "viewerStopSlideShow": "Stop Slideshow",
+  "viewerFitScreen": "Fit Screen",
+  "viewerFillScreen": "Fill Screen",
+  "viewerZoom": "Zoom ",
+  "viewerZoomIn": "Zoom In",
+  "viewerZoomOut": "Zoom Out",
+  "viewerZoom100": "Zoom 1:1",
+  "viewerFirstImage": "First Image",
+  "viewerPreviousImage": "Previous Image",
+  "viewerNextImage": "Next Image",
+  "viewerLastImage": "Last Image",
+  "viewerToggleInfo": "Toggle Info Display",
+  "viewerClose": "Close",
+
   "appName": "foto"
 
 }

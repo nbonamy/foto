@@ -10,8 +10,23 @@ class Menu extends ncm.Menu {
   });
 }
 
+class ShortcutModifier extends ncm.ShortcutModifiers {
+  ShortcutModifier({
+    super.shift,
+    super.control,
+    super.command,
+    super.alt,
+  });
+}
+
 class MenuItem extends ncm.MenuItem {
   MenuItem.separator() : super.separator();
+
+  MenuItem.submenu({String? label, Menu? submenu})
+      : super.submenu(
+          label: label,
+          submenu: submenu,
+        );
 
   MenuItem({
     super.key,
@@ -22,6 +37,8 @@ class MenuItem extends ncm.MenuItem {
     super.icon,
     super.checked,
     super.disabled = false,
+    super.shortcutKey,
+    super.shortcutModifiers,
     super.submenu,
     super.onClick,
   });

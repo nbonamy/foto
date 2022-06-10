@@ -74,5 +74,20 @@
   "exifColorModel": "Modèle couleur",
   "exifProfileName": "Nom profil",
   
+  "viewerStartSlideShow": "Démarrer le diaporama",
+  "viewerStopSlideShow": "Arrêter le diaporama",
+  "viewerFitScreen": "Ajuster à l'écran",
+  "viewerFillScreen": "Remplir l'écran",
+  "viewerZoom": "Zoom",
+  "viewerZoomIn": "Zoomer",
+  "viewerZoomOut": "Dézoomer",
+  "viewerZoom100": "Zoom 1:1",
+  "viewerFirstImage": "Première image",
+  "viewerPreviousImage": "Image précédente",
+  "viewerNextImage": "Image suivante",
+  "viewerLastImage": "Dernière image",
+  "viewerToggleInfo": "Bascule affichage info",
+  "viewerClose": "Fermer",
+
   "appName": "foto"
 }

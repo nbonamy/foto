@@ -53,10 +53,12 @@ packages:
   contextual_menu:
     dependency: "direct main"
     description:
-      name: contextual_menu
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.1.1"
+      path: "."
+      ref: HEAD
+      resolved-ref: "8d70983c1d2e8fa8f6d2bdd987ac1243705162f2"
+      url: "https://github.com/nbonamy/contextual_menu"
+    source: git
+    version: "0.1.2"
   convert:
     dependency: transitive
     description:
@@ -208,10 +210,12 @@ packages:
   menu_base:
     dependency: transitive
     description:
-      name: menu_base
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.1.0"
+      path: "."
+      ref: HEAD
+      resolved-ref: a20747de2c737355cc15f380e9868506eb8ae2f0
+      url: "https://github.com/nbonamy/menu_base"
+    source: git
+    version: "0.2.0"
   meta:
     dependency: transitive
     description:
