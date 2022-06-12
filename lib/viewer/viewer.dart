@@ -208,7 +208,7 @@ class _ImageViewerState extends State<ImageViewer>
                 ctxm.MenuItem(
                   label: AppLocalizations.of(context)!.viewerZoom100,
                   shortcutKey: '=',
-                  onClick: (_) => _nozoom(),
+                  onClick: (_) => _noZoom(),
                 ),
               ],
             ),
@@ -309,7 +309,7 @@ class _ImageViewerState extends State<ImageViewer>
     }
   }
 
-  void _nozoom() {
+  void _noZoom() {
     _setScale(1.0);
   }
 
@@ -386,7 +386,7 @@ class _ImageViewerState extends State<ImageViewer>
       return KeyEventResult.handled;
     } else if (event.isKeyPressed(LogicalKeyboardKey.equal) ||
         event.isKeyPressed(LogicalKeyboardKey.numpadEqual)) {
-      _nozoom();
+      _noZoom();
       return KeyEventResult.handled;
     } else if (event.isKeyPressed(LogicalKeyboardKey.slash) ||
         event.isKeyPressed(LogicalKeyboardKey.numpadDivide)) {
@@ -510,11 +510,11 @@ class _ImageViewerState extends State<ImageViewer>
           _exit(false);
         } else {
           if (_index == widget.images.length) {
-            setState(() {
-              _index = _index - 1;
-            });
+            _previous();
           } else {
-            setState(() {});
+            setState(() {
+              _resetState();
+            });
           }
         }
       }
