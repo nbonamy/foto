@@ -130,33 +130,34 @@ class _BrowserTreeState extends State<BrowserTree> {
   }
 
   ctxm.Menu _buildMenu(FavoritesModel favorites, Node<dynamic> node) {
+    AppLocalizations t = AppLocalizations.of(context)!;
     return ctxm.Menu(
       items: [
         favorites.isFavorite(node.key)
             ? ctxm.MenuItem(
-                label: AppLocalizations.of(context)!.favoritesRemove,
+                label: t.favoritesRemove,
                 onClick: (_) => favorites.remove(node.key),
               )
             : ctxm.MenuItem(
-                label: AppLocalizations.of(context)!.favoritesAdd,
+                label: t.favoritesAdd,
                 onClick: (_) => favorites.add(node.key),
               ),
         ctxm.MenuItem.separator(),
         ctxm.MenuItem(
-          label: AppLocalizations.of(context)!.menuEditCopy,
+          label: t.menuEditCopy,
           onClick: (_) => Pasteboard.writeFiles([node.key]),
         ),
         ctxm.MenuItem(
-          label: AppLocalizations.of(context)!.menuEditPaste,
+          label: t.menuEditPaste,
           onClick: (_) => FileUtils.tryPaste(context, node.key, false),
         ),
         ctxm.MenuItem(
-          label: AppLocalizations.of(context)!.menuEditPasteMove,
+          label: t.menuEditPasteMove,
           onClick: (_) => FileUtils.tryPaste(context, node.key, true),
         ),
         ctxm.MenuItem.separator(),
         ctxm.MenuItem(
-          label: AppLocalizations.of(context)!.menuEditDelete,
+          label: t.menuEditDelete,
           onClick: (_) => FileUtils.confirmDelete(context, [node.key]),
         ),
       ],

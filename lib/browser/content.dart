@@ -118,6 +118,7 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
     const String tickOnPrefix = '✓';
     const String tickOffPrefix = '   ';
     Preferences prefs = Preferences.of(context);
+    AppLocalizations t = AppLocalizations.of(context)!;
     return ToolBar(
       title: Text(
         Utils.pathTitle(widget.path) ?? '',
@@ -135,41 +136,41 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
         ToolBarIconButton(
           icon: const MacosIcon(CupertinoIcons.sidebar_left),
           onPressed: _toggleSidebar,
-          label: AppLocalizations.of(context)!.toolbarToggleFolders,
+          label: t.toolbarToggleFolders,
           showLabel: false,
         ),
         ToolBarIconButton(
           icon: const MacosIcon(CupertinoIcons.folder),
           onPressed: _toggleShowFolders,
-          label: AppLocalizations.of(context)!.toolbarToggleFolders,
+          label: t.toolbarToggleFolders,
           showLabel: false,
         ),
         ToolBarIconButton(
           icon: const MacosIcon(CupertinoIcons.info_circle),
           onPressed: _toggleInspector,
-          label: AppLocalizations.of(context)!.toolbarToggleInspector,
+          label: t.toolbarToggleInspector,
           showLabel: false,
         ),
         ToolBarPullDownButton(
-          label: AppLocalizations.of(context)!.sortTitle,
+          label: t.sortTitle,
           icon: CupertinoIcons.sort_down_circle,
-          tooltipMessage: AppLocalizations.of(context)!.sortTitle,
+          tooltipMessage: t.sortTitle,
           items: [
             MacosPulldownMenuItem(
-              label: AppLocalizations.of(context)!.sortCriteriaAlphabetical,
+              label: t.sortCriteriaAlphabetical,
               title: Text(
                   '${(prefs.sortCriteria == SortCriteria.alphabetical) ? tickOnPrefix : tickOffPrefix} Sort Alphabetical'),
               onTap: () => _setSortCriteria(SortCriteria.alphabetical),
             ),
             MacosPulldownMenuItem(
-              label: AppLocalizations.of(context)!.sortCriteriaChronological,
+              label: t.sortCriteriaChronological,
               title: Text(
                   '${(prefs.sortCriteria == SortCriteria.chronological) ? tickOnPrefix : tickOffPrefix} Sort Chronological'),
               onTap: () => _setSortCriteria(SortCriteria.chronological),
             ),
             const MacosPulldownMenuDivider(),
             MacosPulldownMenuItem(
-              label: AppLocalizations.of(context)!.sortOrderReverse,
+              label: t.sortOrderReverse,
               title: Text(
                   '${prefs.sortReversed ? tickOnPrefix : tickOffPrefix} Reverse Order'),
               onTap: _toggleSortOrder,

@@ -313,34 +313,34 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     required MediaItem media,
     required Widget child,
   }) {
+    AppLocalizations t = AppLocalizations.of(context)!;
     return ctxm.ContextMenu(
       menu: ctxm.Menu(
         items: [
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.menuImageView,
+            label: t.menuImageView,
             onClick: (_) => _handleDoubleTap(media),
           ),
           ctxm.MenuItem(
-              label: _photoshopPath == null
-                  ? AppLocalizations.of(context)!.edit
-                  : AppLocalizations.of(context)!.edit_with(photoshopName!),
+              label:
+                  _photoshopPath == null ? t.edit : t.edit_with(photoshopName!),
               disabled: _photoshopPath == null,
               onClick: (_) => PlatformUtils.openFilesWithBundleIdentifier(
                   selection, photoshopBundleId)),
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.menuFileRename,
+            label: t.menuFileRename,
             disabled: selection.length != 1,
             onClick: (_) => _rename(media.path),
           ),
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.menuEditCopy,
+            label: t.menuEditCopy,
             disabled: selection.isEmpty,
             onClick: (_) => _copyToClipboard(),
           ),
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.menuEditDelete,
+            label: t.menuEditDelete,
             onClick: (_) => _delete(selection),
           ),
         ],

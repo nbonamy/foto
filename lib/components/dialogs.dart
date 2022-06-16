@@ -17,6 +17,7 @@ class FotoDialog {
     bool isDestructive = false,
     Color? barrierColor,
   }) {
+    AppLocalizations t = AppLocalizations.of(context)!;
     return showMacosAlertDialog(
       context: context,
       barrierColor: barrierColor,
@@ -42,7 +43,7 @@ class FotoDialog {
           isSecondary: isDestructive,
           buttonSize: ButtonSize.large,
           onPressed: () => onConfirmed(context),
-          child: Text(confirmLabel ?? AppLocalizations.of(context)!.yes),
+          child: Text(confirmLabel ?? t.yes),
         ),
         secondaryButton: PushButton(
           isSecondary: !isDestructive,
@@ -50,7 +51,7 @@ class FotoDialog {
           onPressed: () => onCancel != null
               ? onCancel(context)
               : Navigator.of(context).pop(),
-          child: Text(cancelLabel ?? AppLocalizations.of(context)!.cancel),
+          child: Text(cancelLabel ?? t.cancel),
         ),
       ),
     );
@@ -65,6 +66,7 @@ class FotoDialog {
     bool isDanger = false,
   }) {
     TextEditingController controller = TextEditingController(text: value);
+    AppLocalizations t = AppLocalizations.of(context)!;
     return showMacosSheet(
       context: context,
       builder: (context) => MacosSheet(
@@ -88,7 +90,7 @@ class FotoDialog {
                         onPressed: () => onCancel != null
                             ? onCancel(context)
                             : Navigator.of(context).pop(),
-                        child: Text(AppLocalizations.of(context)!.cancel),
+                        child: Text(t.cancel),
                       ),
                     ),
                     const SizedBox(width: 8.0),
@@ -98,7 +100,7 @@ class FotoDialog {
                         buttonSize: ButtonSize.small,
                         onPressed: () =>
                             onConfirmed(context, controller.value.text),
-                        child: Text(AppLocalizations.of(context)!.ok),
+                        child: Text(t.ok),
                       ),
                     ),
                   ],

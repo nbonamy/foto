@@ -167,46 +167,47 @@ class _ImageViewerState extends State<ImageViewer>
 
   Widget _getContextMenu(
       {required BuildContext context, required Widget child}) {
+    AppLocalizations t = AppLocalizations.of(context)!;
     return ctxm.ContextMenu(
       menu: ctxm.Menu(
         items: [
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
             label: _isSlideshowing()
-                ? AppLocalizations.of(context)!.viewerStopSlideShow
-                : AppLocalizations.of(context)!.viewerStartSlideShow,
+                ? t.viewerStopSlideShow
+                : t.viewerStartSlideShow,
             shortcutKey: 's',
             shortcutModifiers: ctxm.ShortcutModifier(command: true),
             onClick: (_) => _toggleSlideshow(),
           ),
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.viewerFitScreen,
+            label: t.viewerFitScreen,
             shortcutKey: '/',
             onClick: (_) => _fit(),
           ),
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.viewerFillScreen,
+            label: t.viewerFillScreen,
             shortcutKey: '.',
             onClick: (_) => _fill(),
           ),
           ctxm.MenuItem.submenu(
-            label: AppLocalizations.of(context)!.viewerZoom,
+            label: t.viewerZoom,
             submenu: ctxm.Menu(
               items: [
                 ctxm.MenuItem(
-                  label: AppLocalizations.of(context)!.viewerZoomIn,
+                  label: t.viewerZoomIn,
                   shortcutKey: '+',
                   onClick: (_) => _zoom(true),
                 ),
                 ctxm.MenuItem(
-                  label: AppLocalizations.of(context)!.viewerZoomOut,
+                  label: t.viewerZoomOut,
                   shortcutKey: '-',
                   onClick: (_) => _zoom(false),
                 ),
                 ctxm.MenuItem.separator(),
                 ctxm.MenuItem(
-                  label: AppLocalizations.of(context)!.viewerZoom100,
+                  label: t.viewerZoom100,
                   shortcutKey: '=',
                   onClick: (_) => _noZoom(),
                 ),
@@ -215,49 +216,49 @@ class _ImageViewerState extends State<ImageViewer>
           ),
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.viewerFirstImage,
+            label: t.viewerFirstImage,
             onClick: (_) => _first(),
           ),
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.viewerPreviousImage,
+            label: t.viewerPreviousImage,
             shortcutKey: '◀',
             onClick: (_) => _previous(),
           ),
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.viewerNextImage,
+            label: t.viewerNextImage,
             shortcutKey: '▶',
             onClick: (_) => _next(),
           ),
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.viewerLastImage,
+            label: t.viewerLastImage,
             onClick: (_) => _last(),
           ),
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.viewerToggleInfo,
+            label: t.viewerToggleInfo,
             shortcutKey: 'i',
             onClick: (_) => _toggleLevel(),
           ),
           ctxm.MenuItem.separator(),
           ctxm.MenuItem.submenu(
-            label: AppLocalizations.of(context)!.menuImageTransform,
+            label: t.menuImageTransform,
             submenu: ctxm.Menu(
               items: [
                 ctxm.MenuItem(
-                  label: AppLocalizations.of(context)!.menuImageRotate90CW,
+                  label: t.menuImageRotate90CW,
                   shortcutKey: '▶',
                   shortcutModifiers: ctxm.ShortcutModifier(command: true),
                   onClick: (_) => _rotateImage(ImageTransformation.rotate90CW),
                 ),
                 ctxm.MenuItem(
-                  label: AppLocalizations.of(context)!.menuImageRotate90CCW,
+                  label: t.menuImageRotate90CCW,
                   shortcutKey: '◀',
                   shortcutModifiers: ctxm.ShortcutModifier(command: true),
                   onClick: (_) => _rotateImage(ImageTransformation.rotate90CCW),
                 ),
                 ctxm.MenuItem.separator(),
                 ctxm.MenuItem(
-                  label: AppLocalizations.of(context)!.menuImageRotate180,
+                  label: t.menuImageRotate180,
                   shortcutKey: '▼',
                   shortcutModifiers: ctxm.ShortcutModifier(command: true),
                   onClick: (_) => _rotateImage(ImageTransformation.rotate180),
@@ -267,14 +268,14 @@ class _ImageViewerState extends State<ImageViewer>
           ),
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.menuEditDelete,
+            label: t.menuEditDelete,
             shortcutKey: '⌫',
             shortcutModifiers: ctxm.ShortcutModifier(command: true),
             onClick: (_) => _confirmDelete(),
           ),
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
-            label: AppLocalizations.of(context)!.viewerClose,
+            label: t.viewerClose,
             shortcutKey: '↩',
             onClick: (_) => _exit(true),
           ),

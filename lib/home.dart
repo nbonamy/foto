@@ -78,9 +78,10 @@ class _HomeState extends State<Home> with WindowListener {
   }
 
   List<MenuItem> _getMainMenu(BuildContext context) {
+    AppLocalizations t = AppLocalizations.of(context)!;
     return [
       PlatformMenu(
-        label: AppLocalizations.of(context)!.appName,
+        label: t.appName,
         menus: [
           const PlatformProvidedMenuItem(
             type: PlatformProvidedMenuItemType.about,
@@ -91,27 +92,27 @@ class _HomeState extends State<Home> with WindowListener {
         ],
       ),
       PlatformMenu(
-        label: AppLocalizations.of(context)!.menuFile,
+        label: t.menuFile,
         menus: [
           PlatformMenuItem(
-            label: AppLocalizations.of(context)!.menuFileRefresh,
+            label: t.menuFileRefresh,
             shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.keyR),
             onSelected: () => _onMenu(MenuAction.fileRefresh),
           ),
           PlatformMenuItem(
-            label: AppLocalizations.of(context)!.menuFileRename,
+            label: t.menuFileRename,
             //shortcut: const SingleActivator(LogicalKeyboardKey.enter),
             onSelected: () => _onMenu(MenuAction.fileRename),
           ),
         ],
       ),
       PlatformMenu(
-        label: AppLocalizations.of(context)!.menuEdit,
+        label: t.menuEdit,
         menus: [
           PlatformMenuItemGroup(
             members: [
               PlatformMenuItem(
-                label: AppLocalizations.of(context)!.menuEditSelectAll,
+                label: t.menuEditSelectAll,
                 shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.keyA),
                 onSelected: () => _onMenu(MenuAction.editSelectAll),
               ),
@@ -120,17 +121,17 @@ class _HomeState extends State<Home> with WindowListener {
           PlatformMenuItemGroup(
             members: [
               PlatformMenuItem(
-                label: AppLocalizations.of(context)!.menuEditCopy,
+                label: t.menuEditCopy,
                 shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.keyC),
                 onSelected: () => _onMenu(MenuAction.editCopy),
               ),
               PlatformMenuItem(
-                label: AppLocalizations.of(context)!.menuEditPaste,
+                label: t.menuEditPaste,
                 shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.keyV),
                 onSelected: () => _onMenu(MenuAction.editPaste),
               ),
               PlatformMenuItem(
-                label: AppLocalizations.of(context)!.menuEditPasteMove,
+                label: t.menuEditPasteMove,
                 shortcut: SingleActivator(
                   LogicalKeyboardKey.keyV,
                   alt: true,
@@ -140,7 +141,7 @@ class _HomeState extends State<Home> with WindowListener {
                 onSelected: () => _onMenu(MenuAction.editPasteMove),
               ),
               PlatformMenuItem(
-                label: AppLocalizations.of(context)!.menuEditDelete,
+                label: t.menuEditDelete,
                 shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.backspace),
                 onSelected: () => _onMenu(MenuAction.editDelete),
               ),
@@ -149,32 +150,32 @@ class _HomeState extends State<Home> with WindowListener {
         ],
       ),
       PlatformMenu(
-        label: AppLocalizations.of(context)!.menuImage,
+        label: t.menuImage,
         menus: [
           PlatformMenuItemGroup(
             members: [
               PlatformMenuItem(
-                label: AppLocalizations.of(context)!.menuImageView,
+                label: t.menuImageView,
                 shortcut: const SingleActivator(LogicalKeyboardKey.enter),
                 onSelected: () => _onMenu(MenuAction.imageView),
               ),
             ],
           ),
           PlatformMenu(
-            label: AppLocalizations.of(context)!.menuImageTransform,
+            label: t.menuImageTransform,
             menus: [
               PlatformMenuItem(
-                label: AppLocalizations.of(context)!.menuImageRotate90CW,
+                label: t.menuImageRotate90CW,
                 shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.arrowRight),
                 onSelected: () => _onMenu(MenuAction.imageRotate90cw),
               ),
               PlatformMenuItem(
-                label: AppLocalizations.of(context)!.menuImageRotate90CCW,
+                label: t.menuImageRotate90CCW,
                 shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.arrowLeft),
                 onSelected: () => _onMenu(MenuAction.imageRotate90ccw),
               ),
               PlatformMenuItem(
-                label: AppLocalizations.of(context)!.menuImageRotate180,
+                label: t.menuImageRotate180,
                 shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.arrowDown),
                 onSelected: () => _onMenu(MenuAction.imageRotate180),
               ),
@@ -183,10 +184,10 @@ class _HomeState extends State<Home> with WindowListener {
         ],
       ),
       PlatformMenu(
-        label: AppLocalizations.of(context)!.menuView,
+        label: t.menuView,
         menus: [
           PlatformMenuItem(
-            label: AppLocalizations.of(context)!.menuViewInspector,
+            label: t.menuViewInspector,
             shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.keyI),
             onSelected: () => _onMenu(MenuAction.viewInspector),
           ),
