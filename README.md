@@ -32,12 +32,12 @@ make deploy
   - [x] delete
   - [x] clipboard
   - [x] rename
-  - [ ] move
+  - [x] move
 - Folder operations
   - [x] delete
   - [x] clipboard
   - [ ] rename
-  - [ ] move
+  - [x] move
 - Image manipulations
   - [x] rotations
   - [ ] resize
