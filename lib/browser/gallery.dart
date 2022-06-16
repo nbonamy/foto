@@ -402,6 +402,9 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
       case MenuAction.editPaste:
         _pasteFromClipboard();
         break;
+      case MenuAction.editPasteMove:
+        _pasteMoveFromClipboard();
+        break;
       case MenuAction.editDelete:
         _delete(selection);
         break;
@@ -607,9 +610,11 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   }
 
   void _pasteFromClipboard() {
-    Pasteboard.files().then((files) {
-      FileUtils.tryCopy(context, files, widget.path);
-    });
+    FileUtils.tryPaste(context, widget.path, false);
+  }
+
+  void _pasteMoveFromClipboard() {
+    FileUtils.tryPaste(context, widget.path, true);
   }
 
   void _delete(List<String> paths) {

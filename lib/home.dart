@@ -12,6 +12,7 @@ import 'model/preferences.dart';
 import 'model/selection.dart';
 import 'utils/file_handler.dart';
 import 'utils/media_utils.dart';
+import 'utils/platform_keyboard.dart';
 import 'viewer/viewer.dart';
 
 class Home extends StatefulWidget {
@@ -127,6 +128,16 @@ class _HomeState extends State<Home> with WindowListener {
                 label: AppLocalizations.of(context)!.menuEditPaste,
                 shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.keyV),
                 onSelected: () => _onMenu(MenuAction.editPaste),
+              ),
+              PlatformMenuItem(
+                label: AppLocalizations.of(context)!.menuEditPasteMove,
+                shortcut: SingleActivator(
+                  LogicalKeyboardKey.keyV,
+                  alt: true,
+                  control: PlatformKeyboard.ctrlIsCommandModifier(),
+                  meta: PlatformKeyboard.metaIsCommandModifier(),
+                ),
+                onSelected: () => _onMenu(MenuAction.editPasteMove),
               ),
               PlatformMenuItem(
                 label: AppLocalizations.of(context)!.menuEditDelete,

@@ -146,6 +146,14 @@ class _BrowserTreeState extends State<BrowserTree> {
           label: AppLocalizations.of(context)!.menuEditCopy,
           onClick: (_) => Pasteboard.writeFiles([node.key]),
         ),
+        ctxm.MenuItem(
+          label: AppLocalizations.of(context)!.menuEditPaste,
+          onClick: (_) => FileUtils.tryPaste(context, node.key, false),
+        ),
+        ctxm.MenuItem(
+          label: AppLocalizations.of(context)!.menuEditPasteMove,
+          onClick: (_) => FileUtils.tryPaste(context, node.key, true),
+        ),
         ctxm.MenuItem.separator(),
         ctxm.MenuItem(
           label: AppLocalizations.of(context)!.menuEditDelete,

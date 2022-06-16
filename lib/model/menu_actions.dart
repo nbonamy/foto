@@ -14,6 +14,7 @@ enum MenuAction {
   editSelectAll,
   editCopy,
   editPaste,
+  editPasteMove,
   editDelete,
   imageView,
   imageRotate90cw,

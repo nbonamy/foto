@@ -12,6 +12,7 @@
   "menuEditSelectAll": "Select All",
   "menuEditCopy": "Copy",
   "menuEditPaste": "Paste",
+  "menuEditPasteMove": "Paste and Move",
   "menuEditDelete": "Move to Trash",
 
   "menuImage": "Image",

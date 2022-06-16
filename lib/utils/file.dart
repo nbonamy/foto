@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' as p;
 
 import '../components/dialogs.dart';
@@ -44,8 +45,14 @@ class FileUtils {
     return Future.wait(futures);
   }
 
-  static Future tryCopy(
-      BuildContext context, List<String> files, String destination) {
+  static Future tryPaste(BuildContext context, String destination, bool move) {
+    return Pasteboard.files().then((files) {
+      FileUtils.tryCopyOrMove(context, files, destination, move);
+    });
+  }
+
+  static Future tryCopyOrMove(
+      BuildContext context, List<String> files, String destination, bool move) {
     bool conflicts = false;
     Map<String, String> operations = {};
     for (var file in files) {
@@ -64,15 +71,25 @@ class FileUtils {
         isDestructive: true,
         onConfirmed: (context) {
           Navigator.of(context).pop();
-          copy(operations);
+          _copyOrMove(operations, move);
         },
       );
     } else {
-      return copy(operations);
+      return _copyOrMove(operations, move);
     }
   }
 
-  static Future copy(Map<String, String> operations) {
+  static Future _copyOrMove(Map<String, String> operations, bool move) {
+    return _copy(operations).then((dynamic) {
+      if (move) {
+        for (var file in operations.keys) {
+          File(file).delete();
+        }
+      }
+    });
+  }
+
+  static Future _copy(Map<String, String> operations) {
     List<Future> futures = [];
     operations.forEach((src, dst) {
       futures.add(File(src).copy(dst));
