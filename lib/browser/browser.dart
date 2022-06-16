@@ -29,18 +29,18 @@ class Browser extends StatefulWidget {
 class BrowserState extends State<Browser> {
   BuildContext? _navigatorContext;
   final MediaDb _mediaDb = MediaDb();
+  late HistoryModel _history;
 
   @override
   void initState() {
-    HistoryModel history = HistoryModel.of(context);
-    history.addListener(_onHistoryChange);
+    _history = HistoryModel.of(context);
+    _history.addListener(_onHistoryChange);
     super.initState();
   }
 
   @override
   void dispose() {
-    HistoryModel history = HistoryModel.of(context);
-    history.removeListener(_onHistoryChange);
+    _history.removeListener(_onHistoryChange);
     super.dispose();
   }
 
@@ -62,7 +62,7 @@ class BrowserState extends State<Browser> {
         _navigatorContext = context;
         return BrowserContent(
           mediaDb: _mediaDb,
-          path: HistoryModel.of(context).top,
+          path: _history.top,
           canNavigateBack: false,
           menuActionStream: widget.menuActionStream,
           navigateToFolder: _navigateToFolder,
@@ -76,15 +76,15 @@ class BrowserState extends State<Browser> {
 
   void _navigateToFolder(String path) {
     if (path == '..') {
-      HistoryModel.of(context).pop();
+      _history.pop();
     } else {
-      HistoryModel.of(context).push(path, true);
+      _history.push(path, true);
     }
   }
 
   void resetHistoryWithFile(String filepath) {
     String folder = p.dirname(filepath);
-    HistoryModel.of(context).reset(folder);
+    _history.reset(folder);
     Navigator.pushAndRemoveUntil(
       _navigatorContext!,
       _getContentRoute(initialSelection: [filepath]),
@@ -93,8 +93,7 @@ class BrowserState extends State<Browser> {
   }
 
   void _onHistoryChange() {
-    HistoryModel history = HistoryModel.of(context);
-    if (history.lastChangeIsPop) {
+    if (_history.lastChangeIsPop) {
       Navigator.pop(_navigatorContext!);
     } else {
       Navigator.push(
@@ -105,12 +104,11 @@ class BrowserState extends State<Browser> {
   }
 
   PageRoute _getContentRoute({String? path, List<String>? initialSelection}) {
-    HistoryModel history = HistoryModel.of(context);
     return PageRouteBuilder(
       pageBuilder: (_, __, ___) => BrowserContent(
         mediaDb: _mediaDb,
-        path: path ?? history.top,
-        canNavigateBack: history.get.length > 1,
+        path: path ?? _history.top,
+        canNavigateBack: _history.get.length > 1,
         menuActionStream: widget.menuActionStream,
         initialSelection: initialSelection,
         navigateToFolder: _navigateToFolder,
@@ -123,33 +121,32 @@ class BrowserState extends State<Browser> {
 
   void _initLocation(context) {
     // preferences
-    HistoryModel history = HistoryModel.of(context);
-    if (history.get.isNotEmpty) {
+    if (_history.get.isNotEmpty) {
       return;
     }
 
     // start with favorites
     var favorites = FavoritesModel.of(context).get;
     if (favorites.isNotEmpty) {
-      history.push(favorites.first, false);
+      _history.push(favorites.first, false);
       return;
     }
 
     // start with pictures
     var pictures = SystemPath.pictures();
     if (pictures != null && Directory(pictures).existsSync()) {
-      history.push(pictures, false);
+      _history.push(pictures, false);
       return;
     }
 
     // now home
     var home = SystemPath.home();
     if (home != null && Directory(home).existsSync()) {
-      history.push(home, false);
+      _history.push(home, false);
       return;
     }
 
     // devices should never be empty
-    history.push('/', false);
+    _history.push('/', false);
   }
 }
