@@ -11,7 +11,7 @@ import '../components/context_menu.dart' as ctxm;
 import '../components/theme.dart';
 import '../model/favorites.dart';
 import '../model/history.dart';
-import '../utils/file.dart';
+import '../utils/file_utils.dart';
 import '../utils/media_utils.dart';
 import '../utils/paths.dart';
 import '../utils/utils.dart';

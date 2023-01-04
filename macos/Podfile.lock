@@ -35,7 +35,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   contextual_menu: 6d35fb15942c0d8769f5eae8d3bda653994a6f5a
-  FlutterMacOS: 57701585bf7de1b3fc2bb61f6378d73bbdea8424
+  FlutterMacOS: ae6af50a8ea7d6103d888583d46bd8328a7e9811
   macos_ui: 125c911559d646194386d84c017ad6819122e2db
   pasteboard: 9b69dba6fedbb04866be632205d532fe2f6b1d99
   shared_preferences_macos: a64dc611287ed6cbe28fd1297898db1336975727

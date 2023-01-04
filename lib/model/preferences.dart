@@ -103,7 +103,8 @@ class Preferences extends ChangeNotifier {
   }
 
   int get slideshowDurationMs {
-    return _prefs.getInt('viewer.slideshow_duration') ?? Preferences.defaultSlideshowDurationMs;
+    return _prefs.getInt('viewer.slideshow_duration') ??
+        Preferences.defaultSlideshowDurationMs;
   }
 
   set slideshowDurationMs(int durationMs) {

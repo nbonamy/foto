@@ -44,20 +44,24 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 				let flutterController = controller as! FlutterViewController
 				
 				// file handler method
-				let fileMethodChannel = FlutterMethodChannel(name: "foto_file_handler/messages", binaryMessenger: flutterController.engine.binaryMessenger)
-				fileMethodChannel.setMethodCallHandler(_fileHandler);
+				let fileHandlerMethodChannel = FlutterMethodChannel(name: "foto_file_handler/messages", binaryMessenger: flutterController.engine.binaryMessenger)
+                fileHandlerMethodChannel.setMethodCallHandler(_fileHandler);
 				
 				// file handler event
-				let fileEventChannel = FlutterEventChannel(name: "foto_file_handler/events", binaryMessenger: flutterController.engine.binaryMessenger)
-				fileEventChannel.setStreamHandler(self);
+				let filHandlerEventChannel = FlutterEventChannel(name: "foto_file_handler/events", binaryMessenger: flutterController.engine.binaryMessenger)
+                filHandlerEventChannel.setStreamHandler(self);
 
 				// platform utils method
-				let platformMethodChannel = FlutterMethodChannel(name: "foto_platform_utils/messages", binaryMessenger: flutterController.engine.binaryMessenger)
-				platformMethodChannel.setMethodCallHandler(_platformHandler);
+				let platformUtilsMethodChannel = FlutterMethodChannel(name: "foto_platform_utils/messages", binaryMessenger: flutterController.engine.binaryMessenger)
+                platformUtilsMethodChannel.setMethodCallHandler(_platformUtilsHandler);
+				
+				// file utils method
+				let fileUtilsMethodChannel = FlutterMethodChannel(name: "foto_file_utils/messages", binaryMessenger: flutterController.engine.binaryMessenger)
+                fileUtilsMethodChannel.setMethodCallHandler(_fileUtilsHandler);
 				
 				// image utils method
-				let imageMethodChannel = FlutterMethodChannel(name: "foto_image_utils/messages", binaryMessenger: flutterController.engine.binaryMessenger)
-				imageMethodChannel.setMethodCallHandler(_imageHandler);
+				let imageUtilsMethodChannel = FlutterMethodChannel(name: "foto_image_utils/messages", binaryMessenger: flutterController.engine.binaryMessenger)
+                imageUtilsMethodChannel.setMethodCallHandler(_imageUtilsHandler);
 				
 			}
 		}
@@ -107,7 +111,7 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 		}
 	}
 	
-	func _platformHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
+	func _platformUtilsHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
 		if ("moveToTrash" == call.method) {
 			let filepath = call.arguments as! String;
 			FileUtils.moveItem(toTrash: filepath);
@@ -138,7 +142,19 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 		}
 	}
 	
-	func _imageHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
+	func _fileUtilsHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
+		if ("getCreationDate" == call.method) {
+			let filepath = call.arguments as! String;
+			let datetime = FileUtils.getCreationDate(forFile: filepath);
+			result(datetime!.timeIntervalSince1970);
+		} else if ("getModificationDate" == call.method) {
+			let filepath = call.arguments as! String;
+			let datetime = FileUtils.getModificationDate(forFile: filepath);
+			result(datetime!.timeIntervalSince1970);
+		}
+	}
+
+	func _imageUtilsHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
 		
 		if ("getCreationDate" == call.method) {
 			let filepath = call.arguments as! String;

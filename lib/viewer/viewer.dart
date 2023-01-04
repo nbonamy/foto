@@ -11,7 +11,7 @@ import 'package:window_manager/window_manager.dart';
 import '../components/context_menu.dart' as ctxm;
 import '../model/menu_actions.dart';
 import '../model/preferences.dart';
-import '../utils/file.dart';
+import '../utils/file_utils.dart';
 import '../utils/image_utils.dart';
 import '../utils/platform_keyboard.dart';
 import '../utils/utils.dart';

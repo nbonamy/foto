@@ -58,7 +58,7 @@ class MediaUtils {
           MediaItem mediaItem = await mediaDb.get(entity.path);
           items.add(mediaItem);
         } else {
-          items.add(MediaItem.forEntity(entity));
+          items.add(await MediaItem.forEntity(entity));
         }
       }
 

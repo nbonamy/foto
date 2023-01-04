@@ -69,7 +69,7 @@ class _HomeState extends State<Home> with WindowListener {
   Widget build(BuildContext context) {
     return PlatformMenuBar(
       menus: _getMainMenu(context),
-      body: Browser(
+      child: Browser(
         key: _keyBrowser,
         viewImages: viewImages,
         menuActionStream: _menuActionBrowserStream.stream,

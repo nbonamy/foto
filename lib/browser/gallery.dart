@@ -17,7 +17,7 @@ import '../model/menu_actions.dart';
 import '../model/preferences.dart';
 import '../model/selection.dart';
 import '../utils/database.dart';
-import '../utils/file.dart';
+import '../utils/file_utils.dart';
 import '../utils/image_utils.dart';
 import '../utils/media_utils.dart';
 import '../utils/platform_keyboard.dart';
@@ -194,6 +194,13 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
           sortCriteria: _preferences.sortCriteria,
           sortReversed: _preferences.sortReversed,
         );
+    Future.delayed(const Duration(milliseconds: 0), () async {
+      if (_items == null) return;
+      for (MediaItem mediaItem in _items!) {
+        if (mediaItem.mediaInfoParsed) continue;
+        await mediaItem.getMediaInfo();
+      }
+    });
     return _items!;
   }
 

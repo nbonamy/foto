@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import '../model/media.dart';
-import 'image_utils.dart';
 
 class MediaDb {
   final Map<String, MediaItem> _cache = {};
@@ -21,15 +20,8 @@ class MediaDb {
       }
     }
 
-    // get other data
-    DateTime creationDate = await ImageUtils.getCreationDate(filepath);
-
     // create info
-    MediaItem info = MediaItem.forFile(
-      filepath,
-      creationDate: creationDate,
-      modificationDate: lastModified,
-    );
+    MediaItem info = await MediaItem.forFile(filepath);
 
     // store and return
     _cache[filepath] = info;

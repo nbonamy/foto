@@ -3,12 +3,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../browser/thumbnail.dart';
+import '../utils/file_utils.dart';
+import '../utils/image_utils.dart';
 import '../utils/paths.dart';
 import '../utils/utils.dart';
 
 class MediaItem {
   final String path;
   final FileSystemEntityType entityType;
+  bool mediaInfoParsed;
   DateTime creationDate;
   DateTime modificationDate;
   SizeInt? imageSize;
@@ -16,7 +19,7 @@ class MediaItem {
   Image? thumbnail;
   final ValueNotifier<int> updateCounter = ValueNotifier<int>(0);
 
-  static MediaItem forEntity(FileSystemEntity entity) {
+  static Future<MediaItem> forEntity(FileSystemEntity entity) {
     if (entity is File) {
       return MediaItem.forFile(entity.path);
     } else {
@@ -24,44 +27,34 @@ class MediaItem {
     }
   }
 
-  static MediaItem forFile(
-    String filepath, {
-    DateTime? creationDate,
-    DateTime? modificationDate,
-  }) {
-    File file = File(filepath);
-    FileStat stats = file.statSync();
-    if (creationDate == null || modificationDate == null) {
-      creationDate = creationDate ?? stats.changed;
-      modificationDate = modificationDate ?? stats.modified;
-    }
+  static Future<MediaItem> forFile(String filepath) async {
     return MediaItem(
       path: filepath,
       entityType: FileSystemEntityType.file,
-      fileSize: stats.size,
-      creationDate: creationDate,
-      modificationDate: modificationDate,
-      imageSize: Utils.imageSize(filepath),
-      thumbnail: _fileThumbnail(file),
+      creationDate: await FileUtils.getCreationDate(filepath),
+      modificationDate: await FileUtils.getModificationDate(filepath),
+      mediaInfoParsed: false,
     );
   }
 
-  static MediaItem forFolder(String folderpath) {
+  static Future<MediaItem> forFolder(String folderpath) async {
     return MediaItem(
       path: folderpath,
       entityType: FileSystemEntityType.directory,
-      modificationDate: DateTime.now(),
-      creationDate: DateTime.now(),
+      creationDate: await FileUtils.getCreationDate(folderpath),
+      modificationDate: await FileUtils.getModificationDate(folderpath),
       thumbnail: Image.asset(SystemPath.getFolderNamedAsset(folderpath)),
+      mediaInfoParsed: true,
     );
   }
 
   MediaItem({
     required this.path,
     required this.entityType,
-    this.fileSize,
+    required this.mediaInfoParsed,
     required this.modificationDate,
     required this.creationDate,
+    this.fileSize,
     this.imageSize,
     this.thumbnail,
   });
@@ -109,6 +102,15 @@ class MediaItem {
     FileStat stats = file.statSync();
     creationDate = stats.changed;
     modificationDate = stats.modified;
+    evictFromCache();
+  }
+
+  Future<void> getMediaInfo() async {
+    fileSize = File(path).statSync().size;
+    creationDate = await ImageUtils.getCreationDate(path);
+    imageSize = Utils.imageSize(path);
+    thumbnail = _fileThumbnail(File(path));
+    mediaInfoParsed = true;
     evictFromCache();
   }
 

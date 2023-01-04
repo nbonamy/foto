@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' as p;
@@ -9,6 +10,20 @@ import '../components/dialogs.dart';
 import 'platform_utils.dart';
 
 class FileUtils {
+  static const MethodChannel _mChannel =
+      MethodChannel('foto_file_utils/messages');
+
+  static Future<DateTime> getCreationDate(String filepath) async {
+    double epoch = await _mChannel.invokeMethod('getCreationDate', filepath);
+    return DateTime.fromMillisecondsSinceEpoch(epoch.toInt() * 1000);
+  }
+
+  static Future<DateTime> getModificationDate(String filepath) async {
+    double epoch =
+        await _mChannel.invokeMethod('getModificationDate', filepath);
+    return DateTime.fromMillisecondsSinceEpoch(epoch.toInt() * 1000);
+  }
+
   static Future confirmDelete(
     BuildContext context,
     List<String> files, {
