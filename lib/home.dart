@@ -77,7 +77,7 @@ class _HomeState extends State<Home> with WindowListener {
     );
   }
 
-  List<MenuItem> _getMainMenu(BuildContext context) {
+  List<PlatformMenuItem> _getMainMenu(BuildContext context) {
     AppLocalizations t = AppLocalizations.of(context)!;
     return [
       PlatformMenu(

@@ -1,6 +1,6 @@
 import 'package:contextual_menu/contextual_menu.dart' as ncm;
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart' hide MenuItem;
+import 'package:flutter/material.dart';
 
 typedef BoolCallback = bool Function();
 

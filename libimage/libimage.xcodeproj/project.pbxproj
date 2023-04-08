@@ -482,7 +482,7 @@
 					/usr/local/Cellar/gettext/0.21/lib,
 					"$(PROJECT_DIR)/libexif",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.nabocorp.mac.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "../nbFoundation/** ../libimage/**";
@@ -513,7 +513,7 @@
 					/usr/local/Cellar/gettext/0.21/lib,
 					"$(PROJECT_DIR)/libexif",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.nabocorp.mac.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "../nbFoundation/** ../libimage/**";
