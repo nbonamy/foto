@@ -52,6 +52,9 @@ class BrowserState extends State<Browser> {
     Widget window = MacosWindow(
       sidebar: Sidebar(
         minWidth: 250,
+        decoration: const BoxDecoration(
+          color: Color.fromRGBO(210, 207, 202, 1.0),
+        ),
         builder: (context, controller) {
           return BrowserSidebar(
             scrollController: controller,

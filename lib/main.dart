@@ -18,7 +18,7 @@ void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
 
-  WindowOptions windowOptions = WindowOptions(
+  WindowOptions windowOptions = const WindowOptions(
     //size: rc.size,
     //center: true,
     backgroundColor: Colors.black,
