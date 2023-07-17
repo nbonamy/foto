@@ -73,8 +73,8 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
         if (prefs.showInspector) {
           widgets.add(
             ResizablePane(
-              minWidth: 180,
-              startWidth: 250,
+              minSize: 180,
+              startSize: 250,
               windowBreakpoint: 700,
               resizableSide: ResizableSide.left,
               builder: (_, __) => const Inspector(),
@@ -83,9 +83,13 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
         }
 
         // done
-        return MacosScaffold(
-          toolBar: buildToolbar(),
-          children: widgets,
+        return MacosOverlayFilter(
+          borderRadius: BorderRadius.zero,
+          child: MacosScaffold(
+            toolBar: buildToolbar(),
+            backgroundColor: Colors.white,
+            children: widgets,
+          ),
         );
       },
     );

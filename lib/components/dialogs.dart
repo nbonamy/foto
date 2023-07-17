@@ -40,14 +40,14 @@ class FotoDialog {
           style: MacosTheme.of(context).typography.callout,
         ),
         primaryButton: PushButton(
-          isSecondary: isDestructive,
-          buttonSize: ButtonSize.large,
+          secondary: isDestructive,
+          controlSize: ControlSize.large,
           onPressed: () => onConfirmed(context),
           child: Text(confirmLabel ?? t.yes),
         ),
         secondaryButton: PushButton(
-          isSecondary: !isDestructive,
-          buttonSize: ButtonSize.large,
+          secondary: !isDestructive,
+          controlSize: ControlSize.large,
           onPressed: () => onCancel != null
               ? onCancel(context)
               : Navigator.of(context).pop(),
@@ -85,8 +85,8 @@ class FotoDialog {
                   children: [
                     Expanded(
                       child: PushButton(
-                        buttonSize: ButtonSize.small,
-                        isSecondary: true,
+                        controlSize: ControlSize.small,
+                        secondary: true,
                         onPressed: () => onCancel != null
                             ? onCancel(context)
                             : Navigator.of(context).pop(),
@@ -97,7 +97,7 @@ class FotoDialog {
                     Expanded(
                       child: PushButton(
                         color: Colors.green,
-                        buttonSize: ButtonSize.small,
+                        controlSize: ControlSize.small,
                         onPressed: () =>
                             onConfirmed(context, controller.value.text),
                         child: Text(t.ok),

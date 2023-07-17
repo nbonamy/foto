@@ -21,7 +21,7 @@ void main(List<String> args) async {
   WindowOptions windowOptions = const WindowOptions(
     //size: rc.size,
     //center: true,
-    backgroundColor: Colors.black,
+    //backgroundColor: Colors.white,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
   );
@@ -92,7 +92,7 @@ class FotoApp extends StatelessWidget {
           darkTheme: MacosThemeData.dark(),
           themeMode: appTheme.mode,
           debugShowCheckedModeBanner: false,
-          color: Colors.black,
+          //color: Colors.black,
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,

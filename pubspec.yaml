@@ -24,7 +24,7 @@ dependencies:
   filesize: ^2.0.1
   flutter_treeview: ^1.0.7+1
   image_size_getter: ^2.1.1
-  intl: ^0.17.0
+  intl: ^0.18.0
   macos_ui:
     git:
       url: https://github.com/nbonamy/macos_ui
