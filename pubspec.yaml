@@ -24,6 +24,10 @@ dependencies:
   filesize: ^2.0.1
   flutter_treeview: ^1.0.7+1
   image_size_getter: ^2.1.1
+  image_size_getter_heic:
+    git:
+      url: https://github.com/nbonamy/dart_image_size_getter
+      path: image_size_getter_heic
   intl: ^0.18.0
   macos_ui:
     git:

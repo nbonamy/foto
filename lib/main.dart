@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:image_size_getter_heic/image_size_getter_heic.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -25,6 +26,9 @@ void main(List<String> args) async {
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
   );
+
+  // init image size getter plugins
+  ImageSizeGetter.registerDecoder(HeicDecoder());
 
   // load some stuff
   Preferences preferences = Preferences();
