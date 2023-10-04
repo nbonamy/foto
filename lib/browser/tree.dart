@@ -43,7 +43,11 @@ class _BrowserTreeState extends State<BrowserTree> {
   @override
   void initState() {
     List<Node> nodes = getRootNode(
-        widget.title, widget.root, widget.assetName, widget.selectedPath);
+      widget.title,
+      widget.root,
+      widget.assetName,
+      widget.selectedPath,
+    );
     _treeViewController = TreeViewController(
       children: nodes,
       selectedKey: widget.selectedPath,
@@ -73,6 +77,7 @@ class _BrowserTreeState extends State<BrowserTree> {
               return Material(
                 type: MaterialType.transparency,
                 child: TreeView(
+                  primary: false,
                   controller: _treeViewController!,
                   theme: _getTreeTheme(context, theme),
                   allowParentSelect: true,
