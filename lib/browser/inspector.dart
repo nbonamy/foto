@@ -55,47 +55,102 @@ class _InspectorState extends State<Inspector> {
 
     // rows
     List<InspectorValue> data = [];
-    data.add(InspectorValue(t.exifFileName, Utils.pathTitle(_currentFile)!));
-    data.add(InspectorValue(t.exifFileSize,
-        _fileStats?.size == null ? '' : filesize(_fileStats?.size)));
     data.add(InspectorValue(
-        t.exifCreationDate, _fileStats?.changed.toString() ?? ''));
+      t.exifFileName,
+      Utils.pathTitle(_currentFile)!,
+    ));
     data.add(InspectorValue(
-        t.exifCreationDate, _getExifTag('EXIF DateTimeOriginal')));
+      t.exifFileSize,
+      _fileStats?.size == null ? '' : filesize(_fileStats?.size),
+    ));
     data.add(InspectorValue(
-        t.exifImageSize,
-        _imageSize == null
-            ? ''
-            : '${_imageSize?.width} x ${_imageSize?.height}'));
-    data.add(
-        InspectorValue(t.exifOrientation, _getExifTag('Image Orientation')));
-    data.add(InspectorValue(t.exifSceneType, _getExifTag('EXIF SceneType')));
+      t.exifCreationDate,
+      _fileStats?.changed.toString().substring(0, 19) ?? '',
+    ));
     data.add(InspectorValue(
-        t.exifCaptureType, _getExifTag('EXIF SceneCaptureType')));
-    data.add(
-        InspectorValue(t.exifExposureMode, _getExifTag('EXIF ExposureMode')));
+      t.exifCaptureDate,
+      _getExifTag('EXIF DateTimeOriginal'),
+    ));
     data.add(InspectorValue(
-        t.exifExposureTime, _getExifTag('EXIF ExposureTime', suffix: ' s')));
-    data.add(InspectorValue(t.exifFNumber,
-        _getExifTag('EXIF FNumber', parseRatio: true, prefix: 'f')));
-    data.add(InspectorValue(t.exifFocalLength,
-        _getExifTag('EXIF FocalLength', parseRatio: true, suffix: ' mm')));
-    data.add(
-        InspectorValue(t.exifISORating, _getExifTag('EXIF ISOSpeedRatings')));
-    data.add(InspectorValue(t.exifExposureBias,
-        _getExifTag('EXIF ExposureBiasValue', suffix: ' EV')));
-    data.add(InspectorValue(t.exifFlashMode, _getExifTag('EXIF Flash')));
-    data.add(
-        InspectorValue(t.exifWhiteBalance, _getExifTag('EXIF WhiteBalance')));
-    data.add(InspectorValue(t.exifBrightness,
-        _getExifTag('EXIF BrightnessValue', parseRatio: true)));
-    data.add(InspectorValue(t.exifContrast, _getExifTag('EXIF Contrast')));
-    data.add(InspectorValue(t.exifSaturation, _getExifTag('EXIF Saturation')));
-    data.add(InspectorValue(t.exifSharpness, _getExifTag('EXIF Sharpness')));
-    data.add(InspectorValue(t.exifCameraMake, _getExifTag('Image Make')));
-    data.add(InspectorValue(t.exifCameraModel, _getExifTag('Image Model')));
-    data.add(InspectorValue(t.exifColorModel, _getExifTag('EXIF ColorSpace')));
-    data.add(InspectorValue(t.exifProfileName, _getExifTag('')));
+      t.exifImageSize,
+      _imageSize == null ? '' : '${_imageSize?.width} x ${_imageSize?.height}',
+    ));
+    data.add(InspectorValue(
+      t.exifOrientation,
+      _getExifTag('Image Orientation'),
+    ));
+    data.add(InspectorValue(
+      t.exifSceneType,
+      _getExifTag('EXIF SceneType'),
+    ));
+    data.add(InspectorValue(
+      t.exifCaptureType,
+      _getExifTag('EXIF SceneCaptureType'),
+    ));
+    data.add(InspectorValue(
+      t.exifExposureMode,
+      _getExifTag('EXIF ExposureMode'),
+    ));
+    data.add(InspectorValue(
+      t.exifExposureTime,
+      _getExifTag('EXIF ExposureTime', suffix: ' s'),
+    ));
+    data.add(InspectorValue(
+      t.exifFNumber,
+      _getExifTag('EXIF FNumber', parseRatio: true, prefix: 'f'),
+    ));
+    data.add(InspectorValue(
+      t.exifFocalLength,
+      _getExifTag('EXIF FocalLength', parseRatio: true, suffix: ' mm'),
+    ));
+    data.add(InspectorValue(
+      t.exifISORating,
+      _getExifTag('EXIF ISOSpeedRatings'),
+    ));
+    data.add(InspectorValue(
+      t.exifExposureBias,
+      _getExifTag('EXIF ExposureBiasValue', suffix: ' EV'),
+    ));
+    data.add(InspectorValue(
+      t.exifFlashMode,
+      _getExifTag('EXIF Flash'),
+    ));
+    data.add(InspectorValue(
+      t.exifWhiteBalance,
+      _getExifTag('EXIF WhiteBalance'),
+    ));
+    data.add(InspectorValue(
+      t.exifBrightness,
+      _getExifTag('EXIF BrightnessValue', parseRatio: true),
+    ));
+    data.add(InspectorValue(
+      t.exifContrast,
+      _getExifTag('EXIF Contrast'),
+    ));
+    data.add(InspectorValue(
+      t.exifSaturation,
+      _getExifTag('EXIF Saturation'),
+    ));
+    data.add(InspectorValue(
+      t.exifSharpness,
+      _getExifTag('EXIF Sharpness'),
+    ));
+    data.add(InspectorValue(
+      t.exifCameraMake,
+      _getExifTag('Image Make'),
+    ));
+    data.add(InspectorValue(
+      t.exifCameraModel,
+      _getExifTag('Image Model'),
+    ));
+    data.add(InspectorValue(
+      t.exifColorModel,
+      _getExifTag('EXIF ColorSpace'),
+    ));
+    data.add(InspectorValue(
+      t.exifProfileName,
+      _getExifTag(''),
+    ));
 
     // convert to rows
     List<TableRow> rows = [];
