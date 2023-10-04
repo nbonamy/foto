@@ -151,6 +151,17 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     // watcher
     _stopWatchDir();
     _dirSubscription = Directory(widget.path).watch().listen((event) {
+      // skip
+      if (event.type == FileSystemEvent.modify) {
+        FileSystemModifyEvent modifyEvent = event as FileSystemModifyEvent;
+        if (modifyEvent.contentChanged == false) {
+          return;
+        }
+      }
+
+      // debug
+      //print('Directory Watcher event: ${event.type} ${event.path}');
+
       // first evict modified images
       if (_items != null) {
         for (var item in _items!) {
