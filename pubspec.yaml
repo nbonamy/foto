@@ -19,7 +19,7 @@ dependencies:
     git:
       url: https://github.com/nbonamy/contextual_menu
   cupertino_icons: ^1.0.2
-  exif: ^3.1.4
+  exif: ^3.2.1
   file: ^6.1.4
   filesize: ^2.0.1
   flutter_treeview: ^1.0.7+1

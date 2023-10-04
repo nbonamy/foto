@@ -116,11 +116,25 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     if (widget.initialSelection != null) {
       _selectionModel.set(
         widget.initialSelection!,
-        notify: false,
+        notify: true,
       );
-    } else {
+      return;
+    } else if (_items != null && _items!.isNotEmpty) {
+      for (MediaItem item in _items!) {
+        if (item.isFile()) {
+          _selectionModel.set(
+            [item.path],
+            notify: true,
+          );
+          return;
+        }
+      }
+    }
+
+    // default
+    if (_selectionModel.get.isEmpty == false) {
       _selectionModel.clear(
-        notify: false,
+        notify: true,
       );
     }
   }
@@ -197,6 +211,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   }
 
   Future<List<MediaItem>> _getItems() async {
+    bool startedEmpty = _items == null;
     _items = _items ??
         await MediaUtils.getMediaFiles(
           widget.mediaDb,
@@ -205,6 +220,9 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
           sortCriteria: _preferences.sortCriteria,
           sortReversed: _preferences.sortReversed,
         );
+    if (startedEmpty) {
+      _initSelection();
+    }
     Future.delayed(const Duration(milliseconds: 0), () async {
       if (_items == null) return;
       for (MediaItem mediaItem in _items!) {
@@ -253,14 +271,13 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
           children: [
             Consumer<SelectionModel>(
               builder: (context, selectionModel, child) {
-                // merge selections
-                var selection =
-                    _mergeSelections(selectionModel.get, _dragSelection);
-
                 return FutureBuilder(
                     future: _getItems(),
                     builder: (context, snapshot) {
                       if (_items == null) return const SizedBox();
+                      // merge selections
+                      var selection =
+                          _mergeSelections(selectionModel.get, _dragSelection);
                       return GridView.builder(
                         shrinkWrap: true,
                         controller: _autoScrollController,
