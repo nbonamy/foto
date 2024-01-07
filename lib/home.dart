@@ -206,7 +206,12 @@ class _HomeState extends State<Home> with WindowListener {
 
   void viewImage(String image) async {
     var path = File(image).parent.path;
-    var items = await MediaUtils.getMediaFiles(null, path, includeDirs: false);
+    var items = await MediaUtils.getMediaFiles(
+      null,
+      path,
+      includeDirs: false,
+      sortCriteria: SortCriteria.alphabetical,
+    );
     var images = items.map<String>((e) => e.path).toList();
     var index = images.indexOf(image);
     viewImages(images, index);

@@ -134,7 +134,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     // default
     if (_selectionModel.get.isEmpty == false) {
       _selectionModel.clear(
-        notify: true,
+        notify: false,
       );
     }
   }
