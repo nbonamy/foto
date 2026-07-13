@@ -5,10 +5,10 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/l10n/app_localizations.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:provider/provider.dart';
 
 import '../components/context_menu.dart' as ctxm;
+import '../components/theme.dart';
 import '../model/favorites.dart';
 import '../model/history.dart';
 import '../utils/media_utils.dart';
@@ -150,8 +150,6 @@ class _SidebarState extends State<BrowserSidebar> {
         // now build
         return Focus(
           focusNode: _focusNode,
-          // The macOS default uses fast trackpad deceleration. An explicit
-          // BouncingScrollPhysics falls back to the slower iOS-style rate.
           child: CustomScrollView(
             controller: widget.scrollController,
             slivers: _buildSidebarSlivers(context, history, favorites),
@@ -259,7 +257,7 @@ class _SidebarState extends State<BrowserSidebar> {
 }
 
 class FavoriteShortcut extends StatelessWidget {
-  static const double rowExtent = 21;
+  static const double rowExtent = 34;
   static const double _iconSize = 16;
 
   final String path;
@@ -279,11 +277,10 @@ class FavoriteShortcut extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme.copyWith(
-          primary: const Color.fromARGB(255, 48, 105, 202),
-        );
-    final labelStyle = MacosTheme.of(context).typography.body.copyWith(
-          color: selected ? colorScheme.onPrimary : null,
+    final palette = FotoPalette.of(context);
+    final labelStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: selected ? palette.accent : palette.primaryText,
+          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
           fontSize: 12,
         );
     final row = Semantics(
@@ -296,16 +293,14 @@ class FavoriteShortcut extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
           onTap: onTap,
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 8),
+            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
             decoration: BoxDecoration(
-              color: selected ? colorScheme.primary : Colors.transparent,
-              borderRadius: BorderRadius.circular(4),
+              color: selected ? palette.selectionFill : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
             ),
             padding: const EdgeInsets.only(
-              left: 24,
-              right: 4,
-              top: 2.5,
-              bottom: 2.5,
+              left: 12,
+              right: 8,
             ),
             child: Row(
               children: [
@@ -332,9 +327,7 @@ class FavoriteShortcut extends StatelessWidget {
                     index: reorderIndex,
                     child: Icon(
                       CupertinoIcons.bars,
-                      color: selected
-                          ? colorScheme.onPrimary
-                          : const Color(0xFF86838A),
+                      color: selected ? palette.accent : palette.secondaryText,
                       size: _iconSize,
                     ),
                   ),
@@ -372,6 +365,7 @@ class Section extends StatelessWidget {
   const Section({super.key, required this.title});
   @override
   Widget build(BuildContext context) {
+    final palette = FotoPalette.of(context);
     return Container(
       padding: const EdgeInsets.only(
         left: 12,
@@ -381,11 +375,12 @@ class Section extends StatelessWidget {
       ),
       child: Text(
         title.toUpperCase(),
-        style: const TextStyle(
-          color: Color(0xFF86838A),
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: palette.secondaryText,
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
+              letterSpacing: 0.7,
+            ),
       ),
     );
   }

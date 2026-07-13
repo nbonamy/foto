@@ -239,23 +239,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
-  macos_ui:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: HEAD
-      resolved-ref: "7d0237505c6d24d952e23dd20d13db7400e5adb9"
-      url: "https://github.com/nbonamy/macos_ui"
-    source: git
-    version: "2.0.0-beta.9"
-  macos_window_utils:
-    dependency: transitive
-    description:
-      name: macos_window_utils
-      sha256: cb918e1ff0b31fdaa5cd8631eded7c24bd72e1025cf1f95c819e483f0057c652
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.9.1"
   matcher:
     dependency: transitive
     description:

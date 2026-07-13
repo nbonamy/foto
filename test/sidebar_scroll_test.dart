@@ -5,10 +5,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foto/browser/sidebar.dart';
 import 'package:foto/browser/tree.dart';
+import 'package:foto/components/theme.dart';
 import 'package:foto/l10n/app_localizations.dart';
 import 'package:foto/model/favorites.dart';
 import 'package:foto/model/history.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -32,8 +32,9 @@ void main() {
           ChangeNotifierProvider<FavoritesModel>.value(value: favorites),
           ChangeNotifierProvider<HistoryModel>.value(value: history),
         ],
-        child: MacosApp(
-          scrollBehavior: const _MacosTestScrollBehavior(),
+        child: MaterialApp(
+          theme: FotoTheme.light,
+          scrollBehavior: const FotoScrollBehavior(),
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
@@ -107,7 +108,9 @@ void main() {
           ChangeNotifierProvider<FavoritesModel>.value(value: favorites),
           ChangeNotifierProvider<HistoryModel>.value(value: history),
         ],
-        child: MacosApp(
+        child: MaterialApp(
+          theme: FotoTheme.light,
+          scrollBehavior: const FotoScrollBehavior(),
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
@@ -171,7 +174,9 @@ void main() {
     await tester.pumpWidget(
       ChangeNotifierProvider<FavoritesModel>.value(
         value: favorites,
-        child: MacosApp(
+        child: MaterialApp(
+          theme: FotoTheme.light,
+          scrollBehavior: const FotoScrollBehavior(),
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
@@ -227,11 +232,4 @@ void main() {
       expect(find.byType(Text).evaluate().length, lessThan(80));
     }
   });
-}
-
-class _MacosTestScrollBehavior extends MacosScrollBehavior {
-  const _MacosTestScrollBehavior();
-
-  @override
-  TargetPlatform getPlatform(BuildContext context) => TargetPlatform.macOS;
 }

@@ -81,9 +81,9 @@ Commit: `feat: replace browser toolbar with foto controls`
 
 ## Phase 4: sidebar redesign
 
-- [ ] Restyle Favorites and Devices with the airy gallery hierarchy in light and dark modes.
-- [ ] Preserve the single enclosing scroll viewport, non-scrollable favorites reorder list, and fixed-extent virtualized directory rows.
-- [ ] Preserve mounted-volume watching, favorite reordering/removal, tree expansion, selection, and context menus.
+- [x] Restyle Favorites and Devices with the airy gallery hierarchy in light and dark modes.
+- [x] Preserve the single enclosing scroll viewport, non-scrollable favorites reorder list, and fixed-extent virtualized directory rows.
+- [x] Preserve mounted-volume watching, favorite reordering/removal, tree expansion, selection, and context menus.
 - [ ] Add a rebuild-boundary regression test proving sidebar scrolling does not rebuild the browser shell.
 - [ ] Extend sidebar tests for hover, focus, selection, reorder behavior, empty favorites, and dark appearance.
 
@@ -113,9 +113,9 @@ Commit: `feat: redesign foto metadata inspector`
 
 ## Phase 7: dialogs and remaining controls
 
-- [ ] Replace `MacosAlertDialog`, `MacosSheet`, `PushButton`, and `MacosTextField` with Foto-owned Material-based components.
-- [ ] Preserve destructive confirmation, prompt validation, rename cancellation, and keyboard behavior.
-- [ ] Replace remaining `MacosTheme` typography and brightness reads with semantic theme tokens.
+- [x] Replace `MacosAlertDialog`, `MacosSheet`, `PushButton`, and `MacosTextField` with Foto-owned Material-based components.
+- [x] Preserve destructive confirmation, prompt submission, rename cancellation, and keyboard behavior.
+- [x] Replace remaining `MacosTheme` typography and brightness reads with semantic theme tokens.
 - [ ] Add dialog, prompt, rename, cancellation, semantics, and keyboard tests.
 
 Commit: `feat: replace foto dialogs and text inputs`
@@ -125,14 +125,16 @@ Commit: `feat: replace foto dialogs and text inputs`
 - [ ] Keep System mode following macOS appearance changes live.
 - [ ] Synchronize explicit Light and Dark choices with the native `NSVisualEffectView` appearance.
 - [ ] Verify the viewer remains intentionally dark and unaffected by browser appearance switching.
-- [ ] Remove every `macos_ui` import and remove the dependency from `pubspec.yaml` and the lockfile.
-- [ ] Require `rg "macos_ui|MacosApp|MacosWindow|MacosTheme" lib test pubspec.yaml` to return no matches.
+- [x] Remove every `macos_ui` import and remove the dependency from `pubspec.yaml` and the lockfile.
+- [x] Require `rg "macos_ui|MacosApp|MacosWindow|MacosTheme" lib test pubspec.yaml` to return no matches.
 - [ ] Add appearance synchronization tests at the Dart/native-channel boundary.
 
 Commits:
 
 - `feat: sync foto appearance with the native window`
 - `chore: remove macos ui`
+
+Dependency-removal checkpoint: `macos_ui` and its transitive `macos_window_utils` dependency are absent from the resolved package graph. The zero-reference search passed, analyzer passed, all 84 tests passed, and the macOS debug application built successfully.
 
 ## Phase 9: final verification
 

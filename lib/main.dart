@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:image_size_getter_heic/image_size_getter_heic.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -104,15 +103,6 @@ class FotoApp extends StatelessWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) {
-            final brightness = Theme.of(context).brightness;
-            return MacosTheme(
-              data: brightness == Brightness.dark
-                  ? MacosThemeData.dark()
-                  : MacosThemeData.light(),
-              child: child!,
-            );
-          },
           home: Home(args: args),
         );
       },

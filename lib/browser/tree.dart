@@ -3,12 +3,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:foto/l10n/app_localizations.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 
 import '../components/context_menu.dart' as ctxm;
+import '../components/theme.dart';
 import '../model/favorites.dart';
 import '../utils/file_utils.dart';
 import '../utils/media_utils.dart';
@@ -16,7 +16,7 @@ import '../utils/paths.dart';
 import '../utils/utils.dart';
 
 class BrowserTree extends StatefulWidget {
-  static const double rowExtent = 21;
+  static const double rowExtent = 32;
 
   const BrowserTree({
     super.key,
@@ -81,7 +81,7 @@ class _BrowserTreeState extends State<BrowserTree> {
       builder: (context, favorites, child) {
         final visibleNodes = _buildVisibleNodes();
         return SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           sliver: SliverFixedExtentList.builder(
             itemExtent: BrowserTree.rowExtent,
             itemCount: visibleNodes.length,
@@ -143,11 +143,10 @@ class _BrowserTreeState extends State<BrowserTree> {
     final path = node.path;
     final isExpanded = _expandedPaths.contains(path);
     final isSelected = widget.selectedPath == path;
-    final colorScheme = Theme.of(context).colorScheme.copyWith(
-          primary: const Color.fromARGB(255, 48, 105, 202),
-        );
-    final labelStyle = MacosTheme.of(context).typography.body.copyWith(
-          color: isSelected ? colorScheme.onPrimary : null,
+    final palette = FotoPalette.of(context);
+    final labelStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: isSelected ? palette.accent : palette.primaryText,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
           fontSize: 12,
         );
 
@@ -160,14 +159,14 @@ class _BrowserTreeState extends State<BrowserTree> {
           _updateSelectedPath(path);
         },
         child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 1),
           decoration: BoxDecoration(
-            color: isSelected ? colorScheme.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(4),
+            color: isSelected ? palette.selectionFill : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
           ),
           padding: EdgeInsets.only(
-            left: node.depth * _indent,
-            top: 2.5,
-            bottom: 2.5,
+            left: 8 + node.depth * _indent,
+            right: 8,
           ),
           child: Row(
             children: [
@@ -182,9 +181,7 @@ class _BrowserTreeState extends State<BrowserTree> {
                         ? Icons.keyboard_arrow_down
                         : Icons.keyboard_arrow_right,
                     size: _iconSize,
-                    color: isSelected
-                        ? colorScheme.onPrimary
-                        : MacosTheme.of(context).typography.body.color,
+                    color: isSelected ? palette.accent : palette.secondaryText,
                   ),
                 ),
               ),
