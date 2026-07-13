@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "8D07987417C38CCC00EEB4F9"
-               BuildableName = "nbImage.framework"
-               BlueprintName = "nbImage"
-               ReferencedContainer = "container:nbImage.xcodeproj">
+               BuildableName = "libimage.framework"
+               BlueprintName = "libimage"
+               ReferencedContainer = "container:libimage.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -44,9 +44,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8D07987417C38CCC00EEB4F9"
-            BuildableName = "nbImage.framework"
-            BlueprintName = "nbImage"
-            ReferencedContainer = "container:nbImage.xcodeproj">
+               BuildableName = "libimage.framework"
+               BlueprintName = "libimage"
+               ReferencedContainer = "container:libimage.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </LaunchAction>

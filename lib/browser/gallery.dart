@@ -4,7 +4,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:foto/l10n/app_localizations.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
@@ -34,7 +34,7 @@ class ImageGallery extends StatefulWidget {
   final List<String>? initialSelection;
 
   const ImageGallery({
-    Key? key,
+    super.key,
     required this.path,
     required this.mediaDb,
     required this.navigatorContext,
@@ -42,7 +42,7 @@ class ImageGallery extends StatefulWidget {
     required this.scrollController,
     required this.menuActionStream,
     this.initialSelection,
-  }) : super(key: key);
+  });
 
   @override
   State<StatefulWidget> createState() => _ImageGalleryState();
@@ -50,6 +50,10 @@ class ImageGallery extends StatefulWidget {
 
 class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   List<MediaItem>? _items;
+  Future<List<MediaItem>>? _itemsFuture;
+  int _loadGeneration = 0;
+  final Set<String> _metadataLoading = {};
+  final Set<String> _pendingModifiedPaths = {};
   String? _fileBeingRenamed;
 
   late Preferences _preferences;
@@ -59,6 +63,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   bool _extendSelection = false;
 
   StreamSubscription<FileSystemEvent>? _dirSubscription;
+  Timer? _reloadDebounce;
 
   final FocusNode _focusNode = FocusNode();
   late AutoScrollController _autoScrollController;
@@ -69,6 +74,10 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
 
   static const String photoshopBundleId = 'com.adobe.Photoshop';
   String? _photoshopPath;
+  bool _selectionInitialized = false;
+  late bool _showFolders;
+  late SortCriteria _sortCriteria;
+  late bool _sortReversed;
 
   String? get photoshopName {
     return _photoshopPath == null
@@ -82,24 +91,31 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
 
   @override
   void initState() {
-    _watchDir();
-    _findPhotoshop();
+    super.initState();
     _subscribeToMenu();
     _subscribeToSelection();
     _subscribeToPreferences();
     _initAutoScrollController();
     _initSelection();
-    super.initState();
+    _watchDir();
+    _findPhotoshop();
   }
 
   void _findPhotoshop() {
     PlatformUtils.bundlePathForIdentifier(photoshopBundleId).then((value) {
-      _photoshopPath = value;
+      if (mounted) {
+        setState(() => _photoshopPath = value);
+      }
+    }).onError((error, stackTrace) {
+      debugPrint('Unable to find Photoshop: $error');
     });
   }
 
   void _subscribeToPreferences() {
     _preferences = Preferences.of(context);
+    _showFolders = _preferences.showFolders;
+    _sortCriteria = _preferences.sortCriteria;
+    _sortReversed = _preferences.sortReversed;
     _preferences.addListener(_onPrefsChange);
   }
 
@@ -118,6 +134,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
         widget.initialSelection!,
         notify: true,
       );
+      _selectionInitialized = true;
       return;
     } else if (_items != null && _items!.isNotEmpty) {
       for (MediaItem item in _items!) {
@@ -126,6 +143,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
             [item.path],
             notify: true,
           );
+          _selectionInitialized = true;
           return;
         }
       }
@@ -149,10 +167,13 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
 
   @override
   void dispose() {
+    _reloadDebounce?.cancel();
     _stopWatchDir();
     cancelMenuSubscription();
     _preferences.removeListener(_onPrefsChange);
     _selectionModel.removeListener(_onSelectionChange);
+    _focusNode.dispose();
+    _autoScrollController.dispose();
     super.dispose();
   }
 
@@ -162,75 +183,145 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   }
 
   void _watchDir() {
-    // watcher
     _stopWatchDir();
-    _dirSubscription = Directory(widget.path).watch().listen((event) {
-      // skip
-      if (event.type == FileSystemEvent.modify) {
-        FileSystemModifyEvent modifyEvent = event as FileSystemModifyEvent;
-        if (modifyEvent.contentChanged == false) {
-          return;
-        }
-      }
-
-      // debug
-      //print('Directory Watcher event: ${event.type} ${event.path}');
-
-      // first evict modified images
-      if (_items != null) {
-        for (var item in _items!) {
-          item.checkForModification();
-        }
-      }
-
-      // now restore selection with still existing files
-      List<String> selection = [];
-      for (var file in selection) {
-        if (File(file).existsSync()) {
-          selection.add(file);
-        }
-      }
-      setState(() {
-        _items = null;
-        _selectionModel.set(selection);
+    try {
+      _dirSubscription = Directory(widget.path).watch().listen((event) {
+        unawaited(_handleDirectoryEvent(event));
+      }, onError: (Object error, StackTrace stackTrace) {
+        debugPrint('Unable to watch ${widget.path}: $error');
       });
+    } catch (error) {
+      debugPrint('Unable to watch ${widget.path}: $error');
+    }
+  }
+
+  Future<void> _handleDirectoryEvent(FileSystemEvent event) async {
+    // Ignore metadata-only modification events.
+    if (event is FileSystemModifyEvent && !event.contentChanged) return;
+
+    final modifiedPaths = <String>{};
+    final items = _items;
+    if (items != null) {
+      final eventPath = p.normalize(p.absolute(event.path));
+      var candidates = items
+          .where((item) => p.normalize(p.absolute(item.path)) == eventPath)
+          .toList(growable: false);
+
+      // Some platforms report a directory-wide modification instead of the
+      // individual changed file. Keep that uncommon fallback asynchronous.
+      if (candidates.isEmpty &&
+          event is FileSystemModifyEvent &&
+          (event.path.isEmpty ||
+              eventPath == p.normalize(p.absolute(widget.path)))) {
+        candidates =
+            items.where((item) => item.isFile()).toList(growable: false);
+      }
+      final modified = await Future.wait(
+        candidates.map((item) => item.checkForModification()),
+      );
+      for (var index = 0; index < candidates.length; index += 1) {
+        if (modified[index]) modifiedPaths.add(candidates[index].path);
+      }
+      _pendingModifiedPaths.addAll(modifiedPaths);
+    }
+
+    if (!mounted) return;
+    _reloadDebounce?.cancel();
+    _reloadDebounce = Timer(const Duration(milliseconds: 100), () async {
+      if (!mounted) return;
+      final modifiedPaths = Set<String>.of(_pendingModifiedPaths);
+      _pendingModifiedPaths.clear();
+      final existingSelection = <String>[];
+      final selectedPaths = selection.toList(growable: false);
+      for (final path in selectedPaths) {
+        if (await FileSystemEntity.type(path) !=
+            FileSystemEntityType.notFound) {
+          existingSelection.add(path);
+        }
+      }
+      if (!mounted) return;
+      _selectionModel.set(existingSelection);
+      if (existingSelection.any(modifiedPaths.contains)) {
+        _selectionModel.refresh();
+      }
+      _reloadItems();
     });
   }
 
   void _onPrefsChange() {
-    _items = null;
+    final reload = _showFolders != _preferences.showFolders ||
+        _sortCriteria != _preferences.sortCriteria ||
+        _sortReversed != _preferences.sortReversed;
+    _showFolders = _preferences.showFolders;
+    _sortCriteria = _preferences.sortCriteria;
+    _sortReversed = _preferences.sortReversed;
+    if (reload && mounted) {
+      _reloadItems();
+    }
   }
 
   void _onSelectionChange() {
     if (_items != null && selection.length == 1) {
       int index = _items!.indexWhere((it) => it.path == selection[0]);
-      if (index != -1) {
-        _autoScrollController.scrollToIndex(index);
+      if (index != -1 && _autoScrollController.hasClients) {
+        unawaited(_autoScrollController.scrollToIndex(index));
       }
     }
   }
 
   Future<List<MediaItem>> _getItems() async {
-    bool startedEmpty = _items == null;
-    _items = _items ??
-        await MediaUtils.getMediaFiles(
-          widget.mediaDb,
-          widget.path,
-          includeDirs: _preferences.showFolders,
-          sortCriteria: _preferences.sortCriteria,
-          sortReversed: _preferences.sortReversed,
-        );
-    if (startedEmpty) {
-      _initSelection();
+    return _itemsFuture ??= _loadItems();
+  }
+
+  Future<List<MediaItem>> _loadItems() async {
+    final generation = _loadGeneration;
+    final items = await MediaUtils.getMediaFiles(
+      widget.mediaDb,
+      widget.path,
+      includeDirs: _showFolders,
+      sortCriteria: _sortCriteria,
+      sortReversed: _sortReversed,
+    );
+    if (!mounted || generation != _loadGeneration) {
+      return items;
     }
-    Future.delayed(const Duration(milliseconds: 0), () async {
-      if (_items == null) return;
-      for (MediaItem mediaItem in _items!) {
-        if (mediaItem.mediaInfoParsed) continue;
-        await mediaItem.getMediaInfo();
+    _items = items;
+    if (!_selectionInitialized) {
+      _initSelection();
+      _selectionInitialized = true;
+    } else {
+      final itemPaths = items.map((item) => item.path).toSet();
+      _selectionModel.set(
+        selection.where(itemPaths.contains).toList(growable: false),
+      );
+    }
+    unawaited(_loadMediaInfo(items, generation));
+    return items;
+  }
+
+  Future<void> _loadMediaInfo(List<MediaItem> items, int generation) async {
+    for (final mediaItem in items) {
+      if (!mounted || generation != _loadGeneration) return;
+      if (mediaItem.mediaInfoParsed || !_metadataLoading.add(mediaItem.path)) {
+        continue;
       }
+      try {
+        await mediaItem.getMediaInfo();
+      } catch (error) {
+        debugPrint('Unable to read metadata for ${mediaItem.path}: $error');
+      } finally {
+        _metadataLoading.remove(mediaItem.path);
+      }
+    }
+  }
+
+  void _reloadItems() {
+    if (!mounted) return;
+    setState(() {
+      _loadGeneration += 1;
+      _items = null;
+      _itemsFuture = null;
     });
-    return _items!;
   }
 
   @override
@@ -243,14 +334,19 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
       //onFocusChange: (hasFocus) {
       //  if (hasFocus) debugPrint('gallery');
       //},
-      onKey: (_, event) {
+      onKeyEvent: (_, event) {
+        if (event is KeyUpEvent) {
+          _extendSelection =
+              PlatformKeyboard.selectionExtensionModifierPressed(event);
+          return KeyEventResult.ignored;
+        }
         if (_fileBeingRenamed == null) {
-          if (event.isKeyPressed(LogicalKeyboardKey.arrowRight) &&
+          if (event.logicalKey == LogicalKeyboardKey.arrowRight &&
               !PlatformKeyboard.commandModifierPressed(event)) {
             _selectNext();
             return KeyEventResult.handled;
           }
-          if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft) &&
+          if (event.logicalKey == LogicalKeyboardKey.arrowLeft &&
               !PlatformKeyboard.commandModifierPressed(event)) {
             _selectPrevious();
             return KeyEventResult.handled;
@@ -298,12 +394,14 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
                             child: GestureDetector(
                               onTapDown: (_) {
                                 _focusNode.requestFocus();
-                                _fileBeingRenamed = null;
-                                if (_extendSelection) {
-                                  selectionModel.add(media.path);
-                                } else {
-                                  selectionModel.set([media.path]);
-                                }
+                                setState(() {
+                                  _fileBeingRenamed = null;
+                                  if (_extendSelection) {
+                                    selectionModel.toggle(media.path);
+                                  } else {
+                                    selectionModel.set([media.path]);
+                                  }
+                                });
                               },
                               onDoubleTap: () {
                                 _focusNode.requestFocus();
@@ -445,9 +543,10 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
         break;
       case MenuAction.imageView:
         if (selection.isNotEmpty) {
-          var item = _items?.firstWhere((it) => it.path == selection[0]);
-          if (item != null) {
-            _handleDoubleTap(item);
+          final matches =
+              _items?.where((it) => it.path == selection[0]).toList();
+          if (matches != null && matches.isNotEmpty) {
+            _handleDoubleTap(matches.first);
           }
         } else if (_items != null) {
           for (var item in _items!) {
@@ -473,12 +572,12 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   }
 
   void _refresh() async {
-    for (var item in _items!) {
+    final items = _items;
+    if (items == null) return;
+    for (var item in items) {
       await item.evictFromCache();
     }
-    setState(() {
-      _items = null;
-    });
+    _reloadItems();
   }
 
   void _handleTap() {
@@ -499,10 +598,12 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
         });
       }
       List<String> images =
-          _items!.where((m) => m.isFile()).map((m) => m.path).toList();
+          (_items ?? []).where((m) => m.isFile()).map((m) => m.path).toList();
+      final index = images.indexOf(media.path);
+      if (index < 0) return;
       widget.executeItem(
         images: images,
-        index: images.indexOf(media.path),
+        index: index,
       );
     }
   }
@@ -562,7 +663,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   }
 
   List<String> _mergeSelections(List<String> orig, List<String> updates) {
-    List<String> updated = List.from(orig);
+    final updated = orig.toSet();
     for (String update in updates) {
       if (updated.contains(update)) {
         updated.remove(update);
@@ -570,7 +671,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
         updated.add(update);
       }
     }
-    return updated;
+    return updated.toList(growable: false);
   }
 
   int _selectionIndex() {
@@ -583,22 +684,30 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   }
 
   void _selectNext() {
-    if (_items != null) {
+    if (_items != null && _items!.isNotEmpty) {
       int index = _selectionIndex();
       index = min(index + 1, _items!.length - 1);
       _selectionModel.set([_items![index].path]);
-      _autoScrollController.scrollToIndex(index,
-          preferPosition: AutoScrollPosition.middle);
+      if (_autoScrollController.hasClients) {
+        unawaited(_autoScrollController.scrollToIndex(
+          index,
+          preferPosition: AutoScrollPosition.middle,
+        ));
+      }
     }
   }
 
   void _selectPrevious() {
-    if (_items != null) {
+    if (_items != null && _items!.isNotEmpty) {
       int index = _selectionIndex();
       index = max(index - 1, 0);
       _selectionModel.set([_items![index].path]);
-      _autoScrollController.scrollToIndex(index,
-          preferPosition: AutoScrollPosition.middle);
+      if (_autoScrollController.hasClients) {
+        unawaited(_autoScrollController.scrollToIndex(
+          index,
+          preferPosition: AutoScrollPosition.middle,
+        ));
+      }
     }
   }
 
@@ -608,25 +717,34 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     });
   }
 
-  void _onFileRenamed(file, newName) {
+  bool _onFileRenamed(String file, String? newName) {
     // we are just asked to end editing
     if (newName == null) {
       setState(() {
         _fileBeingRenamed = null;
       });
-      return;
+      return true;
     }
 
     // now do it
-    if (newName != '') {
+    if (newName.trim().isNotEmpty) {
       String? newPath = FileUtils.tryRename(file, newName);
       if (newPath != null) {
-        _selectionModel.set([newPath], notify: false);
+        if (_selectionModel.contains(file)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _selectionModel.contains(file)) {
+              _selectionModel.set([newPath]);
+            }
+          });
+        }
+        return true;
       }
     }
+    return false;
   }
 
   void _selectAll() {
+    if (_items == null) return;
     List<String> selection = [];
     for (var item in _items!) {
       if (item.isFile()) {
@@ -659,18 +777,32 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   }
 
   void _rotateSelection(ImageTransformation transformation) async {
+    final paths = selection.toList(growable: false);
+    var changed = false;
     _stopWatchDir();
-    for (var filepath in selection) {
-      bool rc = await ImageUtils.transformImage(filepath, transformation);
-      if (rc && _items != null) {
-        for (var item in _items!) {
-          if (item.path == filepath) {
-            item.evictFromCache();
-            break;
+    try {
+      for (var filepath in paths) {
+        bool rc = await ImageUtils.transformImage(filepath, transformation);
+        if (rc) {
+          changed = true;
+        }
+        if (rc && _items != null) {
+          for (var item in _items!) {
+            if (item.path == filepath) {
+              await item.refresh();
+              break;
+            }
           }
         }
       }
+    } finally {
+      if (mounted) {
+        if (changed) {
+          _selectionModel.refresh();
+          _reloadItems();
+        }
+        _watchDir();
+      }
     }
-    _watchDir();
   }
 }

@@ -16,7 +16,7 @@ class FavoritesModel extends ChangeNotifier {
     return Provider.of<FavoritesModel>(context, listen: false);
   }
 
-  init() async {
+  Future<void> init() async {
     await _load();
   }
 

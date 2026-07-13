@@ -1,7 +1,7 @@
 // ignore_for_file: unnecessary_brace_in_string_interps
 
+import 'dart:async';
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:exif/exif.dart';
 import 'package:filesize/filesize.dart';
@@ -26,9 +26,10 @@ class InfoOverlay extends StatefulWidget {
 }
 
 class _InfoOverlayState extends State<InfoOverlay> {
-  File? _file;
+  int? _fileSize;
   SizeInt? _imageSize;
   Map<String, IfdTag>? _exif;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -39,15 +40,44 @@ class _InfoOverlayState extends State<InfoOverlay> {
   @override
   void didUpdateWidget(covariant InfoOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _loadInfo();
+    if (oldWidget.image != widget.image) {
+      _loadInfo();
+    }
   }
 
   void _loadInfo() {
-    _file = File(widget.image);
-    _imageSize = Utils.imageSize(widget.image);
-    readExifFromFile(_file!).then((value) => setState(() {
-          _exif = value;
-        }));
+    final int generation = ++_loadGeneration;
+    final String image = widget.image;
+    final File file = File(image);
+
+    _fileSize = null;
+    _imageSize = null;
+    _exif = null;
+
+    try {
+      _fileSize = file.lengthSync();
+      _imageSize = Utils.imageSize(image);
+    } on FileSystemException {
+      // The file may have been moved or deleted while the viewer was open.
+    } on FormatException {
+      // Unsupported or partially-written images simply omit dimensions.
+    } catch (_) {
+      // Image decoders may throw package-specific errors for invalid files.
+    }
+
+    unawaited(_readExif(file, image, generation));
+  }
+
+  Future<void> _readExif(File file, String image, int generation) async {
+    try {
+      final Map<String, IfdTag> value = await readExifFromFile(file);
+      if (!mounted || generation != _loadGeneration || image != widget.image) {
+        return;
+      }
+      setState(() => _exif = value);
+    } catch (_) {
+      // Missing or malformed EXIF data is not an error for the viewer.
+    }
   }
 
   @override
@@ -72,7 +102,7 @@ class _InfoOverlayState extends State<InfoOverlay> {
     if (_imageSize != null) {
       if (prefs.overlayLevel == OverlayLevel.image ||
           prefs.overlayLevel == OverlayLevel.exif) {
-        var size = filesize(_file?.lengthSync());
+        var size = filesize(_fileSize ?? 0);
         texts.add(Text(
           '${_imageSize!.width} x ${_imageSize!.height} pixels${widget.scale != null ? ' (Zoom x${widget.scale?.toStringAsFixed(4)})' : ''}, ${size}',
           style: textStyle,
@@ -82,9 +112,13 @@ class _InfoOverlayState extends State<InfoOverlay> {
         // date time original
         String? datetime = _exif?['EXIF DateTimeOriginal']?.printable;
         if (datetime != null) {
-          DateFormat format = DateFormat('yyyy:MM:dd HH:mm:ss');
-          DateTime dt = format.parse(datetime);
-          texts.add(Text(DateFormat().format(dt), style: textStyle));
+          try {
+            DateFormat format = DateFormat('yyyy:MM:dd HH:mm:ss');
+            DateTime dt = format.parseStrict(datetime);
+            texts.add(Text(DateFormat().format(dt), style: textStyle));
+          } on FormatException {
+            // Ignore malformed dates while keeping the remaining EXIF fields.
+          }
         }
 
         // picture info

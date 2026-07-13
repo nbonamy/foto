@@ -42,7 +42,8 @@
     // Calculate compositing rectangles
     NSRect sourceRect;
     if (cropping) {
-        float destX, destY;
+        float destX = 0.0;
+        float destY = 0.0;
         if (resizeMethod == MGImageResizeCrop) {
             // Crop center
             destX = round((scaledWidth - targetWidth) / 2.0);
@@ -85,15 +86,17 @@
 
 - (NSImage *)imageToFitSize:(NSSize)size method:(MGImageResizingMethod)resizeMethod
 {
-    NSImage *result = [[NSImage alloc] initWithSize:size];
-    
-    // Composite image appropriately
-    [result lockFocus];
-    [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
-	[self drawInRect:NSMakeRect(0,0,size.width,size.height) operation:NSCompositeSourceOver fraction:1.0 method:resizeMethod];
-    [result unlockFocus];
-    
-    return [result autorelease];
+	NSImage* sourceImage = self;
+	return [NSImage imageWithSize:size
+													flipped:NO
+										drawingHandler:^BOOL(NSRect destinationRect) {
+		[NSGraphicsContext currentContext].imageInterpolation = NSImageInterpolationHigh;
+		[sourceImage drawInRect:destinationRect
+							 operation:NSCompositingOperationSourceOver
+								fraction:1.0
+									method:resizeMethod];
+		return YES;
+	}];
 }
 
 - (NSImage *)imageCroppedToFitSize:(NSSize)size

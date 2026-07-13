@@ -13,11 +13,12 @@ NSMutableDictionary* iconCache;
 
 @implementation FileUtils
 
-+ (BOOL) isFile:(NSString*) path conformingTo:(CFStringRef) UTType orHasExtensionIn:(NSArray*) extensions {
++ (BOOL) isFile:(NSString*) path conformingTo:(UTType*) contentType orHasExtensionIn:(NSArray*) extensions {
 
 	// first check UTType
-	NSString* type = [[NSWorkspace sharedWorkspace] typeOfFile:path error:nil];
-	if (UTTypeConformsTo((__bridge CFStringRef) type, UTType)) {
+	UTType* fileType = nil;
+	[[NSURL fileURLWithPath:path] getResourceValue:&fileType forKey:NSURLContentTypeKey error:nil];
+	if ([fileType conformsToType:contentType]) {
 		return TRUE;
 	}
 		
@@ -33,15 +34,15 @@ NSMutableDictionary* iconCache;
 
 + (BOOL) isImageFile:(NSString*) path {
 	
-	NSArray* extensions = [NSArray arrayWithObjects:@"jpg", @"jpeg", @"png", @"gif", @"heic", @"tif", @"tiff", nil];
-	return [FileUtils isFile:path conformingTo:kUTTypeImage orHasExtensionIn:extensions];
+	NSArray* extensions = [NSArray arrayWithObjects:@"jpg", @"jpeg", @"png", @"gif", @"heic", @"tif", @"tiff", @"webp", nil];
+	return [FileUtils isFile:path conformingTo:UTTypeImage orHasExtensionIn:extensions];
 	
 }
 
 + (BOOL) isVideoFile:(NSString*) path {
 	
 	NSArray* extensions = [NSArray arrayWithObjects:@"mov", @"mp4", @"avi", @"mkv", @"divx", @"ts", @"mts", @"m2ts", nil];
-	return [FileUtils isFile:path conformingTo:kUTTypeMovie orHasExtensionIn:extensions];
+	return [FileUtils isFile:path conformingTo:UTTypeMovie orHasExtensionIn:extensions];
 
 }
 
@@ -74,14 +75,11 @@ NSMutableDictionary* iconCache;
 
 }
 
-+ (void) moveItemToTrash:(NSString*) path {
-	
-	[[NSWorkspace sharedWorkspace] performFileOperation:NSWorkspaceRecycleOperation
-																							 source:[path stringByDeletingLastPathComponent]
-																					destination:@""
-																								files:[NSArray arrayWithObject:[path lastPathComponent]]
-																									tag:nil];
-	
++ (BOOL) moveItemToTrash:(NSString*) path error:(NSError**) error {
+	NSURL* itemURL = [NSURL fileURLWithPath:path];
+	return [[NSFileManager defaultManager] trashItemAtURL:itemURL
+												 resultingItemURL:nil
+																 error:error];
 }
 
 + (NSDate*) getCreationDateForFile:(NSString*) file  {

@@ -113,7 +113,7 @@
 	// draw original image
 	[self drawInRect:result.bounds
 					fromRect:NSZeroRect
-				 operation:NSCompositeSourceOver
+				 operation:NSCompositingOperationSourceOver
 					fraction:1.0
 		respectFlipped:TRUE
 						 hints:nil];
@@ -191,7 +191,7 @@
 		[affTransform concat];
 		[self drawInRect:imageBounds
 						fromRect:NSZeroRect
-					 operation:NSCompositeCopy
+					 operation:NSCompositingOperationCopy
 						fraction:1.0
 			respectFlipped:YES
 							 hints:nil];

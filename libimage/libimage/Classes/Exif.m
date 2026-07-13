@@ -29,6 +29,13 @@
 	return self;
 }
 
+- (void) dealloc {
+	if (exifData != nil) {
+		exif_data_unref(exifData);
+		exifData = nil;
+	}
+}
+
 - (NSString*) getTagValue:(ExifTag) tag {
 	
 	// check
@@ -40,6 +47,9 @@
 	char value[1024];
 	memset(value, 0, 1024);
 	ExifEntry* entry = exif_data_get_entry(exifData, tag);
+	if (entry == nil) {
+		return nil;
+	}
 	if (exif_entry_get_value(entry, value, 1024) != NULL) {
 		return [[NSString alloc] initWithCString:value encoding:NSUTF8StringEncoding];
 	} else {
@@ -52,17 +62,17 @@
 
 	// try with ImageIO
 	CGImageRef ioThumbnail = nil;
-	CGImageSourceRef isr = CGImageSourceCreateWithURL((CFURLRef)CFBridgingRetain([NSURL fileURLWithPath:file]), NULL);
+	CGImageSourceRef isr = CGImageSourceCreateWithURL((__bridge CFURLRef)[NSURL fileURLWithPath:file], NULL);
 	if (isr)
 	{
 		// create a thumbnail:
 		// - specify max pixel size
 		// - create the thumbnail with honoring the EXIF orientation flag (correct transform)
-		ioThumbnail = CGImageSourceCreateThumbnailAtIndex (isr, 0, (CFDictionaryRef)CFBridgingRetain(
-									  [NSDictionary dictionaryWithObjectsAndKeys:
+		NSDictionary* options = [NSDictionary dictionaryWithObjectsAndKeys:
 										 [NSNumber numberWithInt: 256],  kCGImageSourceThumbnailMaxPixelSize,
 										 (id) kCFBooleanTrue, kCGImageSourceCreateThumbnailWithTransform,
-										 NULL]));
+										 NULL];
+		ioThumbnail = CGImageSourceCreateThumbnailAtIndex(isr, 0, (__bridge CFDictionaryRef)options);
 		CFRelease(isr);
 	}
 	
@@ -91,24 +101,6 @@
 			NSData* data = [NSData dataWithBytes:exifData->data length:exifData->size];
 			exifThumbnail = [[NSImage alloc] initWithData:data];
 			
-			// rotate
-			if (exifThumbnail != nil) {
-				
-				// check for orientation tag
-				ExifEntry* exifOrientation = exif_data_get_entry(exifData, EXIF_TAG_ORIENTATION);
-				if (exifOrientation != nil) {
-					
-					// get it
-					ExifByteOrder exifByteOrder = exif_data_get_byte_order(exifData);
-					int orientation = orientation = exif_get_short(exifOrientation->data, exifByteOrder);
-					
-					// rotate thumbnail
-					//exifThumbnail = [Exif rotateImage:exifThumbnail forExifOrientation:orientation];
-				}
-				
-				
-			}
-			
 		}
 		
 		// free
@@ -134,6 +126,7 @@
 		// get full image
 		NSImage* image = [[NSImage alloc] initWithContentsOfFile:file];
 		if (image == nil) {
+			exif_data_unref(exifData);
 			return FALSE;
 		}
 		
@@ -155,7 +148,11 @@
 		
 		// now save it
 		NSString* tempFile = [NSFileManager temporaryFilename];
-		[thumbnail saveAsJpeg:tempFile compressed:EXIF_THUMBNAIL_JPEG_COMPRESSION];
+		if (![thumbnail saveAsJpeg:tempFile compressed:EXIF_THUMBNAIL_JPEG_COMPRESSION]) {
+			[[NSFileManager defaultManager] removeItemAtPath:tempFile error:nil];
+			exif_data_unref(exifData);
+			return FALSE;
+		}
 		
 		// now read thumbnail
 		FILE* f = fopen([tempFile UTF8String], "rb");
@@ -164,13 +161,15 @@
 			// set its data into exifData
 			fseek(f, 0, SEEK_END);
 			exifData->size = (unsigned int) ftell(f);
-			exifData->data = malloc(sizeof(char) * exifData->size);
+			exifData->data = malloc(sizeof(unsigned char) * exifData->size);
 			fseek(f, 0, SEEK_SET);
 			fread(exifData->data, sizeof(char), exifData->size, f);
 			
 			// done
 			fclose(f);
 		} else {
+			[[NSFileManager defaultManager] removeItemAtPath:tempFile error:nil];
+			exif_data_unref(exifData);
 			return FALSE;
 		}
 		
@@ -229,10 +228,8 @@
 	// done
 	exif_data_unref(exifData);
 	
-	// swap
-	if ([[NSFileManager defaultManager] removeItemAtPath:path error:nil] == TRUE) {
-		[[NSFileManager defaultManager] moveItemAtPath:tempFile toPath:path error:nil];
-	}
+	// swap without deleting the original until the replacement is ready
+	[FileUtils replaceFile:path withFile:tempFile isTemporary:TRUE];
 
 }
 
@@ -259,10 +256,8 @@
 		// done
 		exif_data_unref(exifData);
 		
-		// swap
-		if ([[NSFileManager defaultManager] removeItemAtPath:destination error:nil] == TRUE) {
-			[[NSFileManager defaultManager] moveItemAtPath:tempFile toPath:destination error:nil];
-		}
+		// swap without deleting the destination until the replacement is ready
+		[FileUtils replaceFile:destination withFile:tempFile isTemporary:TRUE];
 		
 	}
 

@@ -1,16 +1,15 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_treeview/flutter_treeview.dart';
+import 'package:foto/l10n/app_localizations.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:pasteboard/pasteboard.dart';
+import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 
 import '../components/context_menu.dart' as ctxm;
-import '../components/theme.dart';
 import '../model/favorites.dart';
-import '../model/history.dart';
 import '../utils/file_utils.dart';
 import '../utils/media_utils.dart';
 import '../utils/paths.dart';
@@ -18,344 +17,365 @@ import '../utils/utils.dart';
 
 class BrowserTree extends StatefulWidget {
   const BrowserTree({
-    Key? key,
+    super.key,
     required this.root,
     this.title,
     this.assetName,
     this.selectedPath,
     required this.onUpdate,
-  }) : super(key: key);
+  });
 
   final String root;
   final String? title;
   final String? assetName;
   final String? selectedPath;
-  final Function onUpdate;
+  final void Function(String root, String selectedPath) onUpdate;
 
   @override
-  State<StatefulWidget> createState() => _BrowserTreeState();
+  State<BrowserTree> createState() => _BrowserTreeState();
 }
 
 class _BrowserTreeState extends State<BrowserTree> {
-  TreeViewController? _treeViewController;
+  static const double _indent = 16;
+  static const double _iconSize = 16;
+
   final FocusNode _focusNode = FocusNode();
+  final Set<String> _expandedPaths = {};
+  final Map<String, List<Directory>> _folderCache = {};
+  final Set<String> _loadingPaths = {};
+  final Map<String, StreamSubscription<FileSystemEvent>> _folderWatchers = {};
+  final Map<String, Timer> _reloadDebounces = {};
 
   @override
   void initState() {
-    List<Node> nodes = getRootNode(
-      widget.title,
-      widget.root,
-      widget.assetName,
-      widget.selectedPath,
-    );
-    _treeViewController = TreeViewController(
-      children: nodes,
-      selectedKey: widget.selectedPath,
-    );
     super.initState();
+    _expandAncestorsOfSelection();
   }
 
   @override
   void didUpdateWidget(covariant BrowserTree oldWidget) {
-    if (widget.selectedPath != oldWidget.selectedPath) {
-      _treeViewController = _treeViewController == null
-          ? null
-          : TreeViewController(
-              children: _treeViewController!.children,
-              selectedKey: widget.selectedPath,
-            );
-    }
     super.didUpdateWidget(oldWidget);
+    if (widget.root != oldWidget.root) {
+      _cancelAllWatchers();
+      _expandedPaths.clear();
+      _folderCache.clear();
+    }
+    if (widget.root != oldWidget.root ||
+        widget.selectedPath != oldWidget.selectedPath) {
+      _expandAncestorsOfSelection();
+      _reloadExpandedSubtree(widget.root);
+    }
+  }
+
+  @override
+  void dispose() {
+    _cancelAllWatchers();
+    _focusNode.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget tree = _treeViewController == null
-        ? const SizedBox()
-        : Consumer3<AppTheme, HistoryModel, FavoritesModel>(
-            builder: (context, theme, history, favorites, child) {
-              return Material(
-                type: MaterialType.transparency,
-                child: TreeView(
-                  primary: false,
-                  controller: _treeViewController!,
-                  theme: _getTreeTheme(context, theme),
-                  allowParentSelect: true,
-                  shrinkWrap: true,
-                  nodeBuilder: (context, node) {
-                    return ctxm.ContextMenu(
-                      menu: _buildMenu(favorites, node),
-                      child: _buildNodeLabel(
-                        _treeViewController!,
-                        node,
-                        _getTreeTheme(context, theme),
-                      ),
-                    );
-                  },
-                  onNodeTap: (key) {
-                    _focusNode.requestFocus();
-                    updateSelectedPath(history, key);
-                  },
-                  onExpansionChanged: (key, state) {
-                    _focusNode.requestFocus();
-                    expandPath(key, state);
-                  },
-                ),
-              );
-            },
-          );
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-      ),
-      child: /*Focus(
-        focusNode: _focusNode,
-        debugLabel: widget.root,
-        //onFocusChange: (hasFocus) {
-        //  if (hasFocus) debugPrint(widget.root);
-        //},
-        onKey: (_, event) {
-          var selectedPath = _treeViewController?.selectedKey;
-          if (selectedPath == null) return KeyEventResult.ignored;
-          if (PlatformKeyboard.isDelete(event)) {
-            FileUtils.confirmDelete(context, [selectedPath]);
-            return KeyEventResult.handled;
-          } else if (PlatformKeyboard.isCopy(event)) {
-            Pasteboard.writeFiles([selectedPath]);
-            return KeyEventResult.handled;
-          } else {
-            return KeyEventResult.ignored;
-          }
-        },
-        child: */
-          tree,
-      //),
+    return Consumer<FavoritesModel>(
+      builder: (context, favorites, child) {
+        return Material(
+          type: MaterialType.transparency,
+          child: Focus(
+            focusNode: _focusNode,
+            debugLabel: widget.root,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: _buildNode(
+                favorites: favorites,
+                path: widget.root,
+                label: widget.title ?? Utils.pathTitle(widget.root) ?? '',
+                assetName: widget.assetName,
+                depth: 0,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
-  ctxm.Menu _buildMenu(FavoritesModel favorites, Node<dynamic> node) {
-    AppLocalizations t = AppLocalizations.of(context)!;
+  Widget _buildNode({
+    required FavoritesModel favorites,
+    required String path,
+    required String label,
+    required int depth,
+    String? assetName,
+  }) {
+    final isExpanded = _expandedPaths.contains(path);
+    if (isExpanded && !_folderCache.containsKey(path)) {
+      unawaited(_loadFolders(path));
+    }
+    final isSelected = widget.selectedPath == path;
+    final colorScheme = Theme.of(context).colorScheme.copyWith(
+          primary: const Color.fromARGB(255, 48, 105, 202),
+        );
+    final labelStyle = MacosTheme.of(context).typography.body.copyWith(
+          color: isSelected ? colorScheme.onPrimary : null,
+          fontSize: 12,
+        );
+
+    final row = MouseRegion(
+      cursor: SystemMouseCursors.basic,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          _focusNode.requestFocus();
+          _updateSelectedPath(path);
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: isSelected ? colorScheme.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          padding: EdgeInsets.only(
+            left: depth * _indent,
+            top: 2.5,
+            bottom: 2.5,
+          ),
+          child: Row(
+            children: [
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _toggleExpanded(path),
+                child: SizedBox(
+                  width: _iconSize,
+                  height: _iconSize,
+                  child: Icon(
+                    isExpanded
+                        ? Icons.keyboard_arrow_down
+                        : Icons.keyboard_arrow_right,
+                    size: _iconSize,
+                    color: isSelected
+                        ? colorScheme.onPrimary
+                        : MacosTheme.of(context).typography.body.color,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: _iconSize,
+                height: _iconSize,
+                child: Image.asset(
+                  assetName ?? SystemPath.getFolderNamedAsset(null),
+                  width: _iconSize,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: labelStyle,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ctxm.ContextMenu(
+          menu: _buildMenu(favorites, path),
+          child: row,
+        ),
+        if (isExpanded)
+          for (final folder in _folderCache[path] ?? const <Directory>[])
+            _buildNode(
+              favorites: favorites,
+              path: folder.path,
+              label: Utils.pathTitle(folder.path) ?? '',
+              assetName: SystemPath.getFolderNamedAsset(folder.path),
+              depth: depth + 1,
+            ),
+      ],
+    );
+  }
+
+  ctxm.Menu _buildMenu(FavoritesModel favorites, String path) {
+    final t = AppLocalizations.of(context)!;
     return ctxm.Menu(
       items: [
-        favorites.isFavorite(node.key)
+        favorites.isFavorite(path)
             ? ctxm.MenuItem(
                 label: t.favoritesRemove,
-                onClick: (_) => favorites.remove(node.key),
+                onClick: (_) => favorites.remove(path),
               )
             : ctxm.MenuItem(
                 label: t.favoritesAdd,
-                onClick: (_) => favorites.add(node.key),
+                onClick: (_) => favorites.add(path),
               ),
         ctxm.MenuItem.separator(),
         ctxm.MenuItem(
           label: t.menuEditCopy,
-          onClick: (_) => Pasteboard.writeFiles([node.key]),
+          onClick: (_) => Pasteboard.writeFiles([path]),
         ),
         ctxm.MenuItem(
           label: t.menuEditPaste,
-          onClick: (_) => FileUtils.tryPaste(context, node.key, false),
+          onClick: (_) => FileUtils.tryPaste(context, path, false),
         ),
         ctxm.MenuItem(
           label: t.menuEditPasteMove,
-          onClick: (_) => FileUtils.tryPaste(context, node.key, true),
+          onClick: (_) => FileUtils.tryPaste(context, path, true),
         ),
         ctxm.MenuItem.separator(),
         ctxm.MenuItem(
           label: t.menuEditDelete,
-          onClick: (_) => FileUtils.confirmDelete(context, [node.key]),
+          onClick: (_) => FileUtils.confirmDelete(context, [path]),
         ),
       ],
     );
   }
 
-  TreeViewTheme _getTreeTheme(BuildContext context, AppTheme appTheme) {
-    TreeViewTheme treeViewTheme = TreeViewTheme(
-      expanderTheme: ExpanderThemeData(
-        type: ExpanderType.chevron,
-        modifier: ExpanderModifier.none,
-        position: ExpanderPosition.start,
-        size: 16,
-        color: MacosTheme.of(context).typography.body.color,
-      ),
-      labelStyle: MacosTheme.of(context).typography.body.copyWith(fontSize: 12),
-      parentLabelStyle:
-          MacosTheme.of(context).typography.body.copyWith(fontSize: 12),
-      colorScheme: Theme.of(context)
-          .colorScheme
-          .copyWith(primary: const Color.fromARGB(255, 48, 105, 202)),
-      iconTheme: const IconThemeData(
-        size: 16,
-      ),
-      iconPadding: 16,
-      verticalSpacing: 2.5,
-      parentLabelOverflow: TextOverflow.ellipsis,
-      labelOverflow: TextOverflow.ellipsis,
-    );
-    return treeViewTheme;
+  void _updateSelectedPath(String selectedPath) {
+    widget.onUpdate(widget.root, selectedPath);
   }
 
-  Widget _buildNodeIcon(
-      TreeViewController controller, Node node, TreeViewTheme theme) {
-    return Container(
-      alignment: Alignment.center,
-      width: theme.iconTheme.size! + theme.iconPadding,
-      child: Image.asset(
-        node.data ?? SystemPath.getFolderNamedAsset(null),
-        width: theme.iconTheme.size,
-      ),
-    );
-  }
-
-  Widget _buildNodeLabel(
-      TreeViewController controller, Node node, TreeViewTheme theme) {
-    bool isSelected =
-        controller.selectedKey != null && controller.selectedKey == node.key;
-    final icon = _buildNodeIcon(controller, node, theme);
-    return MouseRegion(
-      cursor: SystemMouseCursors.basic,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          vertical: theme.verticalSpacing ?? (theme.dense ? 10 : 15),
-          horizontal: node.isParent ? 0 : 2,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            icon,
-            Expanded(
-              child: Text(
-                node.label,
-                softWrap: node.isParent
-                    ? theme.parentLabelOverflow == null
-                    : theme.labelOverflow == null,
-                overflow: node.isParent
-                    ? theme.parentLabelOverflow
-                    : theme.labelOverflow,
-                style: node.isParent
-                    ? theme.parentLabelStyle.copyWith(
-                        fontWeight: theme.parentLabelStyle.fontWeight,
-                        color: isSelected
-                            ? theme.colorScheme.onPrimary
-                            : theme.parentLabelStyle.color,
-                      )
-                    : theme.labelStyle.copyWith(
-                        fontWeight: theme.labelStyle.fontWeight,
-                        color: isSelected ? theme.colorScheme.onPrimary : null,
-                      ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void updateSelectedPath(HistoryModel historyModel, String selectedPath) {
-    historyModel.push(selectedPath, true);
-    widget.onUpdate(widget.root);
-  }
-
-  void expandPath(String path, bool expanded) {
-    Node? node = _treeViewController!.getNode(path);
-    if (node != null) {
-      List<Node> nodes = [];
-      if (!expanded) {
-        nodes = _treeViewController!.updateNode(
-          path,
-          node.copyWith(
-            expanded: false,
-          ),
-        );
-      } else if (node.isParent && node.children.isEmpty) {
-        nodes = _treeViewController!.updateNode(
-          path,
-          node.copyWith(
-            expanded: true,
-            children: getNodes(path, path),
-            parent: false,
-          ),
-        );
+  void _toggleExpanded(String path) {
+    _focusNode.requestFocus();
+    setState(() {
+      if (_expandedPaths.remove(path)) {
+        _stopWatchingAtOrBelow(path);
       } else {
-        nodes = _treeViewController!.updateNode(
-          path,
-          node.copyWith(
-            expanded: true,
-          ),
-        );
+        _expandedPaths.add(path);
+        _reloadExpandedSubtree(path);
       }
-      setState(() {
-        _treeViewController = _treeViewController!.copyWith(
-          children: nodes,
-        );
-      });
+    });
+  }
+
+  void _expandAncestorsOfSelection() {
+    final selectedPath = widget.selectedPath;
+    if (selectedPath == null ||
+        selectedPath == widget.root ||
+        !MediaUtils.isPathAtOrBelow(selectedPath, widget.root)) {
+      return;
+    }
+
+    var ancestor = p.dirname(selectedPath);
+    while (MediaUtils.isPathAtOrBelow(ancestor, widget.root)) {
+      _expandedPaths.add(ancestor);
+      if (ancestor == widget.root) {
+        break;
+      }
+      final parent = p.dirname(ancestor);
+      if (parent == ancestor) {
+        break;
+      }
+      ancestor = parent;
     }
   }
 
-  List<Node> getRootNode(
-    String? title,
-    String path,
-    String? assetName,
-    String? selectedPath,
-  ) {
-    List<Node> children = [];
-
-    if (selectedPath != null && selectedPath.startsWith(path)) {
-      children = getNodes(path, selectedPath);
+  Future<void> _loadFolders(String path, {bool force = false}) async {
+    if ((!force && _folderCache.containsKey(path)) ||
+        !_loadingPaths.add(path)) {
+      return;
     }
-    return [
-      Node(
-        key: path,
-        label: title ?? Utils.pathTitle(path) ?? '',
-        expanded: selectedPath != null &&
-            selectedPath != path &&
-            selectedPath.startsWith(path),
-        data: assetName,
-        children: children,
-        parent: true,
-      )
-    ];
-  }
-
-  List<Node> getNodes(String path, String? selectedPath) {
-    // init
-    List<Node> nodes = [];
 
     try {
-      // get folders
-      final dir = Directory(path);
-      var folders =
-          dir.listSync(recursive: false).whereType<Directory>().toList();
-      folders = folders
-          .where((f) => !MediaUtils.shouldExcludeFileOrDir(f.path))
+      final entities = await Directory(path)
+          .list(recursive: false, followLinks: false)
           .toList();
-      folders
-          .sort((a, b) => a.path.toLowerCase().compareTo(b.path.toLowerCase()));
-
-      for (var folder in folders) {
-        List<Node> children = [];
-
-        if (selectedPath != null && selectedPath.startsWith(folder.path)) {
-          children = getNodes(folder.path, selectedPath);
-        }
-
-        nodes.add(Node(
-          key: folder.path,
-          label: Utils.pathTitle(folder.path) ?? '',
-          data: SystemPath.getFolderNamedAsset(folder.path),
-          expanded: selectedPath != null &&
-              selectedPath != path &&
-              selectedPath.startsWith(folder.path),
-          children: children,
-          parent: true,
-        ));
+      final folders = entities
+          .whereType<Directory>()
+          .where((folder) => !MediaUtils.shouldExcludeFileOrDir(folder.path))
+          .toList();
+      folders.sort(
+        (a, b) => a.path.toLowerCase().compareTo(b.path.toLowerCase()),
+      );
+      if (!mounted) return;
+      _folderCache[path] = folders;
+      if (_isEffectivelyExpanded(path)) {
+        _watchFolder(path);
+        setState(() {});
       }
-    } catch (e) {
-      debugPrint(e.toString());
+    } catch (error) {
+      debugPrint('Unable to list $path: $error');
+      if (mounted) {
+        setState(() {
+          _folderCache[path] = const <Directory>[];
+        });
+      }
+    } finally {
+      _loadingPaths.remove(path);
+    }
+  }
+
+  void _watchFolder(String path) {
+    if (_folderWatchers.containsKey(path)) return;
+    try {
+      _folderWatchers[path] = Directory(path).watch().listen(
+        (_) {
+          _reloadDebounces[path]?.cancel();
+          _reloadDebounces[path] = Timer(
+            const Duration(milliseconds: 100),
+            () => _loadFolders(path, force: true),
+          );
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          debugPrint('Unable to watch $path: $error');
+          _folderWatchers.remove(path)?.cancel();
+        },
+      );
+    } catch (error) {
+      debugPrint('Unable to watch $path: $error');
+    }
+  }
+
+  void _stopWatchingAtOrBelow(String path) {
+    final watchedPaths = _folderWatchers.keys
+        .where((watched) => MediaUtils.isPathAtOrBelow(watched, path))
+        .toList(growable: false);
+    for (final watched in watchedPaths) {
+      _folderWatchers.remove(watched)?.cancel();
+      _reloadDebounces.remove(watched)?.cancel();
+    }
+  }
+
+  void _reloadExpandedSubtree(String path) {
+    final expandedPaths = _expandedPaths
+        .where((expanded) =>
+            MediaUtils.isPathAtOrBelow(expanded, path) &&
+            _isEffectivelyExpanded(expanded))
+        .toList(growable: false);
+    for (final expanded in expandedPaths) {
+      unawaited(_loadFolders(expanded, force: true));
+    }
+  }
+
+  bool _isEffectivelyExpanded(String path) {
+    if (!_expandedPaths.contains(path) ||
+        !MediaUtils.isPathAtOrBelow(path, widget.root)) {
+      return false;
     }
 
-    // done
-    return nodes;
+    var current = path;
+    while (current != widget.root) {
+      final parent = p.dirname(current);
+      if (parent == current || !_expandedPaths.contains(parent)) {
+        return false;
+      }
+      current = parent;
+    }
+    return true;
+  }
+
+  void _cancelAllWatchers() {
+    for (final subscription in _folderWatchers.values) {
+      subscription.cancel();
+    }
+    for (final timer in _reloadDebounces.values) {
+      timer.cancel();
+    }
+    _folderWatchers.clear();
+    _reloadDebounces.clear();
   }
 }

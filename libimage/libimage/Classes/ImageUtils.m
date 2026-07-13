@@ -20,13 +20,16 @@
 	
 	// first use basic system checking
 	NSArray* extensions = [NSArray arrayWithObjects:@"jpg", @"jpeg", nil];
-	if ([FileUtils isFile:path conformingTo:kUTTypeJPEG orHasExtensionIn:extensions] == TRUE) {
+	if ([FileUtils isFile:path conformingTo:UTTypeJPEG orHasExtensionIn:extensions] == TRUE) {
 		return TRUE;
 	}
 	
 	// check header
 	NSFileHandle* fileH = [NSFileHandle fileHandleForReadingAtPath:path];
 	NSData* dataChunk = [fileH readDataOfLength:3];
+	if (dataChunk.length < 3) {
+		return FALSE;
+	}
 	const unsigned char* bytes = [dataChunk bytes];
 	return ((bytes[0] == 0xff) && (bytes[1] == 0xd8) && (bytes[2] == 0xff));
 
@@ -36,13 +39,16 @@
 
 	// first use basic system checking
 	NSArray* extensions = [NSArray arrayWithObjects:@"png", nil];
-	if ([FileUtils isFile:path conformingTo:kUTTypePNG orHasExtensionIn:extensions] == TRUE) {
+	if ([FileUtils isFile:path conformingTo:UTTypePNG orHasExtensionIn:extensions] == TRUE) {
 		return TRUE;
 	}
 	
 	// check header
 	NSFileHandle* fileH = [NSFileHandle fileHandleForReadingAtPath:path];
 	NSData* dataChunk = [fileH readDataOfLength:4];
+	if (dataChunk.length < 4) {
+		return FALSE;
+	}
 	const unsigned char* bytes = [dataChunk bytes];
 	return ((bytes[0] == 0x89) && (bytes[1] == 0x50) &&
 					(bytes[2] == 0x4e) && (bytes[3] == 0x47));
@@ -57,7 +63,7 @@
 	
 	// open file
 	NSURL *imageFileURL = [NSURL fileURLWithPath:path];
-	CGImageSourceRef imageSource = CGImageSourceCreateWithURL(CFBridgingRetain(imageFileURL), NULL);
+	CGImageSourceRef imageSource = CGImageSourceCreateWithURL((__bridge CFURLRef)imageFileURL, NULL);
 	if (imageSource != NULL) {
 		
 		// get width and height

@@ -25,7 +25,8 @@ class Utils {
   }
 
   static SizeInt imageSize(String filepath) {
-    isg.Size imageSize = isg.ImageSizeGetter.getSize(FileInput(File(filepath)));
+    isg.Size imageSize =
+        isg.ImageSizeGetter.getSizeResult(FileInput(File(filepath))).size;
     SizeInt size = SizeInt(imageSize.width, imageSize.height);
     return imageSize.needRotate ? size.flipped : size;
   }

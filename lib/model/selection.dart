@@ -19,6 +19,9 @@ class SelectionModel extends ChangeNotifier {
   }
 
   void clear({bool notify = true}) {
+    if (_selection.isEmpty) {
+      return;
+    }
     _selection.clear();
     if (notify) {
       notifyListeners();
@@ -26,6 +29,9 @@ class SelectionModel extends ChangeNotifier {
   }
 
   void add(String item, {bool notify = true}) {
+    if (_selection.contains(item)) {
+      return;
+    }
     _selection.add(item);
     if (notify) {
       notifyListeners();
@@ -33,10 +39,29 @@ class SelectionModel extends ChangeNotifier {
   }
 
   void set(List<String> items, {bool notify = true}) {
+    final uniqueItems = items.toSet().toList(growable: false);
+    if (_selection.length == uniqueItems.length &&
+        _selection.indexed
+            .every((entry) => entry.$2 == uniqueItems[entry.$1])) {
+      return;
+    }
     _selection.clear();
-    _selection.addAll(items);
+    _selection.addAll(uniqueItems);
     if (notify) {
       notifyListeners();
     }
+  }
+
+  void toggle(String item, {bool notify = true}) {
+    if (_selection.remove(item) == false) {
+      _selection.add(item);
+    }
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
+  void refresh() {
+    notifyListeners();
   }
 }

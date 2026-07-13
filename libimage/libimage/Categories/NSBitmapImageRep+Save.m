@@ -37,7 +37,7 @@
 															nil];
 	// save it
 	return [self saveTo:destination
-					 withFormat:NSJPEGFileType
+					 withFormat:NSBitmapImageFileTypeJPEG
 					 andOptions:imageProps];
 #if 0
 	//
@@ -66,7 +66,7 @@
 - (BOOL) saveAsPng:(NSString*) destination {
 	
 	return [self saveTo:destination
-					 withFormat:NSPNGFileType
+					 withFormat:NSBitmapImageFileTypePNG
 					 andOptions:nil];
 	
 }

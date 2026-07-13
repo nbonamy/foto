@@ -4,39 +4,43 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class PlatformKeyboard {
-  static bool isPrevious(RawKeyEvent event) {
-    return (event.isKeyPressed(LogicalKeyboardKey.arrowLeft) ||
-            event.isKeyPressed(LogicalKeyboardKey.arrowUp) ||
-            event.isKeyPressed(LogicalKeyboardKey.bracketLeft)) &&
+  static bool isPrevious(KeyEvent event) {
+    return event is! KeyUpEvent &&
+        (event.logicalKey == LogicalKeyboardKey.arrowLeft ||
+            event.logicalKey == LogicalKeyboardKey.arrowUp ||
+            event.logicalKey == LogicalKeyboardKey.bracketLeft) &&
         !commandModifierPressed(event);
   }
 
-  static bool isNext(RawKeyEvent event) {
-    return (event.isKeyPressed(LogicalKeyboardKey.arrowRight) ||
-            event.isKeyPressed(LogicalKeyboardKey.arrowDown) ||
-            event.isKeyPressed(LogicalKeyboardKey.space) ||
-            event.isKeyPressed(LogicalKeyboardKey.bracketRight)) &&
+  static bool isNext(KeyEvent event) {
+    return event is! KeyUpEvent &&
+        (event.logicalKey == LogicalKeyboardKey.arrowRight ||
+            event.logicalKey == LogicalKeyboardKey.arrowDown ||
+            event.logicalKey == LogicalKeyboardKey.space ||
+            event.logicalKey == LogicalKeyboardKey.bracketRight) &&
         !commandModifierPressed(event);
   }
 
-  static bool isEscape(RawKeyEvent event) {
+  static bool isEscape(KeyEvent event) {
     return event.physicalKey == PhysicalKeyboardKey.escape;
   }
 
-  static bool isEnter(RawKeyEvent event) {
+  static bool isEnter(KeyEvent event) {
     return event.physicalKey == PhysicalKeyboardKey.enter ||
         event.physicalKey == PhysicalKeyboardKey.numpadEnter;
   }
 
-  static bool selectionExtensionModifierPressed(RawKeyEvent event) {
-    return Platform.isMacOS ? event.isMetaPressed : event.isControlPressed;
+  static bool selectionExtensionModifierPressed(KeyEvent event) {
+    return Platform.isMacOS
+        ? HardwareKeyboard.instance.isMetaPressed
+        : HardwareKeyboard.instance.isControlPressed;
   }
 
-  static bool commandModifierPressed(RawKeyEvent event) {
+  static bool commandModifierPressed(KeyEvent event) {
     if (metaIsCommandModifier()) {
-      return event.isMetaPressed;
+      return HardwareKeyboard.instance.isMetaPressed;
     } else {
-      return event.isControlPressed;
+      return HardwareKeyboard.instance.isControlPressed;
     }
   }
 

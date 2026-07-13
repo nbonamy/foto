@@ -12,6 +12,7 @@ class MediaItem {
   final String path;
   final FileSystemEntityType entityType;
   bool mediaInfoParsed;
+  bool captureDateParsed;
   DateTime creationDate;
   DateTime modificationDate;
   SizeInt? imageSize;
@@ -34,6 +35,7 @@ class MediaItem {
       creationDate: await FileUtils.getCreationDate(filepath),
       modificationDate: await FileUtils.getModificationDate(filepath),
       mediaInfoParsed: false,
+      captureDateParsed: false,
     );
   }
 
@@ -45,6 +47,7 @@ class MediaItem {
       modificationDate: await FileUtils.getModificationDate(folderpath),
       thumbnail: Image.asset(SystemPath.getFolderNamedAsset(folderpath)),
       mediaInfoParsed: true,
+      captureDateParsed: true,
     );
   }
 
@@ -54,6 +57,7 @@ class MediaItem {
     required this.mediaInfoParsed,
     required this.modificationDate,
     required this.creationDate,
+    this.captureDateParsed = false,
     this.fileSize,
     this.imageSize,
     this.thumbnail,
@@ -75,18 +79,19 @@ class MediaItem {
     return Key('$path-${modificationDate.millisecondsSinceEpoch}');
   }
 
-  void checkForModification() {
-    if (isFile()) {
-      File file = File(path);
-      if (file.existsSync()) {
-        FileStat stats = file.statSync();
-        if (stats.modified != modificationDate) {
-          creationDate = stats.changed;
-          modificationDate = stats.modified;
-          evictFromCache();
-        }
-      }
+  Future<bool> checkForModification() async {
+    if (!isFile()) return false;
+
+    final stats = await File(path).stat();
+    if (stats.type != FileSystemEntityType.file ||
+        stats.modified == modificationDate) {
+      return false;
     }
+
+    modificationDate = stats.modified;
+    _invalidateMediaInfo();
+    await evictFromCache();
+    return true;
   }
 
   Future<void> evictFromCache() async {
@@ -98,20 +103,33 @@ class MediaItem {
   }
 
   Future<void> refresh() async {
-    File file = File(path);
-    FileStat stats = file.statSync();
-    creationDate = stats.changed;
+    final file = File(path);
+    final stats = await file.stat();
     modificationDate = stats.modified;
-    evictFromCache();
+    _invalidateMediaInfo();
+    await evictFromCache();
   }
 
   Future<void> getMediaInfo() async {
-    fileSize = File(path).statSync().size;
-    creationDate = await ImageUtils.getCreationDate(path);
+    await getCaptureDate();
+    fileSize = (await File(path).stat()).size;
     imageSize = Utils.imageSize(path);
     thumbnail = _fileThumbnail(File(path));
     mediaInfoParsed = true;
-    evictFromCache();
+    updateCounter.value += 1;
+  }
+
+  Future<void> getCaptureDate() async {
+    if (!isFile() || captureDateParsed) return;
+    creationDate = await ImageUtils.getCreationDate(path);
+    captureDateParsed = true;
+  }
+
+  void _invalidateMediaInfo() {
+    captureDateParsed = false;
+    mediaInfoParsed = false;
+    fileSize = null;
+    imageSize = null;
   }
 
   static Image _fileThumbnail(File file) {

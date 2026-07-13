@@ -12,50 +12,13 @@
 @implementation NSFileManager (Utils)
 
 - (NSString*) temporaryDirectoryOnSameVolumeThan:(NSString*) baseFilename {
-	
-	// Check if the directory to write to exists first
-	//BOOL isDir;
-	//if (!([self fileExistsAtPath:baseFilename isDirectory:&isDir] && isDir)) {
-	//	return nil;
-	//}
-	
-	// Turn into FSRef
-	FSRef outRef;
-	OSStatus err = FSPathMakeRef((const UInt8 *)[baseFilename fileSystemRepresentation], &outRef, NULL);
-	if (err != noErr) {
-		return nil;
+	NSURL* baseURL = [NSURL fileURLWithPath:baseFilename];
+	NSURL* directoryURL = baseURL.URLByDeletingLastPathComponent;
+	BOOL isDirectory = NO;
+	if ([self fileExistsAtPath:directoryURL.path isDirectory:&isDirectory] && isDirectory) {
+		return directoryURL.path;
 	}
-	
-	// Get volume ref number
-	FSCatalogInfo catalogInfo;
-	err = FSGetCatalogInfo(&outRef, kFSCatInfoVolume, &catalogInfo, NULL, NULL, NULL);
-	if (err != noErr) {
-		return nil;
-	}
-	
-	// Determine the temporary folder, creating it if necesssary
-	FSRef foundRef;
-	err = FSFindFolder(catalogInfo.volume, kTemporaryFolderType, kCreateFolder, &foundRef);
-	// NOTE: This is the most likely place to fail if the directory exists.
-	// Some volumes don't have a temporary folder and don't allow its creation
-	if (err != noErr) {
-		return nil;
-	}
-	
-	// Turn folder reference back to cocoa-land
-	NSURL* foundURL = (NSURL*)CFBridgingRelease(CFURLCreateFromFSRef(kCFAllocatorDefault, &foundRef));
-	if (foundURL == nil) {
-		return nil;
-	}
-	
-	// I got it biotch
-	CFStringRef foundString = CFURLCopyFileSystemPath((CFURLRef)foundURL, kCFURLPOSIXPathStyle);
-	if (foundString == NULL) {
-		return nil;
-	}
-	
-	// done
-	return (NSString*)CFBridgingRelease(foundString);
+	return nil;
 }
 
 - (NSString*) randomFilename {
@@ -86,12 +49,7 @@
 }
 
 + (NSString*) UUIDString {
-	
-	CFUUIDRef theUUID = CFUUIDCreate(NULL);
-	CFStringRef string = CFUUIDCreateString(NULL, theUUID);
-	CFRelease(theUUID);
-	return (__bridge NSString *) string;
-	
+	return [NSUUID UUID].UUIDString;
 }
 
 @end

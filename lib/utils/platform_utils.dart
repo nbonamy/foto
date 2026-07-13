@@ -10,7 +10,15 @@ class PlatformUtils {
       MethodChannel('foto_platform_utils/messages');
 
   static Future<void> moveToTrash(String filepath) async {
-    _mChannel.invokeMethod('moveToTrash', filepath);
+    final moved =
+        await _mChannel.invokeMethod<bool>('moveToTrash', filepath) ?? false;
+    if (!moved) {
+      throw PlatformException(
+        code: 'trash_failed',
+        message: 'The item could not be moved to the Trash.',
+        details: filepath,
+      );
+    }
   }
 
   static Future<String?> bundlePathForIdentifier(String identifier) {

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:macos_ui/macos_ui.dart';
 
 import '../model/media.dart';
+import '../utils/platform_keyboard.dart';
 import '../utils/utils.dart';
 
 class Thumbnail extends StatefulWidget {
@@ -38,7 +39,6 @@ class Thumbnail extends StatefulWidget {
 class _ThumbnailState extends State<Thumbnail> {
   final FocusNode _focusNode = FocusNode();
   late TextEditingController _editController;
-  late Key _textFieldKey;
 
   static const double thumbnailWidth = 160;
   static const double thumbnailPadding = 8;
@@ -50,8 +50,14 @@ class _ThumbnailState extends State<Thumbnail> {
   @override
   void initState() {
     _editController = TextEditingController(text: widget.media.title);
-    _textFieldKey = GlobalKey();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _editController.dispose();
+    super.dispose();
   }
 
   @override
@@ -60,17 +66,27 @@ class _ThumbnailState extends State<Thumbnail> {
       String label = widget.media.title;
       if (_editController.text != label) {
         String newFilename = _editController.text;
-        widget.onRenamed(widget.media.path, newFilename);
+        final renamed = widget.onRenamed(widget.media.path, newFilename);
+        if (renamed != true) {
+          _editController.text = label;
+        }
       }
       _editController.selection = const TextSelection.collapsed(offset: 0);
     } else if (!oldWidget.rename && widget.rename) {
+      _editController.text = widget.media.title;
+      final extensionIndex = _editController.text.lastIndexOf('.');
       _editController.selection = TextSelection(
         baseOffset: 0,
-        extentOffset: _editController.text.lastIndexOf('.'),
+        extentOffset:
+            extensionIndex > 0 ? extensionIndex : _editController.text.length,
       );
       Future.delayed(const Duration(milliseconds: 0), () {
-        _focusNode.requestFocus();
+        if (mounted) {
+          _focusNode.requestFocus();
+        }
       });
+    } else if (oldWidget.media.path != widget.media.path && !widget.rename) {
+      _editController.text = widget.media.title;
     }
     super.didUpdateWidget(oldWidget);
   }
@@ -79,9 +95,8 @@ class _ThumbnailState extends State<Thumbnail> {
   Widget build(BuildContext context) {
     Widget textField = _getTextField();
     if (widget.rename) {
-      textField = RawKeyboardListener(
-        focusNode: FocusNode(),
-        onKey: _handleRenameKeyEvent,
+      textField = Focus(
+        onKeyEvent: _handleRenameKeyEvent,
         child: textField,
       );
     }
@@ -148,7 +163,6 @@ class _ThumbnailState extends State<Thumbnail> {
     return SizedBox(
       width: thumbnailWidth,
       child: MacosTextField(
-        key: _textFieldKey,
         focusNode: _focusNode,
         maxLines: widget.rename ? 1 : 2,
         enabled: widget.rename,
@@ -178,13 +192,19 @@ class _ThumbnailState extends State<Thumbnail> {
     );
   }
 
-  void _handleRenameKeyEvent(RawKeyEvent event) {
-    if (event.logicalKey == LogicalKeyboardKey.escape) {
+  KeyEventResult _handleRenameKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is KeyUpEvent) {
+      return KeyEventResult.ignored;
+    }
+    if (PlatformKeyboard.isEscape(event)) {
       _editController.text = Utils.pathTitle(widget.media.path)!;
       widget.onRenamed(widget.media.path, null);
+      return KeyEventResult.handled;
     }
-    if (event.logicalKey == LogicalKeyboardKey.enter) {
+    if (PlatformKeyboard.isEnter(event)) {
       widget.onRenamed(widget.media.path, null);
+      return KeyEventResult.handled;
     }
+    return KeyEventResult.ignored;
   }
 }

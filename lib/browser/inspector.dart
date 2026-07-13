@@ -3,9 +3,10 @@ import 'dart:io';
 import 'package:exif/exif.dart';
 import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:foto/l10n/app_localizations.dart';
 
 import '../model/selection.dart';
+import '../utils/file_utils.dart';
 import '../utils/utils.dart';
 
 class InspectorValue {
@@ -16,7 +17,7 @@ class InspectorValue {
 }
 
 class Inspector extends StatefulWidget {
-  const Inspector({Key? key}) : super(key: key);
+  const Inspector({super.key});
 
   @override
   State<StatefulWidget> createState() => _InspectorState();
@@ -25,9 +26,11 @@ class Inspector extends StatefulWidget {
 class _InspectorState extends State<Inspector> {
   String? _currentFile;
   FileStat? _fileStats;
+  DateTime? _creationDate;
   SizeInt? _imageSize;
   Map<String, IfdTag>? _exifData;
   late SelectionModel _selectionModel;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -65,7 +68,7 @@ class _InspectorState extends State<Inspector> {
     ));
     data.add(InspectorValue(
       t.exifCreationDate,
-      _fileStats?.changed.toString().substring(0, 19) ?? '',
+      _creationDate?.toString().substring(0, 19) ?? '',
     ));
     data.add(InspectorValue(
       t.exifCaptureDate,
@@ -207,22 +210,60 @@ class _InspectorState extends State<Inspector> {
   }
 
   void _onSelectionChange() async {
-    try {
-      Selection selection = SelectionModel.of(context).get;
-      if (selection.length != 1) {
-        _currentFile = null;
-        _exifData = null;
-      } else {
-        _currentFile = selection[0];
-        File file = File(_currentFile!);
-        _fileStats = await file.stat();
-        _imageSize = Utils.imageSize(_currentFile!);
-        _exifData = await readExifFromBytes(file.readAsBytesSync());
+    final int generation = ++_loadGeneration;
+    final Selection selection = SelectionModel.of(context).get;
+
+    if (selection.length != 1) {
+      if (mounted) {
+        setState(_clearSelection);
       }
-    } catch (_) {
-      _currentFile = null;
+      return;
     }
-    setState(() {});
+
+    final String filePath = selection.single;
+    if (mounted) {
+      setState(() {
+        _currentFile = filePath;
+        _fileStats = null;
+        _creationDate = null;
+        _imageSize = null;
+        _exifData = null;
+      });
+    }
+
+    try {
+      final File file = File(filePath);
+      final FileStat fileStats = await file.stat();
+      final DateTime creationDate = await FileUtils.getCreationDate(filePath);
+      final SizeInt imageSize = Utils.imageSize(filePath);
+      Map<String, IfdTag> exifData = const {};
+      try {
+        exifData = await readExifFromBytes(await file.readAsBytes());
+      } catch (_) {
+        // Formats such as WebP may have no EXIF block. Their basic file and
+        // image metadata should still remain visible in the inspector.
+      }
+
+      if (!mounted || generation != _loadGeneration) return;
+      setState(() {
+        _currentFile = filePath;
+        _fileStats = fileStats;
+        _creationDate = creationDate;
+        _imageSize = imageSize;
+        _exifData = exifData;
+      });
+    } catch (_) {
+      if (!mounted || generation != _loadGeneration) return;
+      setState(_clearSelection);
+    }
+  }
+
+  void _clearSelection() {
+    _currentFile = null;
+    _fileStats = null;
+    _creationDate = null;
+    _imageSize = null;
+    _exifData = null;
   }
 
   String _getExifTag(String tag,

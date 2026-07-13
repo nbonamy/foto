@@ -1,13 +1,15 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:foto/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../model/favorites.dart';
 import '../model/history.dart';
+import '../utils/media_utils.dart';
 import '../utils/paths.dart';
 import '../utils/utils.dart';
 import 'tree.dart';
@@ -29,10 +31,12 @@ class RootNode {
 
 class BrowserSidebar extends StatefulWidget {
   final ScrollController scrollController;
+  final ValueChanged<String> navigateToFolder;
 
   const BrowserSidebar({
     super.key,
     required this.scrollController,
+    required this.navigateToFolder,
   });
 
   @override
@@ -42,14 +46,25 @@ class BrowserSidebar extends StatefulWidget {
 class _SidebarState extends State<BrowserSidebar> {
   String? _activeRoot;
   final List<RootNode> _devices = [];
+  StreamSubscription<FileSystemEvent>? _volumesSubscription;
+  Timer? _deviceRefreshDebounce;
 
   @override
   void initState() {
-    _getDevices();
     super.initState();
+    _getDevices();
+    _watchDevices();
+  }
+
+  @override
+  void dispose() {
+    _deviceRefreshDebounce?.cancel();
+    _volumesSubscription?.cancel();
+    super.dispose();
   }
 
   void _getDevices() {
+    final devices = <RootNode>[];
     try {
       // list stuff in volumes
       for (var entity in Directory('/Volumes')
@@ -57,12 +72,12 @@ class _SidebarState extends State<BrowserSidebar> {
         try {
           var title = Utils.pathTitle(entity.path);
           if (entity is Directory) {
-            _devices.add(RootNode(
+            devices.add(RootNode(
               title,
               entity.path,
             ));
           } else if (entity is Link) {
-            _devices.add(RootNode(
+            devices.add(RootNode(
               title,
               entity.resolveSymbolicLinksSync(),
             ));
@@ -76,50 +91,48 @@ class _SidebarState extends State<BrowserSidebar> {
     }
 
     // we need root
-    if (_devices.indexWhere((element) => element.path == '/') == -1) {
-      _devices.add(RootNode('Macintosh HD', '/'));
+    if (devices.indexWhere((element) => element.path == '/') == -1) {
+      devices.add(RootNode('Macintosh HD', '/'));
     }
 
     // now sort devices by path
-    _devices.sort((a, b) => a.path.compareTo(b.path));
+    devices.sort((a, b) => a.path.compareTo(b.path));
+    _devices
+      ..clear()
+      ..addAll(devices);
   }
 
-  void _initActiveRoot(context) {
+  void _watchDevices() {
+    try {
+      _volumesSubscription = Directory('/Volumes').watch().listen((event) {
+        _deviceRefreshDebounce?.cancel();
+        _deviceRefreshDebounce = Timer(const Duration(milliseconds: 200), () {
+          if (!mounted) return;
+          setState(_getDevices);
+        });
+      }, onError: (Object error, StackTrace stackTrace) {
+        debugPrint('Unable to watch mounted volumes: $error');
+      });
+    } catch (error) {
+      debugPrint('Unable to watch mounted volumes: $error');
+    }
+  }
+
+  void _initActiveRoot(BuildContext context) {
     // get data
     var history = HistoryModel.of(context);
     var favorites = FavoritesModel.of(context).get;
 
     // default active root
-    _activeRoot = null;
-    for (var favorite in favorites) {
-      if (history.top.startsWith(favorite) == true) {
-        _activeRoot = favorite;
-        break;
-      }
-    }
-    if (_activeRoot == null) {
-      for (var device in _devices) {
-        if (history.top.startsWith(device.path) == true) {
-          _activeRoot = device.path;
-          break;
-        }
-      }
-    }
+    _activeRoot = MediaUtils.deepestContainingRoot(history.top, favorites);
+    _activeRoot ??= MediaUtils.deepestContainingRoot(
+      history.top,
+      _devices.map((device) => device.path),
+    );
   }
 
-  void _checkActiveRoot(context) {
-    // first check consistency
-    if (_activeRoot != null) {
-      HistoryModel historyModel = HistoryModel.of(context);
-      if (historyModel.top.startsWith(_activeRoot!) == false) {
-        _activeRoot = null;
-      }
-    }
-
-    // now check if null
-    if (_activeRoot == null) {
-      _initActiveRoot(context);
-    }
+  void _checkActiveRoot(BuildContext context) {
+    _initActiveRoot(context);
   }
 
   @override
@@ -239,10 +252,11 @@ class _SidebarState extends State<BrowserSidebar> {
     return sidebarContent;
   }
 
-  void onPathUpdated(String root) async {
+  void onPathUpdated(String root, String selectedPath) {
     setState(() {
       _activeRoot = root;
     });
+    widget.navigateToFolder(selectedPath);
   }
 }
 

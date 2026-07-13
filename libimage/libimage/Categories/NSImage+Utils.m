@@ -17,22 +17,8 @@
 		return nil;
 	}
 	
-	// get image dimensions
-	NSRect imageRect = NSMakeRect(0.0, 0.0, 0.0, 0.0);
-	imageRect.size.height = CGImageGetHeight(image);
-	imageRect.size.width = CGImageGetWidth(image);
-
-	// create new image
-	NSImage* newImage = [[NSImage alloc] initWithSize:imageRect.size];
-	[newImage lockFocus];
-	
-	// Get the Quartz context and draw.
-	CGContextRef imageContext = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
-	CGContextDrawImage(imageContext, *(CGRect*)&imageRect, image);
-	
-	// done
-	[newImage unlockFocus];
-	return newImage;
+	NSSize imageSize = NSMakeSize(CGImageGetWidth(image), CGImageGetHeight(image));
+	return [[NSImage alloc] initWithCGImage:image size:imageSize];
 }
 
 - (NSImageRep*) largestRepresentation {

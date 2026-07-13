@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:foto/l10n/app_localizations.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:provider/provider.dart';
 
@@ -21,7 +21,7 @@ class BrowserContent extends StatefulWidget {
   final List<String>? initialSelection;
 
   const BrowserContent({
-    Key? key,
+    super.key,
     required this.mediaDb,
     required this.path,
     required this.canNavigateBack,
@@ -29,7 +29,7 @@ class BrowserContent extends StatefulWidget {
     required this.navigateToFolder,
     required this.viewImages,
     this.initialSelection,
-  }) : super(key: key);
+  });
 
   @override
   State<BrowserContent> createState() => _BrowserContentState();
@@ -87,7 +87,6 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
           borderRadius: BorderRadius.zero,
           child: MacosScaffold(
             toolBar: buildToolbar(),
-            backgroundColor: Colors.white,
             children: widgets,
           ),
         );
@@ -97,6 +96,9 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
 
   @override
   void onMenuAction(MenuAction action) {
+    if (!mounted || ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
     switch (action) {
       case MenuAction.viewInspector:
         _toggleInspector();
@@ -140,7 +142,7 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
         ToolBarIconButton(
           icon: const MacosIcon(CupertinoIcons.sidebar_left),
           onPressed: _toggleSidebar,
-          label: t.toolbarToggleFolders,
+          label: t.toolbarToggleSidebar,
           showLabel: false,
         ),
         ToolBarIconButton(
@@ -163,20 +165,20 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
             MacosPulldownMenuItem(
               label: t.sortCriteriaAlphabetical,
               title: Text(
-                  '${(prefs.sortCriteria == SortCriteria.alphabetical) ? tickOnPrefix : tickOffPrefix} Sort Alphabetical'),
+                  '${(prefs.sortCriteria == SortCriteria.alphabetical) ? tickOnPrefix : tickOffPrefix} ${t.sortCriteriaAlphabetical}'),
               onTap: () => _setSortCriteria(SortCriteria.alphabetical),
             ),
             MacosPulldownMenuItem(
               label: t.sortCriteriaChronological,
               title: Text(
-                  '${(prefs.sortCriteria == SortCriteria.chronological) ? tickOnPrefix : tickOffPrefix} Sort Chronological'),
+                  '${(prefs.sortCriteria == SortCriteria.chronological) ? tickOnPrefix : tickOffPrefix} ${t.sortCriteriaChronological}'),
               onTap: () => _setSortCriteria(SortCriteria.chronological),
             ),
             const MacosPulldownMenuDivider(),
             MacosPulldownMenuItem(
               label: t.sortOrderReverse,
               title: Text(
-                  '${prefs.sortReversed ? tickOnPrefix : tickOffPrefix} Reverse Order'),
+                  '${prefs.sortReversed ? tickOnPrefix : tickOffPrefix} ${t.sortOrderReverse}'),
               onTap: _toggleSortOrder,
             ),
           ],
@@ -188,15 +190,11 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
   void _setSortCriteria(SortCriteria sortCriteria) {
     Preferences prefs = Preferences.of(context);
     prefs.sortCriteria = sortCriteria;
-    prefs.notifyListeners();
-    //setState(() {});
   }
 
   void _toggleSortOrder() {
     Preferences prefs = Preferences.of(context);
     prefs.sortReversed = !prefs.sortReversed;
-    prefs.notifyListeners();
-    //setState(() {});
   }
 
   void _toggleSidebar() {
@@ -206,14 +204,10 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
   void _toggleShowFolders() {
     Preferences prefs = Preferences.of(context);
     prefs.showFolders = !prefs.showFolders;
-    prefs.notifyListeners();
-    //setState(() {});
   }
 
   void _toggleInspector() {
     Preferences prefs = Preferences.of(context);
     prefs.showInspector = !prefs.showInspector;
-    prefs.notifyListeners();
-    //setState(() {});
   }
 }

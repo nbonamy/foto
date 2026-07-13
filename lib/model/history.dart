@@ -13,6 +13,8 @@ class HistoryModel extends ChangeNotifier {
 
   String get top => _history.isNotEmpty ? _history.last : '/';
 
+  bool get canPop => _history.length > 1;
+
   bool get lastChangeIsPop {
     bool rc = _lastChangeIsPop;
     _lastChangeIsPop = false;
@@ -23,11 +25,12 @@ class HistoryModel extends ChangeNotifier {
     return Provider.of<HistoryModel>(context, listen: false);
   }
 
-  init() async {
+  Future<void> init() async {
     await _load();
   }
 
   void reset(String location, {bool notify = false}) {
+    _lastChangeIsPop = false;
     _history.clear();
     _history.add(location);
     if (notify) {
@@ -40,9 +43,6 @@ class HistoryModel extends ChangeNotifier {
     if (top != location) {
       _lastChangeIsPop = false;
       _history.add(location);
-      if (_history.length > 20) {
-        _history.removeAt(0);
-      }
       if (notify) {
         notifyListeners();
       }
@@ -50,10 +50,15 @@ class HistoryModel extends ChangeNotifier {
     }
   }
 
-  void pop() {
+  void pop({bool notify = true}) {
+    if (!canPop) {
+      return;
+    }
     _lastChangeIsPop = true;
     _history.removeLast();
-    notifyListeners();
+    if (notify) {
+      notifyListeners();
+    }
     _save();
   }
 

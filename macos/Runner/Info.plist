@@ -16,6 +16,16 @@
 				<string>gif</string>
 				<string>tif</string>
 				<string>tiff</string>
+				<string>webp</string>
+			</array>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.heic</string>
+				<string>public.jpeg</string>
+				<string>public.png</string>
+				<string>com.compuserve.gif</string>
+				<string>public.tiff</string>
+				<string>org.webmproject.webp</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>foto</string>

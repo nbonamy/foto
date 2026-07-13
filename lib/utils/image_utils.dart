@@ -15,7 +15,9 @@ class ImageUtils {
 
   static Future<DateTime> getCreationDate(String filepath) async {
     double epoch = await _mChannel.invokeMethod('getCreationDate', filepath);
-    return DateTime.fromMillisecondsSinceEpoch(epoch.toInt() * 1000);
+    return DateTime.fromMicrosecondsSinceEpoch(
+      (epoch * Duration.microsecondsPerSecond).round(),
+    );
   }
 
   static Future<bool> transformImage(

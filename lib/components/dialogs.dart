@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:macos_ui/macos_ui.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:foto/l10n/app_localizations.dart';
 
 typedef DialogCallback = void Function(BuildContext);
 typedef PromptCallback = void Function(BuildContext, String);

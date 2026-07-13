@@ -4,15 +4,29 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 // we need this to force reload on image modification (rotations)
-// ignore: must_be_immutable
 class ImageFile extends FileImage {
-  int _version;
+  static final Map<String, int> _generations = <String, int>{};
+
+  final int _version;
+
   ImageFile(String path)
-      : _version = 0,
+      : _version = Object.hash(
+          _generations[path] ?? 0,
+          _lastModified(path),
+        ),
         super(File(path));
 
-  void invalidate() {
-    _version += 1;
+  static int _lastModified(String path) {
+    try {
+      return File(path).lastModifiedSync().microsecondsSinceEpoch;
+    } on FileSystemException {
+      return 0;
+    }
+  }
+
+  /// Ensures the next provider created for [path] has a fresh cache key.
+  static void invalidatePath(String path) {
+    _generations[path] = (_generations[path] ?? 0) + 1;
   }
 
   @override

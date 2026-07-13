@@ -183,10 +183,7 @@ bool exif_orient(const char* file, unsigned char* orientation)
 			
 			/* Check for "ICC_PROFILE" */
 			if (memcmp(exif_data, "ICC_PROFILE", 6) == 0) {
-				
 				fseek(myfile, length-6, SEEK_CUR);
-				i = ftell(myfile);
-				
 				// re-read length
 				length = read_2_bytes(myfile);
 

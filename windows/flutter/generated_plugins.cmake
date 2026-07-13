@@ -5,7 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   contextual_menu
   pasteboard
-  screen_retriever
+  screen_retriever_windows
   window_manager
 )
 

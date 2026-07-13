@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1F000012E10000100F07000 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1F000022E10000100F07000 /* UniformTypeIdentifiers.framework */; };
 		8D07987917C38CCC00EEB4F9 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D07987817C38CCC00EEB4F9 /* Cocoa.framework */; };
 		8D07988317C38CCC00EEB4F9 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 8D07988117C38CCC00EEB4F9 /* InfoPlist.strings */; };
 		8D0798AF17C38D2D00EEB4F9 /* NSImage+Transform.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D07989A17C38D2D00EEB4F9 /* NSImage+Transform.h */; };
@@ -68,6 +69,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A1F000022E10000100F07000 /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
 		8D07987517C38CCC00EEB4F9 /* libimage.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = libimage.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		8D07987817C38CCC00EEB4F9 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		8D07987B17C38CCC00EEB4F9 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
@@ -82,7 +84,6 @@
 		8D0798A217C38D2D00EEB4F9 /* Exif.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Exif.m; sourceTree = "<group>"; };
 		8D0798A717C38D2D00EEB4F9 /* ImageUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageUtils.h; sourceTree = "<group>"; };
 		8D0798A817C38D2D00EEB4F9 /* ImageUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ImageUtils.m; sourceTree = "<group>"; };
-		8D2A9F99284926C800E7B298 /* libintl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libintl.a; path = ../../../../../../usr/local/Cellar/gettext/0.21/lib/libintl.a; sourceTree = "<group>"; };
 		8D2A9F9B28492F1300E7B298 /* libintl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libintl.a; path = libexif/libintl.a; sourceTree = "<group>"; };
 		8D2A9F9D28492FB700E7B298 /* libiconv.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libiconv.a; path = libexif/libiconv.a; sourceTree = "<group>"; };
 		8D570BEF284989E500EBDC94 /* SystemUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SystemUtils.m; sourceTree = "<group>"; };
@@ -110,6 +111,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1F000012E10000100F07000 /* UniformTypeIdentifiers.framework in Frameworks */,
 				8D2A9F9E28492FB700E7B298 /* libiconv.a in Frameworks */,
 				8D2A9F9C28492F5E00E7B298 /* libintl.a in Frameworks */,
 				8DE8B58B17C38FE400EE8526 /* libjpeg.a in Frameworks */,
@@ -144,8 +146,8 @@
 		8D07987717C38CCC00EEB4F9 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A1F000022E10000100F07000 /* UniformTypeIdentifiers.framework */,
 				8D2A9F9D28492FB700E7B298 /* libiconv.a */,
-				8D2A9F99284926C800E7B298 /* libintl.a */,
 				8D2A9F9B28492F1300E7B298 /* libintl.a */,
 				8DE8B58A17C38FE400EE8526 /* libjpeg.a */,
 				8DE8B58817C38FD800EE8526 /* libexif.a */,
@@ -410,7 +412,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 			};
@@ -454,7 +456,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -463,29 +465,28 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
-				DEFINES_MODULE = YES;
+				DEFINES_MODULE = NO;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/cam2mac-brwnysjakpxtkpbyqrqrztjiboqn/Build/Products/Debug",
-				);
 				FRAMEWORK_VERSION = A;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "libimage/libimage-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/cutils",
+					"$(PROJECT_DIR)/libexif",
+					"$(PROJECT_DIR)/libjpeg",
+				);
 				INFOPLIST_FILE = "libimage/libimage-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/libexif\"",
-					"\"$(SRCROOT)/libjpeg\"",
-					/usr/local/Cellar/gettext/0.21/lib,
 					"$(PROJECT_DIR)/libexif",
+					"$(PROJECT_DIR)/libjpeg",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.nabocorp.mac.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = "../nbFoundation/** ../libimage/**";
 				WRAPPER_EXTENSION = framework;
 			};
 			name = Debug;
@@ -494,29 +495,28 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
-				DEFINES_MODULE = YES;
+				DEFINES_MODULE = NO;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/cam2mac-brwnysjakpxtkpbyqrqrztjiboqn/Build/Products/Debug",
-				);
 				FRAMEWORK_VERSION = A;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "libimage/libimage-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/cutils",
+					"$(PROJECT_DIR)/libexif",
+					"$(PROJECT_DIR)/libjpeg",
+				);
 				INFOPLIST_FILE = "libimage/libimage-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/libexif\"",
-					"\"$(SRCROOT)/libjpeg\"",
-					/usr/local/Cellar/gettext/0.21/lib,
 					"$(PROJECT_DIR)/libexif",
+					"$(PROJECT_DIR)/libjpeg",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.nabocorp.mac.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = "../nbFoundation/** ../libimage/**";
 				WRAPPER_EXTENSION = framework;
 			};
 			name = Release;

@@ -26,11 +26,16 @@ NSMutableDictionary* bundles;
 	// we do not want to look over and over again for a bundle that does not exist
 	// as we cannot store nil in a NSDictionary, we use a dummy value (NIL) instead
 	
+	if (bundles == nil) {
+		bundles = [NSMutableDictionary dictionary];
+	}
+
 	NSString* path = [bundles objectForKey:identifier];
 	if (path == nil) {
 		
-		// get the path of the bunder
-		path = [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:identifier];
+		// Get the path of the bundle.
+		NSURL* applicationURL = [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:identifier];
+		path = applicationURL.path;
 		if (path == nil) {
 			path = NIL;
 		}
@@ -52,11 +57,16 @@ NSMutableDictionary* bundles;
 		[urls addObject:[NSURL fileURLWithPath:filepath]];
 	}
 
+	NSURL* applicationURL = [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:identifier];
+	if (applicationURL == nil) {
+		return;
+	}
+
+	NSWorkspaceOpenConfiguration* configuration = [NSWorkspaceOpenConfiguration configuration];
 	[[NSWorkspace sharedWorkspace] openURLs:urls
-									withAppBundleIdentifier:PHOTOSHOP_BUNDLE_ID
-																	options:0
-					 additionalEventParamDescriptor:nil
-												launchIdentifiers:nil];
+								 withApplicationAtURL:applicationURL
+											 configuration:configuration
+									 completionHandler:nil];
 	
 }
 

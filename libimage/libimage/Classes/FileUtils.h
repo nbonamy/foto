@@ -7,16 +7,17 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 @interface FileUtils : NSObject
 
-+ (BOOL) isFile:(NSString*) path conformingTo:(CFStringRef) UTType orHasExtensionIn:(NSArray*) extensions;
++ (BOOL) isFile:(NSString*) path conformingTo:(UTType*) contentType orHasExtensionIn:(NSArray*) extensions;
 + (BOOL) isImageFile:(NSString*) path;
 + (BOOL) isVideoFile:(NSString*) path;
 
 + (NSImage*) getIcon:(NSString*) path;
 
-+ (void) moveItemToTrash:(NSString*) path;
++ (BOOL) moveItemToTrash:(NSString*) path error:(NSError**) error;
 
 + (NSDate*) getCreationDateForFile:(NSString*) file;
 + (NSDate*) getModificationDateForFile:(NSString*) file;

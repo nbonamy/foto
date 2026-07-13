@@ -1,5 +1,5 @@
 import Cocoa
-import CommonCrypto
+import CryptoKit
 import FlutterMacOS
 
 extension NSBitmapImageRep {
@@ -13,32 +13,24 @@ extension NSImage {
 }
 
 extension Data {
-    var md5 : String {
-        let digest = UnsafeMutablePointer<UInt8>.allocate(capacity: Int(CC_MD5_DIGEST_LENGTH))
-				defer { digest.deallocate() }
-        self.withUnsafeBytes { bytes in 
-					guard let baseAddress = bytes.baseAddress else { return }
-					CC_MD5(baseAddress, CC_LONG(bytes.count), digest)
-				}
-        var digestHex = ""
-        for index in 0..<Int(CC_MD5_DIGEST_LENGTH) {
-            digestHex += String(format: "%02x", digest[index])
-        }
-        return digestHex
+    var sha256: String {
+        SHA256.hash(data: self).map { String(format: "%02x", $0) }.joined()
     }
 }
 
-@NSApplicationMain
+@main
 class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 	
 	var _eventSink:FlutterEventSink?;
 	var _initialFile:String?;
 	var _latestFile:String?;
-	var _cachedIcons:[String] = [];
+	var _cachedIcons:Set<String> = [];
 	
 	override func applicationDidFinishLaunching(_ notification: Notification) {
-		let rootController : NSViewController? = mainFlutterWindow?.contentViewController
-		for controller in rootController!.children {
+		guard let rootController = mainFlutterWindow?.contentViewController else {
+			return
+		}
+		for controller in rootController.children {
 			if (controller is FlutterViewController) {
 
 				let flutterController = controller as! FlutterViewController
@@ -70,6 +62,10 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 	override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
 		return true
 	}
+
+	override func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+		return true
+	}
 	
 	public func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
 		self._eventSink = events;
@@ -87,11 +83,13 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 	}
 	
 	override func application(_ sender: NSApplication, openFiles filenames: [String]) {
-		self._process(filename: filenames[0])
+		guard let filename = filenames.first else { return }
+		self._process(filename: filename)
 	}
 	
 	override func application(_ application: NSApplication, open urls: [URL]) {
-		self._process(filename: urls[0].path)
+		guard let url = urls.first else { return }
+		self._process(filename: url.path)
 	}
 	
 	func _process(filename: String) {
@@ -108,72 +106,117 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 	func _fileHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
 		if ("getInitialFile" == call.method) {
 			result(self._initialFile);
+		} else {
+			result(FlutterMethodNotImplemented)
 		}
 	}
 	
 	func _platformUtilsHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
 		if ("moveToTrash" == call.method) {
-			let filepath = call.arguments as! String;
-			FileUtils.moveItem(toTrash: filepath);
-			result(true);
+			guard let filepath = call.arguments as? String else {
+				result(FlutterError(
+					code: "invalid_path",
+					message: "A valid filesystem path is required.",
+					details: nil
+				));
+				return;
+			}
+			do {
+				try FileUtils.moveItem(toTrash: filepath)
+				result(true);
+			} catch {
+				result(FlutterError(
+					code: "trash_failed",
+					message: error.localizedDescription,
+					details: filepath
+				));
+			}
 		} else if ("getPlatformIcon" == call.method) {
-			let filepath = call.arguments as! String;
+			guard let filepath = call.arguments as? String else {
+				result(FlutterError(code: "invalid_path", message: "A valid filesystem path is required.", details: nil))
+				return
+			}
 			let image = NSWorkspace.shared.icon(forFile: filepath);
-			let hash = image.name() ?? image.tiffRepresentation?.md5 ?? filepath;
+			let hash = image.name() ?? image.tiffRepresentation?.sha256 ?? filepath;
 			if (self._cachedIcons.contains(hash)) {
 				result(hash);
+			} else if let png = image.png {
+				self._cachedIcons.insert(hash);
+				result(["key": hash, "png": FlutterStandardTypedData(bytes: png)]);
 			} else {
-				let png = image.png;
-				self._cachedIcons.append(hash);
-				result([
-					"key": hash,
-					"png": FlutterStandardTypedData.init(bytes: png!)
-				]);
+				result(FlutterError(code: "icon_failed", message: "The file icon could not be rendered.", details: filepath))
 			}
 		} else if ("bundlePathForIdentifier" == call.method) {
-			let identifier = call.arguments as! String;
+			guard let identifier = call.arguments as? String else {
+				result(FlutterError(code: "invalid_identifier", message: "A valid bundle identifier is required.", details: nil))
+				return
+			}
 			result(SystemUtils.bundlePath(forIdentifier:identifier));
 		} else if ("openFilesWithBundleIdentifier" == call.method) {
-			guard let args = call.arguments as? [String:Any] else {return}
-			let files = args["files"] as? Array<String>;
-			let identifier = args["identifier"] as? String;
+			guard let args = call.arguments as? [String:Any],
+				  let files = args["files"] as? [String],
+				  let identifier = args["identifier"] as? String else {
+				result(FlutterError(code: "invalid_arguments", message: "Files and a bundle identifier are required.", details: nil))
+				return
+			}
 			SystemUtils.openFiles(files, withBundleIdentifier: identifier);
 			result(true);
+		} else {
+			result(FlutterMethodNotImplemented)
 		}
 	}
 	
 	func _fileUtilsHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
-		if ("getCreationDate" == call.method) {
-			let filepath = call.arguments as! String;
-			let datetime = FileUtils.getCreationDate(forFile: filepath);
-			result(datetime!.timeIntervalSince1970);
-		} else if ("getModificationDate" == call.method) {
-			let filepath = call.arguments as! String;
-			let datetime = FileUtils.getModificationDate(forFile: filepath);
-			result(datetime!.timeIntervalSince1970);
+		guard let filepath = call.arguments as? String else {
+			result(FlutterError(code: "invalid_path", message: "A valid filesystem path is required.", details: nil))
+			return
+		}
+		if ("getCreationDate" == call.method), let datetime = FileUtils.getCreationDate(forFile: filepath) {
+			result(datetime.timeIntervalSince1970);
+		} else if ("getModificationDate" == call.method), let datetime = FileUtils.getModificationDate(forFile: filepath) {
+			result(datetime.timeIntervalSince1970);
+		} else if (call.method == "getCreationDate" || call.method == "getModificationDate") {
+			result(FlutterError(code: "date_failed", message: "The file date could not be read.", details: filepath))
+		} else {
+			result(FlutterMethodNotImplemented)
 		}
 	}
 
 	func _imageUtilsHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
 		
 		if ("getCreationDate" == call.method) {
-			let filepath = call.arguments as! String;
-			let datetime = ImageUtils.getCreationDate(forImage: filepath);
-			result(datetime!.timeIntervalSince1970);
+			guard let filepath = call.arguments as? String,
+				  let datetime = ImageUtils.getCreationDate(forImage: filepath) else {
+				result(FlutterError(code: "date_failed", message: "The image date could not be read.", details: call.arguments))
+				return
+			}
+			result(datetime.timeIntervalSince1970);
 		} else if ("transformImage" == call.method) {
-			guard let args = call.arguments as? [String:Any] else {return}
-			let filepath = args["filepath"] as? String;
-			let transformation = args["transformation"] as? UInt32;
-			let jpegcompression = args["jpegCompression"] as? Float;
-			let rc = ImageUtils.transformImage(filepath, withTransform: ImageTransformation(rawValue: transformation!), jpegCompression: jpegcompression!);
+			guard let args = call.arguments as? [String:Any],
+				  let filepath = args["filepath"] as? String,
+				  let transformationNumber = args["transformation"] as? NSNumber,
+				  let compressionNumber = args["jpegCompression"] as? NSNumber else {
+				result(FlutterError(code: "invalid_arguments", message: "A path, transformation, and JPEG compression are required.", details: call.arguments))
+				return
+			}
+			guard transformationNumber.uint32Value <= 4 else {
+				result(FlutterError(code: "invalid_transformation", message: "The requested image transformation is invalid.", details: transformationNumber))
+				return
+			}
+			let transformation = ImageTransformation(rawValue: transformationNumber.uint32Value)
+			let rc = ImageUtils.transformImage(filepath, withTransform: transformation, jpegCompression: compressionNumber.floatValue);
 			result(rc);
 		} else if ("losslessRotate" == call.method) {
-			let filepath = call.arguments as! String;
+			guard let filepath = call.arguments as? String else {
+				result(FlutterError(code: "invalid_path", message: "A valid filesystem path is required.", details: nil))
+				return
+			}
 			let rc = ImageUtils.autoLosslessRotateImage(filepath);
 			result(rc);
+		} else {
+			result(FlutterMethodNotImplemented)
 		}
 	}
 	
 	
 }
-

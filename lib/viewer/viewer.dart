@@ -1,10 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:foto/l10n/app_localizations.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -22,14 +23,14 @@ class ImageViewer extends StatefulWidget {
   final List<String> images;
   final int start;
   final MenuActionStream menuActionStream;
-  final Function exit;
+  final void Function({String? current, bool? quit}) exit;
   const ImageViewer({
-    Key? key,
+    super.key,
     required this.images,
     required this.start,
     required this.menuActionStream,
     required this.exit,
-  }) : super(key: key);
+  });
 
   @override
   State<StatefulWidget> createState() => _ImageViewerState();
@@ -37,40 +38,54 @@ class ImageViewer extends StatefulWidget {
 
 class _ImageViewerState extends State<ImageViewer>
     with TickerProviderStateMixin, WindowListener, MenuHandler {
+  late final List<String> _images;
   late int _index;
   double? _fitScale;
   double? _fillScale;
+  bool _calculatingScales = false;
   final FocusNode _focusNode = FocusNode();
   ImageFile? _imageProvider;
   late PhotoViewController _controller;
+  StreamSubscription<PhotoViewControllerValue>? _controllerSubscription;
   late AnimationController _scaleAnimationController;
   Animation<double>? _scaleAnimation;
+  PhotoViewController? _scaleAnimationTarget;
   late Preferences _preferences;
   Timer? _slideshowTimer;
+  final Set<String> _rotatingImages = <String>{};
+  bool _deletePending = false;
+  bool _isExiting = false;
 
-  String get currentImage {
-    return widget.images[_index];
-  }
+  bool get _hasImages => _images.isNotEmpty;
+
+  String get currentImage => _images[_index];
 
   @override
   void initState() {
-    _resetState();
+    super.initState();
+    _images = List<String>.of(widget.images);
+    _index = _hasImages ? widget.start.clamp(0, _images.length - 1) : 0;
     _preferences = Preferences.of(context);
-    initMenuSubscription(widget.menuActionStream);
-    _index = _cycleIndex(widget.start);
     _scaleAnimationController = AnimationController(vsync: this)
       ..addListener(() {
-        _controller.scale = _scaleAnimation!.value;
+        final Animation<double>? animation = _scaleAnimation;
+        final PhotoViewController? target = _scaleAnimationTarget;
+        if (animation != null && target != null) {
+          target.scale = animation.value;
+        }
       });
+    _initController();
+    initMenuSubscription(widget.menuActionStream);
     windowManager.addListener(this);
-    super.initState();
   }
 
   @override
   void didChangeDependencies() {
-    _preload(_index - 1);
-    _preload(_index + 1);
     super.didChangeDependencies();
+    if (_images.length > 1) {
+      _preload(_index - 1);
+      _preload(_index + 1);
+    }
   }
 
   @override
@@ -78,36 +93,58 @@ class _ImageViewerState extends State<ImageViewer>
     cancelMenuSubscription();
     windowManager.removeListener(this);
     _slideshowTimer?.cancel();
+    _scaleAnimationController.dispose();
+    _controllerSubscription?.cancel();
+    _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
-  void _resetState({bool invalidateOnly = false}) {
-    if (invalidateOnly && _imageProvider != null) {
-      _imageProvider?.invalidate();
-    } else {
-      _imageProvider = null;
-    }
+  void _resetState() {
+    _scaleAnimationController.stop();
+    _scaleAnimation = null;
+    _scaleAnimationTarget = null;
+    _imageProvider = null;
     _fitScale = null;
     _fillScale = null;
+    _calculatingScales = false;
     _initController();
   }
 
   void _initController() {
-    _controller = PhotoViewController();
-    _controller.outputStateStream.listen((event) {
-      if (event.scale != null && _fitScale == null) {
-        setState(() {
-          _fitScale = event.scale;
-        });
+    final PhotoViewController? oldController =
+        _controllerSubscription == null ? null : _controller;
+    final StreamSubscription<PhotoViewControllerValue>? oldSubscription =
+        _controllerSubscription;
+    final PhotoViewController controller = PhotoViewController();
+    _controller = controller;
+    _controllerSubscription = controller.outputStateStream.listen((event) {
+      if (mounted &&
+          identical(controller, _controller) &&
+          event.scale != null &&
+          _fitScale == null) {
+        setState(() => _fitScale = event.scale);
       }
     });
+
+    if (oldController != null) {
+      oldSubscription?.cancel();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        oldController.dispose();
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_hasImages) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _exit(false));
+      return const ColoredBox(color: Colors.black);
+    }
+
     // update based on last data
     _imageProvider ??= ImageFile(currentImage);
-    if (_fitScale != null && _fillScale == null) {
+    if (_fitScale != null && _fillScale == null && !_calculatingScales) {
       _calcFitFillScales();
     }
 
@@ -118,7 +155,7 @@ class _ImageViewerState extends State<ImageViewer>
       //onFocusChange: (hasFocus) {
       //  debugPrint('viewer ${hasFocus ? "on" : "off"}');
       //},
-      onKey: (_, event) => _onKey(event),
+      onKeyEvent: (_, event) => _onKey(event),
       child: Container(
         color: Colors.black,
         child: Stack(
@@ -142,6 +179,13 @@ class _ImageViewerState extends State<ImageViewer>
                       key: Key(_imageProvider.hashCode.toString()),
                       controller: _controller,
                       imageProvider: _imageProvider,
+                      errorBuilder: (_, __, ___) => const Center(
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.white70,
+                          size: 64,
+                        ),
+                      ),
                       initialScale:
                           _fitScale ?? PhotoViewComputedScale.contained,
                       maxScale: _fitScale == null ? 1.0 : null,
@@ -155,6 +199,7 @@ class _ImageViewerState extends State<ImageViewer>
             StreamBuilder<PhotoViewControllerValue>(
               stream: _controller.outputStateStream,
               builder: (context, snapshot) => InfoOverlay(
+                key: ValueKey(_imageProvider.hashCode),
                 image: currentImage,
                 scale: snapshot.hasError ? null : snapshot.data?.scale,
               ),
@@ -176,6 +221,7 @@ class _ImageViewerState extends State<ImageViewer>
             label: _isSlideshowing()
                 ? t.viewerStopSlideShow
                 : t.viewerStartSlideShow,
+            disabled: _images.length < 2,
             shortcutKey: 's',
             shortcutModifiers: ctxm.ShortcutModifier(command: true),
             onClick: (_) => _toggleSlideshow(),
@@ -217,20 +263,24 @@ class _ImageViewerState extends State<ImageViewer>
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
             label: t.viewerFirstImage,
+            disabled: _index == 0,
             onClick: (_) => _first(),
           ),
           ctxm.MenuItem(
             label: t.viewerPreviousImage,
+            disabled: _images.length < 2,
             shortcutKey: '◀',
             onClick: (_) => _previous(),
           ),
           ctxm.MenuItem(
             label: t.viewerNextImage,
+            disabled: _images.length < 2,
             shortcutKey: '▶',
             onClick: (_) => _next(),
           ),
           ctxm.MenuItem(
             label: t.viewerLastImage,
+            disabled: _index == _images.length - 1,
             onClick: (_) => _last(),
           ),
           ctxm.MenuItem.separator(),
@@ -277,7 +327,7 @@ class _ImageViewerState extends State<ImageViewer>
           ctxm.MenuItem(
             label: t.viewerClose,
             shortcutKey: '↩',
-            onClick: (_) => _exit(true),
+            onClick: (_) => _exit(false),
           ),
         ],
       ),
@@ -287,6 +337,8 @@ class _ImageViewerState extends State<ImageViewer>
 
   void _setScale(double scale, {bool animate = true}) {
     if (animate && _controller.scale != null) {
+      _scaleAnimationController.stop();
+      _scaleAnimationTarget = _controller;
       _scaleAnimation = Tween<double>(
         begin: _controller.scale,
         end: scale,
@@ -295,6 +347,9 @@ class _ImageViewerState extends State<ImageViewer>
         ..value = 0.0
         ..fling(velocity: 25.0);
     } else {
+      _scaleAnimationController.stop();
+      _scaleAnimation = null;
+      _scaleAnimationTarget = null;
       _controller.scale = scale;
     }
   }
@@ -331,18 +386,31 @@ class _ImageViewerState extends State<ImageViewer>
   }
 
   void _startSlideshow() {
-    _stopSlideshow();
+    if (_images.length < 2) {
+      return;
+    }
+    _stopSlideshow(notify: false);
     _slideshowTimer = Timer.periodic(
       Duration(milliseconds: _preferences.slideshowDurationMs),
-      (_) => _next(),
+      (_) {
+        if (!mounted || _images.length < 2) {
+          _stopSlideshow();
+        } else {
+          _next();
+        }
+      },
     );
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
-  void _stopSlideshow() {
+  void _stopSlideshow({bool notify = true}) {
     _slideshowTimer?.cancel();
     _slideshowTimer = null;
-    setState(() {});
+    if (notify && mounted) {
+      setState(() {});
+    }
   }
 
   void _toggleSlideshow() {
@@ -376,47 +444,65 @@ class _ImageViewerState extends State<ImageViewer>
     }
   }
 
-  KeyEventResult _onKey(RawKeyEvent event) {
-    if (event.isKeyPressed(LogicalKeyboardKey.minus) ||
-        event.isKeyPressed(LogicalKeyboardKey.numpadSubtract)) {
+  KeyEventResult _onKey(KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+
+    final LogicalKeyboardKey key = event.logicalKey;
+    final bool commandPressed = PlatformKeyboard.metaIsCommandModifier()
+        ? HardwareKeyboard.instance.isMetaPressed
+        : HardwareKeyboard.instance.isControlPressed;
+
+    if (key == LogicalKeyboardKey.keyS && commandPressed) {
+      if (event is KeyDownEvent) {
+        _toggleSlideshow();
+      }
+      return KeyEventResult.handled;
+    } else if (key == LogicalKeyboardKey.minus ||
+        key == LogicalKeyboardKey.numpadSubtract) {
       _zoom(false);
       return KeyEventResult.handled;
-    } else if (event.isKeyPressed(LogicalKeyboardKey.add) ||
-        event.isKeyPressed(LogicalKeyboardKey.numpadAdd)) {
+    } else if (key == LogicalKeyboardKey.add ||
+        key == LogicalKeyboardKey.numpadAdd) {
       _zoom(true);
       return KeyEventResult.handled;
-    } else if (event.isKeyPressed(LogicalKeyboardKey.equal) ||
-        event.isKeyPressed(LogicalKeyboardKey.numpadEqual)) {
+    } else if (key == LogicalKeyboardKey.equal ||
+        key == LogicalKeyboardKey.numpadEqual) {
       _noZoom();
       return KeyEventResult.handled;
-    } else if (event.isKeyPressed(LogicalKeyboardKey.slash) ||
-        event.isKeyPressed(LogicalKeyboardKey.numpadDivide)) {
+    } else if (key == LogicalKeyboardKey.slash ||
+        key == LogicalKeyboardKey.numpadDivide) {
       _fit();
       return KeyEventResult.handled;
-    } else if (event.isKeyPressed(LogicalKeyboardKey.period) ||
-        event.isKeyPressed(LogicalKeyboardKey.numpadComma)) {
+    } else if (key == LogicalKeyboardKey.period ||
+        key == LogicalKeyboardKey.numpadComma) {
       _fill();
       return KeyEventResult.handled;
-    } else if (PlatformKeyboard.isPrevious(event)) {
+    } else if (!commandPressed &&
+        (key == LogicalKeyboardKey.arrowLeft ||
+            key == LogicalKeyboardKey.arrowUp ||
+            key == LogicalKeyboardKey.bracketLeft)) {
       _previous();
       return KeyEventResult.handled;
-    } else if (PlatformKeyboard.isNext(event)) {
+    } else if (!commandPressed &&
+        (key == LogicalKeyboardKey.arrowRight ||
+            key == LogicalKeyboardKey.arrowDown ||
+            key == LogicalKeyboardKey.space ||
+            key == LogicalKeyboardKey.bracketRight)) {
       _next();
       return KeyEventResult.handled;
-    } else if (event.isKeyPressed(LogicalKeyboardKey.keyI)) {
+    } else if (key == LogicalKeyboardKey.keyI && !commandPressed) {
       _toggleLevel();
       return KeyEventResult.handled;
-    } else if (event.isKeyPressed(LogicalKeyboardKey.keyA)) {
+    } else if (key == LogicalKeyboardKey.keyA && !commandPressed) {
       _toggleOverlay();
       return KeyEventResult.handled;
-    } else if (event.isKeyPressed(LogicalKeyboardKey.keyA) &&
-        PlatformKeyboard.commandModifierPressed(event)) {
-      _toggleSlideshow();
-      return KeyEventResult.handled;
-    } else if (PlatformKeyboard.isEnter(event)) {
+    } else if (event.physicalKey == PhysicalKeyboardKey.enter ||
+        event.physicalKey == PhysicalKeyboardKey.numpadEnter) {
       _exit(false);
       return KeyEventResult.handled;
-    } else if (PlatformKeyboard.isEscape(event)) {
+    } else if (event.physicalKey == PhysicalKeyboardKey.escape) {
       _exit(true);
       return KeyEventResult.handled;
     } else {
@@ -425,23 +511,43 @@ class _ImageViewerState extends State<ImageViewer>
   }
 
   void _exit(bool quit) {
+    if (_isExiting) {
+      return;
+    }
+    _isExiting = true;
+    _stopSlideshow(notify: false);
     widget.exit(
       quit: quit,
-      current: widget.images.isEmpty ? null : currentImage,
+      current: _hasImages ? currentImage : null,
     );
   }
 
   int _cycleIndex(int index) {
-    if (index < 0) return widget.images.length - 1;
-    if (index > widget.images.length - 1) return 0;
+    if (!_hasImages) return 0;
+    if (index < 0) return _images.length - 1;
+    if (index > _images.length - 1) return 0;
     return index;
   }
 
-  Future<void> _preload(int index) {
-    return precacheImage(ImageFile(widget.images[_cycleIndex(index)]), context);
+  Future<void> _preload(int index) async {
+    if (!_hasImages || !mounted) {
+      return;
+    }
+    final String image = _images[_cycleIndex(index)];
+    if (!File(image).existsSync()) {
+      return;
+    }
+    try {
+      await precacheImage(ImageFile(image), context);
+    } catch (_) {
+      // Preloading is opportunistic. The active image still has an error UI.
+    }
   }
 
   void _first() {
+    if (!_hasImages || _index == 0) {
+      return;
+    }
     setState(() {
       _resetState();
       _index = 0;
@@ -450,6 +556,9 @@ class _ImageViewerState extends State<ImageViewer>
   }
 
   void _previous() {
+    if (_images.length < 2) {
+      return;
+    }
     setState(() {
       _resetState();
       _index = _cycleIndex(_index - 1);
@@ -458,6 +567,9 @@ class _ImageViewerState extends State<ImageViewer>
   }
 
   void _next() {
+    if (_images.length < 2) {
+      return;
+    }
     setState(() {
       _resetState();
       _index = _cycleIndex(_index + 1);
@@ -466,9 +578,12 @@ class _ImageViewerState extends State<ImageViewer>
   }
 
   void _last() {
+    if (!_hasImages || _index == _images.length - 1) {
+      return;
+    }
     setState(() {
       _resetState();
-      _index = widget.images.length - 1;
+      _index = _images.length - 1;
       _preload(_index + 1);
     });
   }
@@ -490,59 +605,118 @@ class _ImageViewerState extends State<ImageViewer>
     setState(() {});
   }
 
-  void _rotateImage(ImageTransformation transformation) async {
-    bool rc = await ImageUtils.transformImage(currentImage, transformation);
-    if (rc) {
-      _resetState(invalidateOnly: true);
-      setState(() {});
+  Future<void> _rotateImage(ImageTransformation transformation) async {
+    if (!_hasImages) {
+      return;
+    }
+    final String image = currentImage;
+    if (!_rotatingImages.add(image)) {
+      return;
+    }
+
+    try {
+      final bool transformed =
+          await ImageUtils.transformImage(image, transformation);
+      if (!transformed) {
+        return;
+      }
+
+      ImageFile.invalidatePath(image);
+      if (mounted && _hasImages && currentImage == image) {
+        setState(_resetState);
+      }
+    } catch (_) {
+      // Native transforms can fail if the file changed during the operation.
+    } finally {
+      _rotatingImages.remove(image);
     }
   }
 
-  void _confirmDelete() {
-    FileUtils.confirmDelete(
+  Future<void> _confirmDelete() async {
+    if (!_hasImages || _deletePending) {
+      return;
+    }
+    _deletePending = true;
+    _stopSlideshow();
+    final String image = currentImage;
+
+    final bool deleted = await FileUtils.confirmDelete(
       context,
-      [currentImage],
-      barrierColor: Colors.black.withOpacity(0.6),
-    ).then((deleted) {
-      if (deleted != null && deleted) {
-        // remove
-        widget.images.removeAt(_index);
-        if (widget.images.isEmpty) {
-          _exit(false);
-        } else {
-          if (_index == widget.images.length) {
-            _previous();
-          } else {
-            setState(() {
-              _resetState();
-            });
-          }
-        }
+      [image],
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+    );
+    _deletePending = false;
+    if (!mounted || !deleted) {
+      return;
+    }
+
+    final int deletedIndex = _images.indexOf(image);
+    if (deletedIndex == -1) {
+      return;
+    }
+    _images.removeAt(deletedIndex);
+    ImageFile.invalidatePath(image);
+    if (_images.isEmpty) {
+      _exit(false);
+      return;
+    }
+
+    setState(() {
+      if (_index > deletedIndex) {
+        _index -= 1;
+      } else if (_index >= _images.length) {
+        _index = _images.length - 1;
       }
+      _resetState();
     });
   }
 
   Future<void> _calcFitFillScales() async {
-    Rect screenBounds = await windowManager.getBounds();
-    SizeInt imageSize = Utils.imageSize(currentImage);
-    _fitScale = Utils.scaleForContained(screenBounds.size, imageSize.toSize());
-    _fillScale = Utils.scaleForCovering(screenBounds.size, imageSize.toSize());
+    if (!_hasImages || _calculatingScales) {
+      return;
+    }
+    _calculatingScales = true;
+    final String image = currentImage;
+    try {
+      final Rect screenBounds = await windowManager.getBounds();
+      final SizeInt imageSize = Utils.imageSize(image);
+      if (!mounted || !_hasImages || currentImage != image) {
+        return;
+      }
+      final double fit =
+          Utils.scaleForContained(screenBounds.size, imageSize.toSize());
+      final double fill =
+          Utils.scaleForCovering(screenBounds.size, imageSize.toSize());
+      setState(() {
+        _fitScale = fit;
+        _fillScale = fill;
+      });
+    } catch (_) {
+      // The file or native window may disappear while async work is pending.
+    } finally {
+      if (mounted && _hasImages && currentImage == image) {
+        _calculatingScales = false;
+      }
+    }
   }
 
   @override
   void onWindowResized() {
+    if (!_hasImages) {
+      return;
+    }
     double? currentScale = _controller.scale;
     bool isFitted = currentScale != null && currentScale == _fitScale;
     bool isFilled = currentScale != null && currentScale == _fillScale;
     _calcFitFillScales().then((_) {
-      setState(() {
-        if (currentScale == null) {
-        } else if (isFitted) {
-          _fit();
-        } else if (isFilled) {
-          _fill();
-        }
-      });
+      if (!mounted || currentScale == null) {
+        return;
+      }
+      if (isFitted) {
+        _fit();
+      } else if (isFilled) {
+        _fill();
+      }
     });
   }
 }

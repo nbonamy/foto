@@ -63,8 +63,6 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
 
     RegisterGeneratedPlugins(registry: blurryContainerViewController.flutterViewController)
 
-    WindowManagerPlugin.RegisterGeneratedPlugins = RegisterGeneratedPlugins
-
     super.awakeFromNib()
   }
 

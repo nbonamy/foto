@@ -10,32 +10,25 @@ const MethodChannel _mChannel = MethodChannel('foto_file_handler/messages');
 const EventChannel _eChannel = EventChannel('foto_file_handler/events');
 Stream<String>? _stream;
 
-/// Returns a [Future], which completes to one of the following:
+/// Returns the raw filesystem path supplied by macOS.
 ///
-///   * the initially stored link (possibly null), on successful invocation;
+///   * the initially stored path (possibly null), on successful invocation;
 ///   * a [PlatformException], if the invocation failed in the platform plugin.
 Future<String?> getInitialFile() async {
-  final String? initialFile = await _mChannel.invokeMethod('getInitialFile');
-  if (initialFile == null) return null;
-  return Uri.parse(initialFile).path;
+  return _mChannel.invokeMethod<String>('getInitialFile');
 }
 
-/// A convenience method that returns the initially stored link
-/// as a new [Uri] object.
-///
-/// If the link is not valid as a URI or URI reference,
-/// a [FormatException] is thrown.
+/// Returns a file [Uri] for the initially stored filesystem path.
 Future<Uri?> getInitialUri() async {
-  final String? link = await _mChannel.invokeMethod('getInitialFile');
-  if (link == null) return null;
-  return Uri.parse(link);
+  final file = await getInitialFile();
+  return file == null ? null : Uri.file(file);
 }
 
 /// Sets up a broadcast stream for receiving incoming link change events.
 ///
 /// Returns a broadcast [Stream] which emits events to listeners as follows:
 ///
-///   * a decoded data ([String]) event (possibly null) for each successful
+///   * a raw filesystem path ([String]) for each successful
 ///   event received from the platform plugin;
 ///   * an error event containing a [PlatformException] for each error event
 ///   received from the platform plugin.
@@ -49,48 +42,22 @@ Stream<String>? getStream() {
   return _stream;
 }
 
-/// A convenience transformation of the stream to a `Stream<String>`.
-///
-/// If the link is not valid as a URI or URI reference,
-/// a [FormatException] is thrown.
+/// A convenience alias for the raw filesystem path stream.
 ///
 /// Refer to `getLinksStream` about error/exception details.
 ///
 /// If the app was stared by a link intent or user activity the stream will
 /// not emit that initial uri - query either the `getInitialFile` instead.
 Stream<String>? getFilesStream() {
-  return getStream()?.transform<String>(
-    StreamTransformer<String, String>.fromHandlers(
-      handleData: (String? link, EventSink<String?> sink) {
-        if (link == null) {
-          sink.add(null);
-        } else {
-          sink.add(Uri.parse(link).path);
-        }
-      },
-    ),
-  );
+  return getStream();
 }
 
-/// A convenience transformation of the stream to a `Stream<Uri>`.
-///
-/// If the link is not valid as a URI or URI reference,
-/// a [FormatException] is thrown.
+/// Transforms each raw filesystem path into a file [Uri].
 ///
 /// Refer to `getLinksStream` about error/exception details.
 ///
 /// If the app was stared by a link intent or user activity the stream will
 /// not emit that initial uri - query either the `getInitialUri` instead.
 Stream<Uri>? getUriFilesStream() {
-  return getStream()?.transform<Uri>(
-    StreamTransformer<String, Uri>.fromHandlers(
-      handleData: (String? link, EventSink<Uri?> sink) {
-        if (link == null) {
-          sink.add(null);
-        } else {
-          sink.add(Uri.parse(link));
-        }
-      },
-    ),
-  );
+  return getStream()?.map(Uri.file);
 }

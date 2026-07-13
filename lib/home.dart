@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:foto/l10n/app_localizations.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'browser/browser.dart';
@@ -17,7 +19,7 @@ import 'viewer/viewer.dart';
 
 class Home extends StatefulWidget {
   final List<String> args;
-  const Home({Key? key, required this.args}) : super(key: key);
+  const Home({super.key, required this.args});
 
   @override
   State<StatefulWidget> createState() => _HomeState();
@@ -30,35 +32,44 @@ class _HomeState extends State<Home> with WindowListener {
       MenuActionController.broadcast();
   final MenuActionController _menuActionViewerStream =
       MenuActionController.broadcast();
+  StreamSubscription<String>? _fileSubscription;
+  PageRoute<void>? _viewerRoute;
+  int _openRequestGeneration = 0;
 
-  Future<bool> get isViewerActive async {
-    return windowManager.isFullScreen();
-  }
+  bool get isViewerActive => _viewerRoute?.isActive ?? false;
 
   @override
   void initState() {
+    super.initState();
     windowManager.addListener(this);
     _checkFile();
-    super.initState();
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    _fileSubscription?.cancel();
+    _menuActionBrowserStream.close();
+    _menuActionViewerStream.close();
+    super.dispose();
   }
 
   void _checkFile() async {
     try {
       // subscribe to stream
-      getFilesStream()?.listen((String file) {
-        viewImage(Uri.decodeComponent(file));
-      }, onError: (err) {});
+      _fileSubscription = getFilesStream()?.listen(
+        viewImage,
+        onError: (_) {},
+      );
 
       // initial file
       String? initialFile = await getInitialFile();
-      if (initialFile != null) {
-        initialFile = Uri.decodeComponent(initialFile);
-      } else if (widget.args.isNotEmpty) {
+      if (initialFile == null && widget.args.isNotEmpty) {
         initialFile = widget.args[0];
       }
 
       // view
-      if (initialFile != null) {
+      if (mounted && initialFile != null && File(initialFile).existsSync()) {
         _startedFromFinder = true;
         viewImage(initialFile);
       }
@@ -197,53 +208,98 @@ class _HomeState extends State<Home> with WindowListener {
   }
 
   void _onMenu(MenuAction action) {
-    isViewerActive.then((active) {
-      MenuActionController controller =
-          active ? _menuActionViewerStream : _menuActionBrowserStream;
-      controller.sink.add(action);
-    });
+    final MenuActionController controller =
+        isViewerActive ? _menuActionViewerStream : _menuActionBrowserStream;
+    controller.sink.add(action);
   }
 
-  void viewImage(String image) async {
-    var path = File(image).parent.path;
-    var items = await MediaUtils.getMediaFiles(
-      null,
-      path,
-      includeDirs: false,
-      sortCriteria: SortCriteria.alphabetical,
-    );
-    var images = items.map<String>((e) => e.path).toList();
-    var index = images.indexOf(image);
-    viewImages(images, index);
+  Future<void> viewImage(String image) async {
+    final int requestGeneration = ++_openRequestGeneration;
+    try {
+      final File file = File(image);
+      if (!file.existsSync()) {
+        return;
+      }
+      final String normalizedImage = file.absolute.path;
+      final String path = file.parent.absolute.path;
+      var items = await MediaUtils.getMediaFiles(
+        null,
+        path,
+        includeDirs: false,
+        sortCriteria: SortCriteria.alphabetical,
+      );
+      if (!mounted || requestGeneration != _openRequestGeneration) {
+        return;
+      }
+      var images = items.map<String>((e) => e.path).toList();
+      var index = images.indexOf(normalizedImage);
+      if (index == -1) {
+        // Hidden images and new files may not be in the directory scan yet.
+        images = <String>[normalizedImage];
+        index = 0;
+      }
+      await viewImages(images, index);
+    } catch (_) {
+      // Finder events can race file moves and removals.
+    }
   }
 
-  void viewImages(List<String> images, int startIndex) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        settings: const RouteSettings(name: '/viewer'),
-        pageBuilder: (_, __, ___) => ImageViewer(
-          images: images,
-          start: startIndex,
-          menuActionStream: _menuActionViewerStream.stream,
-          exit: closeViewer,
-        ),
-        transitionDuration: const Duration(seconds: 0),
-        reverseTransitionDuration: const Duration(seconds: 0),
+  Future<void> viewImages(List<String> images, int startIndex) async {
+    final String? requestedImage = startIndex >= 0 && startIndex < images.length
+        ? images[startIndex]
+        : null;
+    final List<String> viewerImages = LinkedHashSet<String>.from(
+      images.where((image) => image.isNotEmpty),
+    ).toList(growable: false);
+    if (!mounted || viewerImages.isEmpty) {
+      return;
+    }
+    final int viewerStart = requestedImage == null
+        ? 0
+        : max(0, viewerImages.indexOf(requestedImage));
+
+    final PageRoute<void>? previousRoute = _viewerRoute;
+    final NavigatorState navigator = Navigator.of(context);
+    if (previousRoute != null && previousRoute.isActive) {
+      navigator.popUntil(
+        (route) => identical(route, previousRoute) || route.isFirst,
+      );
+      if (previousRoute.isActive) {
+        navigator.removeRoute(previousRoute);
+      }
+    }
+
+    final PageRoute<void> route = PageRouteBuilder<void>(
+      settings: const RouteSettings(name: '/viewer'),
+      pageBuilder: (_, __, ___) => ImageViewer(
+        images: viewerImages,
+        start: viewerStart,
+        menuActionStream: _menuActionViewerStream.stream,
+        exit: closeViewer,
       ),
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
     );
-    windowManager.setFullScreen(true);
+    _viewerRoute = route;
+    unawaited(windowManager.setFullScreen(true));
+    try {
+      await navigator.push(route);
+    } finally {
+      if (identical(_viewerRoute, route)) {
+        _viewerRoute = null;
+      }
+    }
   }
 
   void closeViewer({String? current, bool? quit = false}) {
-    windowManager.setFullScreen(false);
+    unawaited(windowManager.setFullScreen(false));
     if (_startedFromFinder) {
       _startedFromFinder = false;
       if (quit == true) {
         SystemNavigator.pop();
         return;
       } else if (current != null) {
-        Navigator.pop(context);
+        _popViewer();
         _keyBrowser.currentState?.resetHistoryWithFile(current);
         return;
       }
@@ -258,26 +314,48 @@ class _HomeState extends State<Home> with WindowListener {
     }
 
     // default
-    Navigator.pop(context);
+    _popViewer();
+  }
+
+  void _popViewer() {
+    final PageRoute<void>? route = _viewerRoute;
+    if (route?.isActive == true) {
+      Navigator.of(context).removeRoute(route!);
+    }
   }
 
   @override
   void onWindowMoved() async {
-    if (!await windowManager.isFullScreen()) {
+    final bool fullScreen = await windowManager.isFullScreen();
+    if (mounted && !fullScreen) {
       _saveWindowBounds();
     }
   }
 
   @override
   void onWindowResized() async {
-    if (!await windowManager.isFullScreen()) {
+    final bool fullScreen = await windowManager.isFullScreen();
+    if (mounted && !fullScreen) {
       _saveWindowBounds();
     }
   }
 
   void _saveWindowBounds() async {
-    Rect rc = await windowManager.getBounds();
-    // ignore: use_build_context_synchronously
+    final Rect rc = await windowManager.getBounds();
+    if (!mounted) return;
+    final bool fullScreen = await windowManager.isFullScreen();
+    if (!mounted || fullScreen || !_isValidWindowBounds(rc)) {
+      return;
+    }
     Preferences.of(context).windowBounds = rc;
+  }
+
+  bool _isValidWindowBounds(Rect bounds) {
+    return bounds.left.isFinite &&
+        bounds.top.isFinite &&
+        bounds.right.isFinite &&
+        bounds.bottom.isFinite &&
+        bounds.width >= 320 &&
+        bounds.height >= 240;
   }
 }

@@ -27,6 +27,8 @@ JXFORM_CODE imageTransformToJpegTransform(ImageTransformation transform) {
 		case ImageTransformationFlipVertical:
 			return JXFORM_FLIP_V;
 	}
+
+	return JXFORM_NONE;
 }
 
 @implementation NSImage (Transform)
@@ -45,7 +47,6 @@ JXFORM_CODE imageTransformToJpegTransform(ImageTransformation transform) {
 	[transform rotateByDegrees:degrees];
 	[boundsPath transformUsingAffineTransform:transform];
 	NSRect rotatedBounds = {NSZeroPoint, [boundsPath bounds].size};
-	NSImage* rotatedImage = [[NSImage alloc] initWithSize:rotatedBounds.size];
 	
 	// Center the image within the rotated bounds
 	imageBounds.origin.x = NSMidX(rotatedBounds) - (NSWidth(imageBounds) / 2);
@@ -64,15 +65,20 @@ JXFORM_CODE imageTransformToJpegTransform(ImageTransformation transform) {
 	[transform translateXBy:-(NSWidth(rotatedBounds) / 2)
 											yBy:-(NSHeight(rotatedBounds) / 2)];
 	
-	// Draw the original image, rotated, into the new image
-	// Note: This "drawing" is done off-screen.
-	[rotatedImage lockFocus];
-	[transform concat];
-	[self	 drawInRect:imageBounds
-					 fromRect:NSZeroRect
-					operation:NSCompositeCopy
-					 fraction:1.0];
-	[rotatedImage unlockFocus];
+	// Draw the original image, rotated, into a resolution-independent image.
+	NSImage* sourceImage = self;
+	NSImage* rotatedImage = [NSImage imageWithSize:rotatedBounds.size
+																	 flipped:NO
+															drawingHandler:^BOOL(NSRect destinationRect) {
+		[NSGraphicsContext saveGraphicsState];
+		[transform concat];
+		[sourceImage drawInRect:imageBounds
+							 fromRect:NSZeroRect
+							operation:NSCompositingOperationCopy
+							 fraction:1.0];
+		[NSGraphicsContext restoreGraphicsState];
+		return YES;
+	}];
 	
 	// done
 	return rotatedImage;
@@ -82,7 +88,6 @@ JXFORM_CODE imageTransformToJpegTransform(ImageTransformation transform) {
 	
 	// Calculate the bounds for the rotated image
 	NSRect imageBounds = {NSZeroPoint, self.maxSize};
-	NSImage* flippedImage = [[NSImage alloc] initWithSize:self.size];
 	
 	// Start a new transform, to transform the image
 	NSAffineTransform* transform = [NSAffineTransform transform];
@@ -97,15 +102,20 @@ JXFORM_CODE imageTransformToJpegTransform(ImageTransformation transform) {
 	[transform translateXBy:-(NSWidth(imageBounds) / 2)
 											yBy:-(NSHeight(imageBounds) / 2)];
 	
-	// Draw the original image, flipped, into the new image
-	// Note: This "drawing" is done off-screen.
-	[flippedImage lockFocus];
-	[transform concat];
-	[self	 drawInRect:imageBounds
-					 fromRect:NSZeroRect
-					operation:NSCompositeCopy
-					 fraction:1.0];
-	[flippedImage unlockFocus];
+	// Draw the original image, flipped, into a resolution-independent image.
+	NSImage* sourceImage = self;
+	NSImage* flippedImage = [NSImage imageWithSize:imageBounds.size
+																 flipped:NO
+														drawingHandler:^BOOL(NSRect destinationRect) {
+		[NSGraphicsContext saveGraphicsState];
+		[transform concat];
+		[sourceImage drawInRect:imageBounds
+							 fromRect:NSZeroRect
+							operation:NSCompositingOperationCopy
+							 fraction:1.0];
+		[NSGraphicsContext restoreGraphicsState];
+		return YES;
+	}];
 	
 	// done
 	return flippedImage;

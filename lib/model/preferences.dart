@@ -45,34 +45,36 @@ class Preferences extends ChangeNotifier {
 
   late SharedPreferences _prefs;
 
-  init() async {
+  Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  @override
-  // ignore: unnecessary_overrides
-  void notifyListeners() {
-    super.notifyListeners();
-  }
-
   OverlayLevel get overlayLevel {
-    final level = _prefs.getInt('viewer.overlayLevel') ??
-        Preferences.defaultOverlayLevel.index;
-    return OverlayLevel.values[level];
+    return _enumPreference(
+      'viewer.overlayLevel',
+      OverlayLevel.values,
+      Preferences.defaultOverlayLevel,
+    );
   }
 
   set overlayLevel(OverlayLevel level) {
+    if (overlayLevel == level) return;
     _prefs.setInt('viewer.overlayLevel', level.index);
+    notifyListeners();
   }
 
   SortCriteria get sortCriteria {
-    final type = _prefs.getInt('browser.sort.criteria') ??
-        Preferences.defaultSortCriteria.index;
-    return SortCriteria.values[type];
+    return _enumPreference(
+      'browser.sort.criteria',
+      SortCriteria.values,
+      Preferences.defaultSortCriteria,
+    );
   }
 
   set sortCriteria(SortCriteria type) {
+    if (sortCriteria == type) return;
     _prefs.setInt('browser.sort.criteria', type.index);
+    notifyListeners();
   }
 
   bool get sortReversed {
@@ -81,7 +83,9 @@ class Preferences extends ChangeNotifier {
   }
 
   set sortReversed(bool reversed) {
+    if (sortReversed == reversed) return;
     _prefs.setBool('browser.sort.reversed', reversed);
+    notifyListeners();
   }
 
   bool get showFolders {
@@ -90,7 +94,9 @@ class Preferences extends ChangeNotifier {
   }
 
   set showFolders(bool show) {
+    if (showFolders == show) return;
     _prefs.setBool('browser.show_folders', show);
+    notifyListeners();
   }
 
   bool get showInspector {
@@ -99,27 +105,44 @@ class Preferences extends ChangeNotifier {
   }
 
   set showInspector(bool show) {
+    if (showInspector == show) return;
     _prefs.setBool('browser.show_inspector', show);
+    notifyListeners();
   }
 
   int get slideshowDurationMs {
-    return _prefs.getInt('viewer.slideshow_duration') ??
-        Preferences.defaultSlideshowDurationMs;
+    final duration = _prefs.getInt('viewer.slideshow_duration');
+    return duration != null && duration > 0
+        ? duration
+        : Preferences.defaultSlideshowDurationMs;
   }
 
   set slideshowDurationMs(int durationMs) {
-    _prefs.setInt('viewer.slideshow_duration', durationMs);
+    final validDuration =
+        durationMs > 0 ? durationMs : Preferences.defaultSlideshowDurationMs;
+    if (slideshowDurationMs == validDuration) return;
+    _prefs.setInt('viewer.slideshow_duration', validDuration);
+    notifyListeners();
   }
 
   Rect get windowBounds {
     try {
-      var bounds = _prefs.getString('bounds');
-      var parts = bounds?.split(',');
+      var savedBounds = _prefs.getString('bounds');
+      var parts = savedBounds?.split(',');
       var left = double.parse(parts![0]);
       var top = double.parse(parts[1]);
       var right = double.parse(parts[2]);
       var bottom = double.parse(parts[3]);
-      return Rect.fromLTRB(left, top, right, bottom);
+      final bounds = Rect.fromLTRB(left, top, right, bottom);
+      if (!bounds.left.isFinite ||
+          !bounds.top.isFinite ||
+          !bounds.right.isFinite ||
+          !bounds.bottom.isFinite ||
+          bounds.width < 320 ||
+          bounds.height < 240) {
+        return const Rect.fromLTWH(0, 0, 800, 600);
+      }
+      return bounds;
     } catch (_) {
       return const Rect.fromLTWH(0, 0, 800, 600);
     }
@@ -128,5 +151,12 @@ class Preferences extends ChangeNotifier {
   set windowBounds(Rect rc) {
     _prefs.setString('bounds',
         '${rc.left.toStringAsFixed(1)},${rc.top.toStringAsFixed(1)},${rc.right.toStringAsFixed(1)},${rc.bottom.toStringAsFixed(1)}');
+  }
+
+  T _enumPreference<T>(String key, List<T> values, T fallback) {
+    final index = _prefs.getInt(key);
+    return index != null && index >= 0 && index < values.length
+        ? values[index]
+        : fallback;
   }
 }

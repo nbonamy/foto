@@ -22,9 +22,8 @@ class ShortcutModifier extends ncm.ShortcutModifiers {
 class MenuItem extends ncm.MenuItem {
   MenuItem.separator() : super.separator();
 
-  MenuItem.submenu({String? label, Menu? submenu})
+  MenuItem.submenu({super.label, Menu? submenu})
       : super.submenu(
-          label: label,
           submenu: submenu,
         );
 
@@ -51,12 +50,12 @@ class ContextMenu extends StatefulWidget {
   final Widget child;
 
   const ContextMenu({
-    Key? key,
+    super.key,
     required this.menu,
     this.placement = ncm.Placement.bottomRight,
     this.onBeforeShowMenu,
     required this.child,
-  }) : super(key: key);
+  });
 
   @override
   State<StatefulWidget> createState() => _ContextMenuState();
