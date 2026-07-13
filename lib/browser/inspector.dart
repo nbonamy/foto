@@ -618,7 +618,9 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
     }).catchError((_) {
       if (!mounted || generation != _loadGeneration) return;
       setState(() {
-        _snapshot = null;
+        if (!preserveSnapshot) {
+          _snapshot = null;
+        }
         _loading = false;
       });
     });
@@ -649,13 +651,9 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
   }
 
   void _scheduleSnapshotRefresh({bool immediate = false}) {
-    if (immediate) {
-      _snapshotRefreshTimer?.cancel();
-    } else if (_snapshotRefreshTimer != null) {
-      return;
-    }
+    _snapshotRefreshTimer?.cancel();
     _snapshotRefreshTimer = Timer(
-      immediate ? Duration.zero : const Duration(milliseconds: 80),
+      immediate ? Duration.zero : const Duration(milliseconds: 140),
       () {
         _snapshotRefreshTimer = null;
         if (!mounted) return;
@@ -670,7 +668,7 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
     final palette = FotoPalette.of(context);
     final location = widget.location;
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final visualScale = (_snapshotDistance / _targetDistance).clamp(0.65, 1.55);
+    final visualScale = _snapshotDistance / _targetDistance;
     if (location == null) {
       return _MapFallback(
         icon: Icons.location_off_outlined,

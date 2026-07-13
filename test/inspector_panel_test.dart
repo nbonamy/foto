@@ -166,6 +166,19 @@ void main() {
       find.byKey(const ValueKey('inspector-map-zoom-transform')),
     );
     expect(zoomTransform.transform.getMaxScaleOnAxis(), greaterThan(1));
+    expect(requestedLocations, hasLength(1));
+
+    await trackpad.panZoomUpdate(
+      mapCenter,
+      pan: const Offset(0, -100),
+    );
+    await tester.pump();
+
+    final deepZoomTransform = tester.widget<Transform>(
+      find.byKey(const ValueKey('inspector-map-zoom-transform')),
+    );
+    expect(deepZoomTransform.transform.getMaxScaleOnAxis(), greaterThan(1.55));
+    expect(requestedLocations, hasLength(1));
 
     await trackpad.panZoomEnd();
     await tester.pump(const Duration(milliseconds: 100));
@@ -174,7 +187,7 @@ void main() {
     expect(requestedLocations, hasLength(2));
     expect(requestedLocations[1], requestedLocations[0]);
     expect(requestedDistances.first, 60000);
-    expect(requestedDistances.last, inExclusiveRange(50000, 60000));
+    expect(requestedDistances.last, inExclusiveRange(30000, 40000));
     expect(inspectorScrollable.position.pixels, 0);
   });
 }

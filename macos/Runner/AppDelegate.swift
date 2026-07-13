@@ -256,13 +256,15 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 		}
 		options.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
 
-		MKMapSnapshotter(options: options).start { snapshot, error in
+		let renderQueue = DispatchQueue.global(qos: .userInitiated)
+		MKMapSnapshotter(options: options).start(with: renderQueue) { snapshot, error in
+			let png = autoreleasepool { snapshot?.image.png }
 			DispatchQueue.main.async {
 				if let error {
 					result(FlutterError(code: "map_snapshot_failed", message: error.localizedDescription, details: nil))
 					return
 				}
-				guard let png = snapshot?.image.png else {
+				guard let png else {
 					result(nil)
 					return
 				}
