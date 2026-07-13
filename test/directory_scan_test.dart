@@ -100,6 +100,42 @@ void main() {
     expect(imageCalls, 0);
   });
 
+  test('large network listings do not trigger per-image metadata reads',
+      () async {
+    const itemCount = 10000;
+    var imageCalls = 0;
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(fileChannel, (_) async {
+      return List<Object?>.generate(
+        itemCount,
+        (index) => <Object?, Object?>{
+          'path': '/network/photos/image-$index.jpg',
+          'type': 'file',
+          'creationDate': index.toDouble(),
+          'modificationDate': index.toDouble(),
+          'size': 100,
+        },
+      );
+    });
+    messenger.setMockMethodCallHandler(imageChannel, (_) async {
+      imageCalls += 1;
+      return 0.0;
+    });
+
+    final items = await MediaUtils.getMediaFiles(
+      MediaDb(),
+      '/network/photos',
+      includeDirs: false,
+      sortCriteria: SortCriteria.chronological,
+    );
+
+    expect(items, hasLength(itemCount));
+    expect(items.every((item) => !item.captureDateParsed), isTrue);
+    expect(items.every((item) => !item.mediaInfoParsed), isTrue);
+    expect(imageCalls, 0);
+  });
+
   test('unchanged scan entries reuse parsed in-memory metadata', () {
     final metadata = FileMetadata(
       path: '/network/photos/image.jpg',

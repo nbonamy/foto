@@ -95,11 +95,13 @@ Commit: `feat: redesign foto sidebar navigation`
 - [ ] Add semantic hover, focus, selection-ring, rename, folder, loading, and empty states.
 - [x] Keep lazy row construction and predictable, testable geometry.
 - [x] Avoid per-tile blur, shader masks, and expensive animated shadows.
-- [ ] Add widget tests for image/folder tiles, rename behavior, light/dark selection, empty/loading states, and bounded child creation for large lists.
+- [ ] Add widget tests for image/folder tiles, rename behavior, light/dark selection, empty/loading states, and bounded child creation for large lists. Bounded construction is now covered; the remaining states still need focused coverage.
 
 Commit: `feat: redesign gallery thumbnails and selection states`
 
 Dynamic tiling checkpoint: the custom justified-row algorithm preserves ordering, fills complete rows, avoids stretching the final row, and computes finite indexed geometry for 10,000 items. Visible image decodes feed their real aspect ratios back into a debounced relayout without a separate metadata read, which avoids eagerly opening every file on network folders. Analyzer, all 82 tests, and the macOS debug build passed.
+
+Network-performance checkpoint: opening a chronologically sorted folder no longer starts EXIF reads for every image. The gallery uses creation dates from the native batch directory scan, keeps EXIF loading selection-driven, and builds only visible justified rows. Tests cover a 10,000-file network listing with zero image-metadata channel calls and bounded widget construction while scrolling.
 
 ## Phase 6: inspector redesign
 

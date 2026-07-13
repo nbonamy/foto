@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,6 +22,7 @@ import '../utils/image_utils.dart';
 import '../utils/media_utils.dart';
 import '../utils/platform_keyboard.dart';
 import '../utils/platform_utils.dart';
+import 'justified_gallery_view.dart';
 import 'justified_layout.dart';
 import 'thumbnail.dart';
 
@@ -54,7 +54,6 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   List<MediaItem>? _items;
   Future<List<MediaItem>>? _itemsFuture;
   int _loadGeneration = 0;
-  final Map<MediaItem, Future<void>> _captureDateLoading = {};
   final Set<String> _pendingModifiedPaths = {};
   String? _fileBeingRenamed;
 
@@ -280,73 +279,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
         selection.where(itemPaths.contains).toList(growable: false),
       );
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && generation == _loadGeneration) {
-        unawaited(_loadCaptureDates(items, generation));
-      }
-    });
     return items;
-  }
-
-  Future<void> _loadCaptureDates(
-    List<MediaItem> items,
-    int generation,
-  ) async {
-    if (_sortCriteria != SortCriteria.chronological) return;
-    var nextIndex = 0;
-    Future<void> worker() async {
-      while (mounted && generation == _loadGeneration) {
-        if (nextIndex >= items.length) return;
-        final mediaItem = items[nextIndex++];
-        if (mediaItem.captureDateParsed) continue;
-        try {
-          await _ensureCaptureDate(mediaItem);
-        } catch (error) {
-          debugPrint(
-            'Unable to read capture date for ${mediaItem.path}: $error',
-          );
-        }
-      }
-    }
-
-    await Future.wait(
-      List.generate(min(4, items.length), (_) => worker()),
-    );
-    if (!mounted || generation != _loadGeneration || _items == null) return;
-    if (_sortCriteria == SortCriteria.chronological) {
-      final sorted = List<MediaItem>.of(_items!);
-      MediaUtils.sortMediaItems(
-        sorted,
-        sortCriteria: _sortCriteria,
-        sortReversed: _sortReversed,
-      );
-      if (!listEquals(
-        sorted.map((item) => item.path).toList(growable: false),
-        _items!.map((item) => item.path).toList(growable: false),
-      )) {
-        setState(() => _items = sorted);
-      }
-    }
-  }
-
-  Future<void> _ensureCaptureDate(MediaItem mediaItem) async {
-    while (!mediaItem.captureDateParsed) {
-      final existingLoad = _captureDateLoading[mediaItem];
-      if (existingLoad != null) {
-        await existingLoad;
-        continue;
-      }
-
-      final load = mediaItem.getCaptureDate();
-      _captureDateLoading[mediaItem] = load;
-      try {
-        await load;
-      } finally {
-        if (identical(_captureDateLoading[mediaItem], load)) {
-          _captureDateLoading.remove(mediaItem);
-        }
-      }
-    }
   }
 
   void _reloadItems() {
@@ -416,40 +349,12 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
                       spacing: spacing,
                     );
                     _galleryLayout = layout;
-                    return ListView.builder(
+                    return JustifiedGalleryView(
                       controller: _galleryScrollController,
-                      padding: const EdgeInsets.all(padding),
-                      itemCount: layout.rows.length,
-                      itemBuilder: (context, rowIndex) {
-                        final row = layout.rows[rowIndex];
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            bottom: rowIndex == layout.rows.length - 1
-                                ? 0
-                                : spacing,
-                          ),
-                          child: SizedBox(
-                            height: row.height,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                for (var itemIndex = 0;
-                                    itemIndex < row.items.length;
-                                    itemIndex += 1) ...[
-                                  if (itemIndex > 0)
-                                    const SizedBox(width: spacing),
-                                  SizedBox(
-                                    width: row.items[itemIndex].width,
-                                    child: _buildGalleryItem(
-                                      items[row.items[itemIndex].index],
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                      layout: layout,
+                      spacing: spacing,
+                      itemBuilder: (context, itemIndex) =>
+                          _buildGalleryItem(items[itemIndex]),
                     );
                   },
                 );
