@@ -208,6 +208,35 @@ class _HomeState extends State<Home> with WindowListener {
       PlatformMenu(
         label: t.menuView,
         menus: [
+          PlatformMenu(
+            label: t.menuViewAppearance,
+            menus: [
+              PlatformMenuItem(
+                label: _appearanceLabel(
+                  t.appearanceSystem,
+                  ThemeMode.system,
+                ),
+                onSelected: () =>
+                    Preferences.of(context).themeMode = ThemeMode.system,
+              ),
+              PlatformMenuItem(
+                label: _appearanceLabel(
+                  t.appearanceLight,
+                  ThemeMode.light,
+                ),
+                onSelected: () =>
+                    Preferences.of(context).themeMode = ThemeMode.light,
+              ),
+              PlatformMenuItem(
+                label: _appearanceLabel(
+                  t.appearanceDark,
+                  ThemeMode.dark,
+                ),
+                onSelected: () =>
+                    Preferences.of(context).themeMode = ThemeMode.dark,
+              ),
+            ],
+          ),
           PlatformMenuItem(
             label: t.menuViewInspector,
             shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.keyI),
@@ -216,6 +245,10 @@ class _HomeState extends State<Home> with WindowListener {
         ],
       ),
     ];
+  }
+
+  String _appearanceLabel(String label, ThemeMode mode) {
+    return Preferences.of(context).themeMode == mode ? '✓ $label' : label;
   }
 
   void _onMenu(MenuAction action) {

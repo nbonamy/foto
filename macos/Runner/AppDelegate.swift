@@ -119,7 +119,25 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 	}
 	
 	func _platformUtilsHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
-		if ("enterInstantFullScreen" == call.method) {
+		if ("setAppearance" == call.method) {
+			guard let appearance = call.arguments as? String,
+				  let window = mainFlutterWindow else {
+				result(FlutterError(code: "appearance_failed", message: "A valid appearance and main window are required.", details: call.arguments))
+				return
+			}
+			switch appearance {
+			case "system":
+				window.appearance = nil
+			case "light":
+				window.appearance = NSAppearance(named: .aqua)
+			case "dark":
+				window.appearance = NSAppearance(named: .darkAqua)
+			default:
+				result(FlutterError(code: "appearance_failed", message: "Unknown appearance.", details: appearance))
+				return
+			}
+			result(true)
+		} else if ("enterInstantFullScreen" == call.method) {
 			guard let window = mainFlutterWindow as? MainFlutterWindow else {
 				result(FlutterError(code: "fullscreen_failed", message: "The main window is unavailable.", details: nil))
 				return

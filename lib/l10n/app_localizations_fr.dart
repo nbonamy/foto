@@ -78,6 +78,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get menuViewInspector => 'Basculer Inspecteur';
 
   @override
+  String get menuViewAppearance => 'Apparence';
+
+  @override
+  String get appearanceSystem => 'Système';
+
+  @override
+  String get appearanceLight => 'Clair';
+
+  @override
+  String get appearanceDark => 'Sombre';
+
+  @override
   String get menuWindow => 'Fenêtres';
 
   @override

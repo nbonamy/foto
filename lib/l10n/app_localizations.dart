@@ -236,6 +236,30 @@ abstract class AppLocalizations {
   /// **'Toggle Inspector'**
   String get menuViewInspector;
 
+  /// No description provided for @menuViewAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get menuViewAppearance;
+
+  /// No description provided for @appearanceSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get appearanceSystem;
+
+  /// No description provided for @appearanceLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get appearanceLight;
+
+  /// No description provided for @appearanceDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get appearanceDark;
+
   /// No description provided for @menuWindow.
   ///
   /// In en, this message translates to:

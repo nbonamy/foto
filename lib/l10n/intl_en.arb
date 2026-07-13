@@ -26,6 +26,10 @@
   
   "menuView": "View",
   "menuViewInspector": "Toggle Inspector",
+  "menuViewAppearance": "Appearance",
+  "appearanceSystem": "System",
+  "appearanceLight": "Light",
+  "appearanceDark": "Dark",
   
   "menuWindow": "Window",
 

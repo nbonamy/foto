@@ -122,12 +122,12 @@ Commit: `feat: replace foto dialogs and text inputs`
 
 ## Phase 8: native appearance and dependency removal
 
-- [ ] Keep System mode following macOS appearance changes live.
-- [ ] Synchronize explicit Light and Dark choices with the native `NSVisualEffectView` appearance.
+- [x] Keep System mode following macOS appearance changes live.
+- [x] Synchronize explicit Light and Dark choices with the native `NSVisualEffectView` appearance.
 - [ ] Verify the viewer remains intentionally dark and unaffected by browser appearance switching.
 - [x] Remove every `macos_ui` import and remove the dependency from `pubspec.yaml` and the lockfile.
 - [x] Require `rg "macos_ui|MacosApp|MacosWindow|MacosTheme" lib test pubspec.yaml` to return no matches.
-- [ ] Add appearance synchronization tests at the Dart/native-channel boundary.
+- [x] Add appearance synchronization tests at the Dart/native-channel boundary.
 
 Commits:
 
@@ -135,6 +135,8 @@ Commits:
 - `chore: remove macos ui`
 
 Dependency-removal checkpoint: `macos_ui` and its transitive `macos_window_utils` dependency are absent from the resolved package graph. The zero-reference search passed, analyzer passed, all 84 tests passed, and the macOS debug application built successfully.
+
+Appearance checkpoint: System remains the persisted default, the View menu exposes System/Light/Dark choices, and the Dart preference synchronizes explicit choices with `NSWindow.appearance` while System clears the override. The native-channel test, analyzer, all 85 tests, and a macOS debug build passed.
 
 ## Phase 9: final verification
 

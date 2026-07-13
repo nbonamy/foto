@@ -26,6 +26,10 @@
   
   "menuView": "Affichage",
   "menuViewInspector": "Basculer Inspecteur",
+  "menuViewAppearance": "Apparence",
+  "appearanceSystem": "Système",
+  "appearanceLight": "Clair",
+  "appearanceDark": "Sombre",
 
   "menuWindow": "Fenêtres",
 

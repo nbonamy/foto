@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -14,6 +16,7 @@ import 'model/history.dart';
 import 'model/preferences.dart';
 import 'model/selection.dart';
 import 'utils/platform_keyboard.dart';
+import 'utils/platform_utils.dart';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -103,7 +106,10 @@ class FotoApp extends StatelessWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Home(args: args),
+          home: _AppearanceSync(
+            mode: themeMode,
+            child: Home(args: args),
+          ),
         );
       },
     );
@@ -122,4 +128,39 @@ class FotoApp extends StatelessWidget {
       },
     );
   }
+}
+
+class _AppearanceSync extends StatefulWidget {
+  const _AppearanceSync({required this.mode, required this.child});
+
+  final ThemeMode mode;
+  final Widget child;
+
+  @override
+  State<_AppearanceSync> createState() => _AppearanceSyncState();
+}
+
+class _AppearanceSyncState extends State<_AppearanceSync> {
+  @override
+  void initState() {
+    super.initState();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(covariant _AppearanceSync oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.mode != widget.mode) _sync();
+  }
+
+  void _sync() {
+    unawaited(
+      PlatformUtils.setAppearance(widget.mode).onError((error, stackTrace) {
+        debugPrint('Unable to synchronize native appearance: $error');
+      }),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

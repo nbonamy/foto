@@ -33,6 +33,21 @@ class PlatformUtils {
     });
   }
 
+  static Future<void> setAppearance(ThemeMode mode) async {
+    final changed = await _mChannel.invokeMethod<bool>(
+          'setAppearance',
+          mode.name,
+        ) ??
+        false;
+    if (!changed) {
+      throw PlatformException(
+        code: 'appearance_failed',
+        message: 'The native window appearance could not be updated.',
+        details: mode.name,
+      );
+    }
+  }
+
   static Future<void> enterInstantFullScreen() async {
     await _invokeInstantFullScreen('enterInstantFullScreen');
   }

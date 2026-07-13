@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foto/utils/platform_utils.dart';
 
@@ -82,6 +83,25 @@ void main() {
     await PlatformUtils.exitInstantFullScreen();
 
     expect(methods, ['enterInstantFullScreen', 'exitInstantFullScreen']);
+  });
+
+  test('appearance mode is forwarded to the native window', () async {
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+      calls.add(call);
+      return true;
+    });
+
+    await PlatformUtils.setAppearance(ThemeMode.system);
+    await PlatformUtils.setAppearance(ThemeMode.light);
+    await PlatformUtils.setAppearance(ThemeMode.dark);
+
+    expect(calls.map((call) => call.method), everyElement('setAppearance'));
+    expect(
+      calls.map((call) => call.arguments),
+      orderedEquals(['system', 'light', 'dark']),
+    );
   });
 
   test('instant fullscreen reports native failures', () async {
