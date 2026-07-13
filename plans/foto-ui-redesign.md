@@ -103,13 +103,15 @@ Dynamic tiling checkpoint: the custom justified-row algorithm preserves ordering
 
 ## Phase 6: inspector redesign
 
-- [ ] Replace the current plain table with an inset rounded inspector surface.
-- [ ] Group file, capture, camera, and image metadata without changing metadata loading behavior.
-- [ ] Add clear empty, loading, single-selection, multiple-selection, missing-file, and unsupported-metadata states.
+- [x] Replace the current plain table with an inset rounded inspector surface.
+- [x] Group file, capture, camera, and image metadata without changing metadata loading behavior.
+- [x] Add clear empty, loading, single-selection, multiple-selection, missing-file, and unsupported-metadata states.
 - [ ] Reserve layout space for a future histogram without calculating one in this migration.
 - [ ] Add focused tests for state transitions, stale async result rejection, grouping, overflow, and both appearances.
 
 Commit: `feat: redesign foto metadata inspector`
+
+Inspector checkpoint: the inspector now uses compact grouped cards for file, capture, camera, and image data, filters empty values, and presents explicit empty and loading states. Focused inspector tests, analyzer, all 88 tests, and a macOS debug build passed.
 
 ## Phase 7: dialogs and remaining controls
 

@@ -159,6 +159,27 @@ class AppLocalizationsEn extends AppLocalizations {
       'Destination file(s) already exists. Do you want to overwrite them?';
 
   @override
+  String get inspectorTitle => 'Info';
+
+  @override
+  String get inspectorEmpty => 'Select one photo to see its details.';
+
+  @override
+  String get inspectorLoading => 'Loading metadata…';
+
+  @override
+  String get inspectorFileSection => 'File';
+
+  @override
+  String get inspectorCaptureSection => 'Capture';
+
+  @override
+  String get inspectorCameraSection => 'Camera';
+
+  @override
+  String get inspectorImageSection => 'Image';
+
+  @override
   String get exifFileName => 'Filename';
 
   @override

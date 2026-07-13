@@ -60,6 +60,14 @@
 
   "overwriteConfirm": "Destination file(s) already exists. Do you want to overwrite them?",
 
+  "inspectorTitle": "Info",
+  "inspectorEmpty": "Select one photo to see its details.",
+  "inspectorLoading": "Loading metadata…",
+  "inspectorFileSection": "File",
+  "inspectorCaptureSection": "Capture",
+  "inspectorCameraSection": "Camera",
+  "inspectorImageSection": "Image",
+
   "exifFileName": "Filename",
   "exifFileSize": "File size",
   "exifCreationDate": "Creation date",

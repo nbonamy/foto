@@ -159,6 +159,28 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les fichiers existent déjà. Voulez-vous les remplacer ?';
 
   @override
+  String get inspectorTitle => 'Infos';
+
+  @override
+  String get inspectorEmpty =>
+      'Sélectionnez une photo pour afficher ses détails.';
+
+  @override
+  String get inspectorLoading => 'Chargement des métadonnées…';
+
+  @override
+  String get inspectorFileSection => 'Fichier';
+
+  @override
+  String get inspectorCaptureSection => 'Prise de vue';
+
+  @override
+  String get inspectorCameraSection => 'Appareil';
+
+  @override
+  String get inspectorImageSection => 'Image';
+
+  @override
   String get exifFileName => 'Nom du fichier';
 
   @override

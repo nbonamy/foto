@@ -56,6 +56,14 @@
   
   "overwriteConfirm": "Les fichiers existent déjà. Voulez-vous les remplacer ?",
 
+  "inspectorTitle": "Infos",
+  "inspectorEmpty": "Sélectionnez une photo pour afficher ses détails.",
+  "inspectorLoading": "Chargement des métadonnées…",
+  "inspectorFileSection": "Fichier",
+  "inspectorCaptureSection": "Prise de vue",
+  "inspectorCameraSection": "Appareil",
+  "inspectorImageSection": "Image",
+
   "exifFileName": "Nom du fichier",
   "exifFileSize": "Taille du fichier",
   "exifCreationDate": "Date de création",

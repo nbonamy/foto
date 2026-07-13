@@ -368,6 +368,48 @@ abstract class AppLocalizations {
   /// **'Destination file(s) already exists. Do you want to overwrite them?'**
   String get overwriteConfirm;
 
+  /// No description provided for @inspectorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Info'**
+  String get inspectorTitle;
+
+  /// No description provided for @inspectorEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Select one photo to see its details.'**
+  String get inspectorEmpty;
+
+  /// No description provided for @inspectorLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading metadata…'**
+  String get inspectorLoading;
+
+  /// No description provided for @inspectorFileSection.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get inspectorFileSection;
+
+  /// No description provided for @inspectorCaptureSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture'**
+  String get inspectorCaptureSection;
+
+  /// No description provided for @inspectorCameraSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get inspectorCameraSection;
+
+  /// No description provided for @inspectorImageSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get inspectorImageSection;
+
   /// No description provided for @exifFileName.
   ///
   /// In en, this message translates to:
