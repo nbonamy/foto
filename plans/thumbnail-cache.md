@@ -11,7 +11,7 @@ Make network-backed galleries fast after the first visit while improving first-p
 - Generate 960 px native ImageIO thumbnails with at most two concurrent jobs. Preserve alpha-capable formats as PNG and encode photographic formats as JPEG.
 - Key entries by cache version, absolute path, modification timestamp, file size, and requested pixel size. Flutter's decoded-image key uses the same identity.
 - Cap the cache at 1 GB, touch entries on hits, and prune least-recently-used files to 900 MB in the background.
-- Fall back to the original `FileImage` path if native generation or cache I/O fails.
+- Fall back to decoding the original file path if native generation or cache I/O fails.
 - Add a localized **Clear Thumbnail Cache** application-menu action that clears disk and decoded-memory entries, then refreshes the gallery.
 
 ## Phases and commits
@@ -35,4 +35,7 @@ Every phase runs focused tests plus analyzer and a macOS build before commit. Th
 
 ## Learnings
 
-_Append durable workflow and design learnings after implementation._
+- Reuse metadata already returned by the directory scan for both disk and decoded-image keys. Extra validation stats would erase much of the network-cache win.
+- Keep thumbnail generation visible-item-driven and concurrency-bounded. A disk cache should complement lazy gallery loading, not turn a directory scan into eager background work.
+- Treat disk caching as an optimization boundary: cache resolution, missing cache files, and corrupt cached output must all fall back to the source image without making a gallery item disappear.
+- Clear both native files and Flutter's decoded/live image caches from one application-level action so the user-facing operation has predictable semantics.

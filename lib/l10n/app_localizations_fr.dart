@@ -30,6 +30,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get menuFileRename => 'Renommer';
 
   @override
+  String get menuClearThumbnailCache => 'Vider le cache des miniatures';
+
+  @override
   String get menuEdit => 'Edition';
 
   @override

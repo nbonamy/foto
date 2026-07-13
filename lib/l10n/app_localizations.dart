@@ -140,6 +140,12 @@ abstract class AppLocalizations {
   /// **'Rename'**
   String get menuFileRename;
 
+  /// No description provided for @menuClearThumbnailCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Thumbnail Cache'**
+  String get menuClearThumbnailCache;
+
   /// No description provided for @menuEdit.
   ///
   /// In en, this message translates to:

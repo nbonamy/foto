@@ -16,6 +16,7 @@ import 'utils/file_handler.dart';
 import 'utils/media_utils.dart';
 import 'utils/platform_keyboard.dart';
 import 'utils/platform_utils.dart';
+import 'utils/thumbnail_cache.dart';
 import 'viewer/viewer.dart';
 
 class Home extends StatefulWidget {
@@ -101,6 +102,10 @@ class _HomeState extends State<Home> with WindowListener {
         menus: [
           const PlatformProvidedMenuItem(
             type: PlatformProvidedMenuItemType.about,
+          ),
+          PlatformMenuItem(
+            label: t.menuClearThumbnailCache,
+            onSelected: _clearThumbnailCache,
           ),
           const PlatformProvidedMenuItem(
             type: PlatformProvidedMenuItemType.quit,
@@ -255,6 +260,15 @@ class _HomeState extends State<Home> with WindowListener {
     final MenuActionController controller =
         isViewerActive ? _menuActionViewerStream : _menuActionBrowserStream;
     controller.sink.add(action);
+  }
+
+  Future<void> _clearThumbnailCache() async {
+    try {
+      await ThumbnailCache.clear();
+      _menuActionBrowserStream.add(MenuAction.fileRefresh);
+    } catch (error) {
+      debugPrint('Unable to clear thumbnail cache: $error');
+    }
   }
 
   Future<void> viewImage(String image) async {
