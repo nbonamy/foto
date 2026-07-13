@@ -68,4 +68,35 @@ void main() {
       ),
     );
   });
+
+  test('instant fullscreen delegates entry and exit to the native window',
+      () async {
+    final methods = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+      methods.add(call.method);
+      return true;
+    });
+
+    await PlatformUtils.enterInstantFullScreen();
+    await PlatformUtils.exitInstantFullScreen();
+
+    expect(methods, ['enterInstantFullScreen', 'exitInstantFullScreen']);
+  });
+
+  test('instant fullscreen reports native failures', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (_) async => false);
+
+    await expectLater(
+      PlatformUtils.enterInstantFullScreen(),
+      throwsA(
+        isA<PlatformException>().having(
+          (error) => error.code,
+          'code',
+          'fullscreen_failed',
+        ),
+      ),
+    );
+  });
 }

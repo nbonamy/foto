@@ -15,6 +15,7 @@ import 'model/selection.dart';
 import 'utils/file_handler.dart';
 import 'utils/media_utils.dart';
 import 'utils/platform_keyboard.dart';
+import 'utils/platform_utils.dart';
 import 'viewer/viewer.dart';
 
 class Home extends StatefulWidget {
@@ -35,6 +36,7 @@ class _HomeState extends State<Home> with WindowListener {
   StreamSubscription<String>? _fileSubscription;
   PageRoute<void>? _viewerRoute;
   int _openRequestGeneration = 0;
+  bool _instantFullScreenActive = false;
 
   bool get isViewerActive => _viewerRoute?.isActive ?? false;
 
@@ -47,6 +49,9 @@ class _HomeState extends State<Home> with WindowListener {
 
   @override
   void dispose() {
+    if (_instantFullScreenActive) {
+      unawaited(PlatformUtils.exitInstantFullScreen());
+    }
     windowManager.removeListener(this);
     _fileSubscription?.cancel();
     _menuActionBrowserStream.close();
@@ -281,22 +286,33 @@ class _HomeState extends State<Home> with WindowListener {
       reverseTransitionDuration: Duration.zero,
     );
     _viewerRoute = route;
-    unawaited(windowManager.setFullScreen(true));
+    final routeClosed = navigator.push(route);
+    await WidgetsBinding.instance.endOfFrame;
+    if (mounted && route.isActive && identical(_viewerRoute, route)) {
+      await _enterInstantFullScreen();
+    }
     try {
-      await navigator.push(route);
+      await routeClosed;
     } finally {
       if (identical(_viewerRoute, route)) {
         _viewerRoute = null;
+        await _exitInstantFullScreen();
       }
     }
   }
 
   void closeViewer({String? current, bool? quit = false}) {
-    unawaited(windowManager.setFullScreen(false));
+    unawaited(_closeViewer(current: current, quit: quit));
+  }
+
+  Future<void> _closeViewer({String? current, bool? quit = false}) async {
+    await _exitInstantFullScreen();
+    if (!mounted) return;
+
     if (_startedFromFinder) {
       _startedFromFinder = false;
       if (quit == true) {
-        SystemNavigator.pop();
+        await SystemNavigator.pop();
         return;
       } else if (current != null) {
         _popViewer();
@@ -317,6 +333,28 @@ class _HomeState extends State<Home> with WindowListener {
     _popViewer();
   }
 
+  Future<void> _enterInstantFullScreen() async {
+    if (_instantFullScreenActive) return;
+    _instantFullScreenActive = true;
+    try {
+      await PlatformUtils.enterInstantFullScreen();
+    } catch (error) {
+      _instantFullScreenActive = false;
+      debugPrint('Unable to enter instant fullscreen: $error');
+    }
+  }
+
+  Future<void> _exitInstantFullScreen() async {
+    if (!_instantFullScreenActive) return;
+    try {
+      await PlatformUtils.exitInstantFullScreen();
+    } catch (error) {
+      debugPrint('Unable to exit instant fullscreen: $error');
+    } finally {
+      _instantFullScreenActive = false;
+    }
+  }
+
   void _popViewer() {
     final PageRoute<void>? route = _viewerRoute;
     if (route?.isActive == true) {
@@ -326,6 +364,7 @@ class _HomeState extends State<Home> with WindowListener {
 
   @override
   void onWindowMoved() async {
+    if (_instantFullScreenActive) return;
     final bool fullScreen = await windowManager.isFullScreen();
     if (mounted && !fullScreen) {
       _saveWindowBounds();
@@ -334,6 +373,7 @@ class _HomeState extends State<Home> with WindowListener {
 
   @override
   void onWindowResized() async {
+    if (_instantFullScreenActive) return;
     final bool fullScreen = await windowManager.isFullScreen();
     if (mounted && !fullScreen) {
       _saveWindowBounds();
@@ -341,8 +381,9 @@ class _HomeState extends State<Home> with WindowListener {
   }
 
   void _saveWindowBounds() async {
+    if (_instantFullScreenActive) return;
     final Rect rc = await windowManager.getBounds();
-    if (!mounted) return;
+    if (!mounted || _instantFullScreenActive) return;
     final bool fullScreen = await windowManager.isFullScreen();
     if (!mounted || fullScreen || !_isValidWindowBounds(rc)) {
       return;

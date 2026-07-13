@@ -33,6 +33,24 @@ class PlatformUtils {
     });
   }
 
+  static Future<void> enterInstantFullScreen() async {
+    await _invokeInstantFullScreen('enterInstantFullScreen');
+  }
+
+  static Future<void> exitInstantFullScreen() async {
+    await _invokeInstantFullScreen('exitInstantFullScreen');
+  }
+
+  static Future<void> _invokeInstantFullScreen(String method) async {
+    final changed = await _mChannel.invokeMethod<bool>(method) ?? false;
+    if (!changed) {
+      throw PlatformException(
+        code: 'fullscreen_failed',
+        message: 'The window could not change fullscreen mode.',
+      );
+    }
+  }
+
   static Future<Image?> getPlatformIcon(String filepath) async {
     var data = await _mChannel.invokeMethod('getPlatformIcon', filepath);
     if (data == null) return null;

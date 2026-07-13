@@ -66,6 +66,10 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 	override func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
 		return true
 	}
+
+	override func applicationWillTerminate(_ notification: Notification) {
+		(mainFlutterWindow as? MainFlutterWindow)?.exitInstantFullScreen()
+	}
 	
 	public func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
 		self._eventSink = events;
@@ -112,7 +116,19 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 	}
 	
 	func _platformUtilsHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
-		if ("moveToTrash" == call.method) {
+		if ("enterInstantFullScreen" == call.method) {
+			guard let window = mainFlutterWindow as? MainFlutterWindow else {
+				result(FlutterError(code: "fullscreen_failed", message: "The main window is unavailable.", details: nil))
+				return
+			}
+			result(window.enterInstantFullScreen())
+		} else if ("exitInstantFullScreen" == call.method) {
+			guard let window = mainFlutterWindow as? MainFlutterWindow else {
+				result(FlutterError(code: "fullscreen_failed", message: "The main window is unavailable.", details: nil))
+				return
+			}
+			result(window.exitInstantFullScreen())
+		} else if ("moveToTrash" == call.method) {
 			guard let filepath = call.arguments as? String else {
 				result(FlutterError(
 					code: "invalid_path",
