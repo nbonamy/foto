@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foto/model/file_metadata.dart';
@@ -9,6 +10,7 @@ import 'package:foto/model/preferences.dart';
 import 'package:foto/utils/database.dart';
 import 'package:foto/utils/file_utils.dart';
 import 'package:foto/utils/media_utils.dart';
+import 'package:foto/utils/cached_thumbnail_image_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -96,6 +98,16 @@ void main() {
       '/network/photos/later.jpg',
     ]);
     expect(items.every((item) => item.thumbnail != null), isTrue);
+    final firstProvider = items.first.thumbnail!.image as ResizeImage;
+    expect(firstProvider.imageProvider, isA<CachedThumbnailImageProvider>());
+    final cachedProvider =
+        firstProvider.imageProvider as CachedThumbnailImageProvider;
+    expect(cachedProvider.path, '/network/photos/earlier.webp');
+    expect(cachedProvider.fileSize, 100);
+    expect(
+      cachedProvider.modificationDate.microsecondsSinceEpoch,
+      10000000,
+    );
     expect(items.every((item) => !item.captureDateParsed), isTrue);
     expect(imageCalls, 0);
   });

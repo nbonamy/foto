@@ -4,6 +4,7 @@ import 'dart:isolate';
 import 'package:flutter/material.dart';
 
 import '../utils/file_utils.dart';
+import '../utils/cached_thumbnail_image_provider.dart';
 import '../utils/image_utils.dart';
 import '../utils/paths.dart';
 import '../utils/utils.dart';
@@ -32,14 +33,18 @@ class MediaItem {
   }
 
   static Future<MediaItem> forFile(String filepath) async {
+    final modificationDate = await FileUtils.getModificationDate(filepath);
     return MediaItem(
       path: filepath,
       entityType: FileSystemEntityType.file,
       creationDate: await FileUtils.getCreationDate(filepath),
-      modificationDate: await FileUtils.getModificationDate(filepath),
+      modificationDate: modificationDate,
       mediaInfoParsed: false,
       captureDateParsed: false,
-      thumbnail: _fileThumbnail(File(filepath)),
+      thumbnail: _fileThumbnail(
+        filepath,
+        modificationDate: modificationDate,
+      ),
     );
   }
 
@@ -66,7 +71,11 @@ class MediaItem {
       captureDateParsed: !isFile,
       fileSize: isFile ? metadata.size : null,
       thumbnail: isFile
-          ? _fileThumbnail(File(metadata.path))
+          ? _fileThumbnail(
+              metadata.path,
+              modificationDate: metadata.modificationDate,
+              fileSize: metadata.size,
+            )
           : Image.asset(SystemPath.getFolderNamedAsset(metadata.path)),
     );
   }
@@ -135,7 +144,11 @@ class MediaItem {
   Future<void> evictFromCache() async {
     if (isFile()) {
       await thumbnail?.image.evict();
-      thumbnail = _fileThumbnail(File(path));
+      thumbnail = _fileThumbnail(
+        path,
+        modificationDate: modificationDate,
+        fileSize: fileSize,
+      );
       updateCounter.value += 1;
     }
   }
@@ -173,7 +186,11 @@ class MediaItem {
       fileSize = loadedFileSize;
       imageSize = loadedImageSize;
       mediaInfoParsed = true;
-      thumbnail ??= _fileThumbnail(File(path));
+      thumbnail ??= _fileThumbnail(
+        path,
+        modificationDate: modificationDate,
+        fileSize: fileSize,
+      );
       changed = true;
     }
     if (changed) {
@@ -198,10 +215,21 @@ class MediaItem {
     imageSize = null;
   }
 
-  static Image _fileThumbnail(File file) {
-    return Image.file(
-      file,
-      cacheHeight: 480,
+  static Image _fileThumbnail(
+    String path, {
+    required DateTime modificationDate,
+    int? fileSize,
+  }) {
+    return Image(
+      image: ResizeImage.resizeIfNeeded(
+        null,
+        480,
+        CachedThumbnailImageProvider(
+          path: path,
+          modificationDate: modificationDate,
+          fileSize: fileSize,
+        ),
+      ),
     );
   }
 }
