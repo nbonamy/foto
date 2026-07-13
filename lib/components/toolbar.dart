@@ -9,11 +9,13 @@ class FotoToolbar extends StatelessWidget {
     required this.title,
     this.leading,
     this.actions = const [],
+    this.trailing,
   });
 
   final String title;
   final Widget? leading;
   final List<Widget> actions;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +54,9 @@ class FotoToolbar extends StatelessWidget {
                 ),
               ),
               if (actions.isNotEmpty) _FotoToolbarGroup(children: actions),
+              if (actions.isNotEmpty && trailing != null)
+                const SizedBox(width: 8),
+              if (trailing != null) trailing!,
             ],
           ),
         ),
@@ -96,6 +101,72 @@ class _FotoToolbarSegmentScope extends InheritedWidget {
 
   @override
   bool updateShouldNotify(_FotoToolbarSegmentScope oldWidget) => false;
+}
+
+class FotoToolbarMenuButton<T> extends StatelessWidget {
+  const FotoToolbarMenuButton({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.tooltip,
+    required this.itemBuilder,
+    required this.onSelected,
+  });
+
+  final IconData icon;
+  final String label;
+  final String tooltip;
+  final PopupMenuItemBuilder<T> itemBuilder;
+  final PopupMenuItemSelected<T> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = FotoPalette.of(context);
+    const radius = BorderRadius.all(Radius.circular(11));
+    return Material(
+      color: palette.elevatedSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: radius,
+        side: BorderSide(color: palette.outline),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: PopupMenuButton<T>(
+        tooltip: tooltip,
+        padding: EdgeInsets.zero,
+        borderRadius: radius,
+        position: PopupMenuPosition.under,
+        onSelected: onSelected,
+        itemBuilder: itemBuilder,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 38),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(11, 0, 8, 0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16, color: palette.secondaryText),
+                const SizedBox(width: 7),
+                Text(
+                  label,
+                  maxLines: 1,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: palette.primaryText,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+                const SizedBox(width: 5),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 16,
+                  color: palette.secondaryText,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class FotoToolbarButton extends StatelessWidget {

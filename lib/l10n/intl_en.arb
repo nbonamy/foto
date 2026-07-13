@@ -47,6 +47,8 @@
   "toolbarToggleInspector": "Toggle Inspector",
 
   "sortTitle": "Display Order",
+  "sortByDate": "Sort by Date",
+  "sortByName": "Sort by Name",
   "sortCriteriaAlphabetical": "Alphabetical",
   "sortCriteriaChronological": "Chronological",
   "sortOrderReverse": "Reverse",

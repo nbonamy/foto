@@ -112,4 +112,56 @@ void main() {
         as RoundedRectangleBorder;
     expect(shape.borderRadius, BorderRadius.circular(8));
   });
+
+  testWidgets('labeled toolbar menu stays outside the segmented actions',
+      (tester) async {
+    int? selection;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: FotoTheme.light,
+        home: Scaffold(
+          body: FotoToolbar(
+            title: 'Pictures',
+            actions: [
+              FotoToolbarButton(
+                icon: Icons.view_sidebar_outlined,
+                tooltip: 'Sidebar',
+                onPressed: () {},
+              ),
+              FotoToolbarButton(
+                icon: Icons.folder_outlined,
+                tooltip: 'Folder',
+                onPressed: () {},
+              ),
+              FotoToolbarButton(
+                icon: Icons.info_outline,
+                tooltip: 'Info',
+                onPressed: () {},
+              ),
+            ],
+            trailing: FotoToolbarMenuButton<int>(
+              icon: Icons.sort_rounded,
+              label: 'Sort by Date',
+              tooltip: 'Display Order',
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 1, child: Text('Sort by Name')),
+              ],
+              onSelected: (value) => selection = value,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Sort by Date'), findsOneWidget);
+    expect(find.byIcon(Icons.sort_rounded), findsOneWidget);
+    expect(find.byType(IconButton), findsNWidgets(3));
+
+    await tester.tap(find.text('Sort by Date'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sort by Name'));
+    await tester.pumpAndSettle();
+
+    expect(selection, 1);
+  });
 }

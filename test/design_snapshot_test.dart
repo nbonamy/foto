@@ -81,14 +81,16 @@ class _DesignPreview extends StatelessWidget {
                 ),
                 actions: [
                   FotoToolbarButton(
-                    icon: Icons.folder_open_outlined,
-                    tooltip: 'Open folder',
+                    icon: Icons.view_sidebar_outlined,
+                    tooltip: 'Sidebar',
                     onPressed: _noop,
+                    selected: true,
                   ),
                   FotoToolbarButton(
-                    icon: Icons.swap_vert_rounded,
-                    tooltip: 'Sort',
+                    icon: Icons.folder_open_outlined,
+                    tooltip: 'Folders',
                     onPressed: _noop,
+                    selected: true,
                   ),
                   FotoToolbarButton(
                     icon: Icons.info_outline_rounded,
@@ -97,6 +99,13 @@ class _DesignPreview extends StatelessWidget {
                     selected: true,
                   ),
                 ],
+                trailing: FotoToolbarMenuButton<int>(
+                  icon: Icons.sort_rounded,
+                  label: 'Sort by Date',
+                  tooltip: 'Sort',
+                  itemBuilder: _previewSortItems,
+                  onSelected: _noopSort,
+                ),
               ),
               Expanded(
                 child: FotoSplitView(
@@ -113,6 +122,13 @@ class _DesignPreview extends StatelessWidget {
 }
 
 void _noop() {}
+
+void _noopSort(int value) {}
+
+List<PopupMenuEntry<int>> _previewSortItems(BuildContext context) => const [
+      PopupMenuItem(value: 0, child: Text('Date')),
+      PopupMenuItem(value: 1, child: Text('Name')),
+    ];
 
 class _PreviewSidebar extends StatelessWidget {
   const _PreviewSidebar();

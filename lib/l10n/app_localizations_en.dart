@@ -125,6 +125,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sortTitle => 'Display Order';
 
   @override
+  String get sortByDate => 'Sort by Date';
+
+  @override
+  String get sortByName => 'Sort by Name';
+
+  @override
   String get sortCriteriaAlphabetical => 'Alphabetical';
 
   @override

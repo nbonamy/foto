@@ -150,35 +150,33 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
           tooltip: t.toolbarToggleInspector,
           selected: prefs.showInspector,
         ),
-        SizedBox.square(
-          dimension: 34,
-          child: PopupMenuButton<_SortAction>(
-            tooltip: t.sortTitle,
-            padding: EdgeInsets.zero,
-            iconSize: 17,
-            icon: const Icon(CupertinoIcons.sort_down_circle),
-            onSelected: _applySortAction,
-            itemBuilder: (context) => [
-              CheckedPopupMenuItem(
-                value: _SortAction.alphabetical,
-                checked: prefs.sortCriteria == SortCriteria.alphabetical,
-                child: Text(t.sortCriteriaAlphabetical),
-              ),
-              CheckedPopupMenuItem(
-                value: _SortAction.chronological,
-                checked: prefs.sortCriteria == SortCriteria.chronological,
-                child: Text(t.sortCriteriaChronological),
-              ),
-              const PopupMenuDivider(),
-              CheckedPopupMenuItem(
-                value: _SortAction.reverse,
-                checked: prefs.sortReversed,
-                child: Text(t.sortOrderReverse),
-              ),
-            ],
-          ),
-        ),
       ],
+      trailing: FotoToolbarMenuButton<_SortAction>(
+        icon: Icons.sort_rounded,
+        label: prefs.sortCriteria == SortCriteria.chronological
+            ? t.sortByDate
+            : t.sortByName,
+        tooltip: t.sortTitle,
+        onSelected: _applySortAction,
+        itemBuilder: (context) => [
+          CheckedPopupMenuItem(
+            value: _SortAction.alphabetical,
+            checked: prefs.sortCriteria == SortCriteria.alphabetical,
+            child: Text(t.sortCriteriaAlphabetical),
+          ),
+          CheckedPopupMenuItem(
+            value: _SortAction.chronological,
+            checked: prefs.sortCriteria == SortCriteria.chronological,
+            child: Text(t.sortCriteriaChronological),
+          ),
+          const PopupMenuDivider(),
+          CheckedPopupMenuItem(
+            value: _SortAction.reverse,
+            checked: prefs.sortReversed,
+            child: Text(t.sortOrderReverse),
+          ),
+        ],
+      ),
     );
   }
 

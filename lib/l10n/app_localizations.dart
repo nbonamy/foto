@@ -326,6 +326,18 @@ abstract class AppLocalizations {
   /// **'Display Order'**
   String get sortTitle;
 
+  /// No description provided for @sortByDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by Date'**
+  String get sortByDate;
+
+  /// No description provided for @sortByName.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by Name'**
+  String get sortByName;
+
   /// No description provided for @sortCriteriaAlphabetical.
   ///
   /// In en, this message translates to:
