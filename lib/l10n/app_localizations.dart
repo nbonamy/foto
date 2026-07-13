@@ -410,6 +410,18 @@ abstract class AppLocalizations {
   /// **'Image'**
   String get inspectorImageSection;
 
+  /// No description provided for @galleryLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading photos…'**
+  String get galleryLoading;
+
+  /// No description provided for @galleryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos in this folder.'**
+  String get galleryEmpty;
+
   /// No description provided for @exifFileName.
   ///
   /// In en, this message translates to:

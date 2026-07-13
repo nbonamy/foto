@@ -181,6 +181,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get inspectorImageSection => 'Image';
 
   @override
+  String get galleryLoading => 'Chargement des photos…';
+
+  @override
+  String get galleryEmpty => 'Aucune photo dans ce dossier.';
+
+  @override
   String get exifFileName => 'Nom du fichier';
 
   @override

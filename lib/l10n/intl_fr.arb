@@ -63,6 +63,8 @@
   "inspectorCaptureSection": "Prise de vue",
   "inspectorCameraSection": "Appareil",
   "inspectorImageSection": "Image",
+  "galleryLoading": "Chargement des photos…",
+  "galleryEmpty": "Aucune photo dans ce dossier.",
 
   "exifFileName": "Nom du fichier",
   "exifFileSize": "Taille du fichier",

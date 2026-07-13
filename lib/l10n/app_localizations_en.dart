@@ -180,6 +180,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inspectorImageSection => 'Image';
 
   @override
+  String get galleryLoading => 'Loading photos…';
+
+  @override
+  String get galleryEmpty => 'No photos in this folder.';
+
+  @override
   String get exifFileName => 'Filename';
 
   @override

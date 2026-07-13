@@ -22,6 +22,7 @@ import '../utils/image_utils.dart';
 import '../utils/media_utils.dart';
 import '../utils/platform_keyboard.dart';
 import '../utils/platform_utils.dart';
+import 'gallery_status_view.dart';
 import 'justified_gallery_view.dart';
 import 'justified_layout.dart';
 import 'thumbnail.dart';
@@ -335,7 +336,16 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
             FutureBuilder(
               future: _getItems(),
               builder: (context, snapshot) {
-                if (_items == null) return const SizedBox();
+                final t = AppLocalizations.of(context)!;
+                if (_items == null) {
+                  return GalleryStatusView(
+                    message: t.galleryLoading,
+                    loading: true,
+                  );
+                }
+                if (_items!.isEmpty) {
+                  return GalleryStatusView(message: t.galleryEmpty);
+                }
                 return LayoutBuilder(
                   builder: (context, constraints) {
                     const padding = 16.0;
