@@ -163,12 +163,20 @@ class _ThumbnailState extends State<Thumbnail> {
       return ColoredBox(
         color: palette.chromeSurface,
         child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: Image(
-              image: thumbnail.image,
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.medium,
+          child: Transform.translate(
+            key: const ValueKey('folder-artwork-position'),
+            offset: const Offset(0, -14),
+            child: Transform.scale(
+              key: const ValueKey('folder-artwork-scale'),
+              scale: 0.88,
+              child: Padding(
+                padding: const EdgeInsets.all(28),
+                child: Image(
+                  image: thumbnail.image,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.medium,
+                ),
+              ),
             ),
           ),
         ),
@@ -193,33 +201,17 @@ class _ThumbnailState extends State<Thumbnail> {
   Widget _buildFolderLabel(FotoPalette palette) {
     return Align(
       alignment: Alignment.bottomCenter,
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Color(0xB8000000)],
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 24, 10, 9),
-          child: Row(
-            children: [
-              const Icon(Icons.folder_rounded, color: Colors.white, size: 15),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  widget.media.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 0, 10, 9),
+        child: Text(
+          widget.media.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: palette.primaryText,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0,
               ),
-            ],
-          ),
         ),
       ),
     );

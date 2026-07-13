@@ -52,7 +52,8 @@ void main() {
     expect(tester.widget<Tooltip>(find.byType(Tooltip)).message, 'sunrise.jpg');
   });
 
-  testWidgets('folder tile keeps an identifying overlay', (tester) async {
+  testWidgets('folder tile labels large artwork without a gradient',
+      (tester) async {
     final folder = media('/photos/Trips', FileSystemEntityType.directory);
     await tester.pumpWidget(
       harness(
@@ -66,7 +67,26 @@ void main() {
     );
 
     expect(find.text('Trips'), findsOneWidget);
-    expect(find.byIcon(Icons.folder_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.folder_rounded), findsNothing);
+    expect(find.byType(Image), findsOneWidget);
+    final label = tester.widget<Text>(find.text('Trips'));
+    expect(label.style?.color, FotoTheme.lightPalette.primaryText);
+    expect(label.style?.letterSpacing, 0);
+    final artworkScale = tester.widget<Transform>(
+      find.byKey(const ValueKey('folder-artwork-scale')),
+    );
+    expect(artworkScale.transform.entry(0, 0), 0.88);
+    expect(artworkScale.transform.entry(1, 1), 0.88);
+    final artworkPosition = tester.widget<Transform>(
+      find.byKey(const ValueKey('folder-artwork-position')),
+    );
+    expect(artworkPosition.transform.getTranslation().y, -14);
+    final gradients = tester
+        .widgetList<DecoratedBox>(find.byType(DecoratedBox))
+        .map((widget) => widget.decoration)
+        .whereType<BoxDecoration>()
+        .where((decoration) => decoration.gradient != null);
+    expect(gradients, isEmpty);
   });
 
   testWidgets('filename field only appears while renaming', (tester) async {
