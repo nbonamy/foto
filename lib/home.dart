@@ -137,10 +137,16 @@ class _HomeState extends State<Home> with WindowListener {
           PlatformMenuItemGroup(
             members: [
               PlatformMenuItem(
-                label: t.menuEditCopy,
+                label: isViewerActive ? t.menuImageCopy : t.menuEditCopyItems,
                 shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.keyC),
                 onSelected: () => _onMenu(MenuAction.editCopy),
               ),
+              if (!isViewerActive)
+                PlatformMenuItem(
+                  label: t.menuImageCopy,
+                  shortcut: MenuUtils.cmdShiftShortcut(LogicalKeyboardKey.keyC),
+                  onSelected: () => _onMenu(MenuAction.imageCopy),
+                ),
               PlatformMenuItem(
                 label: t.menuEditPaste,
                 shortcut: MenuUtils.cmdShortcut(LogicalKeyboardKey.keyV),
@@ -287,6 +293,9 @@ class _HomeState extends State<Home> with WindowListener {
     );
     _viewerRoute = route;
     final routeClosed = navigator.push(route);
+    if (mounted) {
+      setState(() {});
+    }
     await WidgetsBinding.instance.endOfFrame;
     if (mounted && route.isActive && identical(_viewerRoute, route)) {
       await _enterInstantFullScreen();
@@ -296,6 +305,9 @@ class _HomeState extends State<Home> with WindowListener {
     } finally {
       if (identical(_viewerRoute, route)) {
         _viewerRoute = null;
+        if (mounted) {
+          setState(() {});
+        }
         await _exitInstantFullScreen();
       }
     }

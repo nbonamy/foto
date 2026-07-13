@@ -35,4 +35,17 @@ class ImageUtils {
     var data = await _mChannel.invokeMethod('losslessRotate', filepath);
     return data;
   }
+
+  static Future<void> copyImageToClipboard(String filepath) async {
+    final copied =
+        await _mChannel.invokeMethod<bool>('copyImageToClipboard', filepath) ??
+            false;
+    if (!copied) {
+      throw PlatformException(
+        code: 'clipboard_failed',
+        message: 'The image could not be copied to the clipboard.',
+        details: filepath,
+      );
+    }
+  }
 }

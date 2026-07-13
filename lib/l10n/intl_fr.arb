@@ -11,6 +11,8 @@
   "menuEdit": "Edition",
   "menuEditSelectAll": "Tout sélectionner",
   "menuEditCopy": "Copier",
+  "menuEditCopyItems": "Copier les éléments",
+  "menuImageCopy": "Copier l’image",
   "menuEditPaste": "Coller",
   "menuEditPasteMove": "Coller Déplacer",
   "menuEditDelete": "Déplacer dans la Corbeille",

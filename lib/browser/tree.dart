@@ -216,7 +216,7 @@ class _BrowserTreeState extends State<BrowserTree> {
               ),
         ctxm.MenuItem.separator(),
         ctxm.MenuItem(
-          label: t.menuEditCopy,
+          label: t.menuEditCopyItems,
           onClick: (_) => Pasteboard.writeFiles([path]),
         ),
         ctxm.MenuItem(

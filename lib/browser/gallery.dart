@@ -467,9 +467,14 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
           ),
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
-            label: t.menuEditCopy,
+            label: t.menuEditCopyItems,
             disabled: selection.isEmpty,
             onClick: (_) => _copyToClipboard(),
+          ),
+          ctxm.MenuItem(
+            label: t.menuImageCopy,
+            disabled: !_canCopyImage,
+            onClick: (_) => _copyImageToClipboard(),
           ),
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
@@ -531,6 +536,9 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
         break;
       case MenuAction.editCopy:
         _copyToClipboard();
+        break;
+      case MenuAction.imageCopy:
+        _copyImageToClipboard();
         break;
       case MenuAction.editPaste:
         _pasteFromClipboard();
@@ -759,6 +767,18 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   void _copyToClipboard() {
     if (selection.isNotEmpty) {
       Pasteboard.writeFiles(selection);
+    }
+  }
+
+  bool get _canCopyImage =>
+      selection.length == 1 && MediaUtils.isImage(selection.single);
+
+  Future<void> _copyImageToClipboard() async {
+    if (!_canCopyImage) return;
+    try {
+      await ImageUtils.copyImageToClipboard(selection.single);
+    } catch (error) {
+      debugPrint('Unable to copy image to clipboard: $error');
     }
   }
 

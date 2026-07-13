@@ -158,6 +158,18 @@ abstract class AppLocalizations {
   /// **'Copy'**
   String get menuEditCopy;
 
+  /// No description provided for @menuEditCopyItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Items'**
+  String get menuEditCopyItems;
+
+  /// No description provided for @menuImageCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Image'**
+  String get menuImageCopy;
+
   /// No description provided for @menuEditPaste.
   ///
   /// In en, this message translates to:

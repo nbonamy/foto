@@ -318,6 +318,13 @@ class _ImageViewerState extends State<ImageViewer>
           ),
           ctxm.MenuItem.separator(),
           ctxm.MenuItem(
+            label: t.menuImageCopy,
+            shortcutKey: 'c',
+            shortcutModifiers: ctxm.ShortcutModifier(command: true),
+            onClick: (_) => _copyImageToClipboard(),
+          ),
+          ctxm.MenuItem.separator(),
+          ctxm.MenuItem(
             label: t.menuEditDelete,
             shortcutKey: '⌫',
             shortcutModifiers: ctxm.ShortcutModifier(command: true),
@@ -427,6 +434,10 @@ class _ImageViewerState extends State<ImageViewer>
       return;
     }
     switch (action) {
+      case MenuAction.editCopy:
+      case MenuAction.imageCopy:
+        _copyImageToClipboard();
+        break;
       case MenuAction.editDelete:
         _confirmDelete();
         break;
@@ -629,6 +640,15 @@ class _ImageViewerState extends State<ImageViewer>
       // Native transforms can fail if the file changed during the operation.
     } finally {
       _rotatingImages.remove(image);
+    }
+  }
+
+  Future<void> _copyImageToClipboard() async {
+    if (!_hasImages) return;
+    try {
+      await ImageUtils.copyImageToClipboard(currentImage);
+    } catch (error) {
+      debugPrint('Unable to copy image to clipboard: $error');
     }
   }
 

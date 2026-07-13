@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foto/l10n/app_localizations.dart';
@@ -15,6 +16,7 @@ void main() {
 
   late Preferences preferences;
   late StreamController<MenuAction> menuActions;
+  const imageChannel = MethodChannel('foto_image_utils/messages');
 
   setUp(() async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -24,6 +26,8 @@ void main() {
   });
 
   tearDown(() async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(imageChannel, null);
     await menuActions.close();
   });
 
@@ -83,5 +87,39 @@ void main() {
 
     expect(find.text('/missing-last.jpg'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('copy menu actions copy the current image as a bitmap',
+      (tester) async {
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(imageChannel, (call) async {
+      calls.add(call);
+      return true;
+    });
+
+    await tester.pumpWidget(viewer(
+      images: const <String>['/current.webp'],
+      start: 0,
+      onExit: ({current, quit}) {},
+    ));
+    await tester.pump();
+
+    menuActions.add(MenuAction.editCopy);
+    await tester.pump();
+    menuActions.add(MenuAction.imageCopy);
+    await tester.pump();
+
+    expect(
+      calls,
+      <Matcher>[
+        isA<MethodCall>()
+            .having((call) => call.method, 'method', 'copyImageToClipboard')
+            .having((call) => call.arguments, 'path', '/current.webp'),
+        isA<MethodCall>()
+            .having((call) => call.method, 'method', 'copyImageToClipboard')
+            .having((call) => call.arguments, 'path', '/current.webp'),
+      ],
+    );
   });
 }

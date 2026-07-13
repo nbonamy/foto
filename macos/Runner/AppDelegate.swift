@@ -1,6 +1,8 @@
 import Cocoa
 import CryptoKit
 import FlutterMacOS
+import ImageIO
+import UniformTypeIdentifiers
 
 extension NSBitmapImageRep {
     var png: Data? { representation(using: .png, properties: [:]) }
@@ -25,6 +27,7 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 	var _initialFile:String?;
 	var _latestFile:String?;
 	var _cachedIcons:Set<String> = [];
+	var _clipboardCopyGeneration: UInt64 = 0;
 	
 	override func applicationDidFinishLaunching(_ notification: Notification) {
 		guard let rootController = mainFlutterWindow?.contentViewController else {
@@ -198,9 +201,20 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 		}
 	}
 
-	func _imageUtilsHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
+	func _imageUtilsHandler(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
 		
-		if ("getCreationDate" == call.method) {
+		if ("copyImageToClipboard" == call.method) {
+			guard let filepath = call.arguments as? String else {
+				result(FlutterError(code: "invalid_path", message: "A valid filesystem path is required.", details: nil))
+				return
+			}
+			_clipboardCopyGeneration &+= 1
+			_copyImageToClipboard(
+				filepath,
+				generation: _clipboardCopyGeneration,
+				result
+			)
+		} else if ("getCreationDate" == call.method) {
 			guard let filepath = call.arguments as? String,
 				  let datetime = ImageUtils.getCreationDate(forImage: filepath) else {
 				result(FlutterError(code: "date_failed", message: "The image date could not be read.", details: call.arguments))
@@ -232,6 +246,112 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 		} else {
 			result(FlutterMethodNotImplemented)
 		}
+	}
+
+	private func _copyImageToClipboard(
+		_ filepath: String,
+		generation: UInt64,
+		_ result: @escaping FlutterResult
+	) {
+		DispatchQueue.global(qos: .userInitiated).async {
+			let representations: (png: Data, tiff: Data)? = autoreleasepool {
+				guard let source = CGImageSourceCreateWithURL(
+					URL(fileURLWithPath: filepath) as CFURL,
+					nil
+				),
+				let properties = CGImageSourceCopyPropertiesAtIndex(
+					source,
+					0,
+					nil
+				) as? [CFString: Any],
+				let width = properties[kCGImagePropertyPixelWidth] as? NSNumber,
+				let height = properties[kCGImagePropertyPixelHeight] as? NSNumber else {
+					return nil
+				}
+
+				let maxPixelSize = max(width.intValue, height.intValue)
+				guard maxPixelSize > 0 else {
+					return nil
+				}
+				let options: [CFString: Any] = [
+					kCGImageSourceCreateThumbnailFromImageAlways: true,
+					kCGImageSourceCreateThumbnailWithTransform: true,
+					kCGImageSourceShouldCacheImmediately: true,
+					kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
+				]
+				guard let image = CGImageSourceCreateThumbnailAtIndex(
+					source,
+					0,
+					options as CFDictionary
+				),
+				let png = self._encodeClipboardImage(
+					image,
+					type: UTType.png.identifier as CFString
+				),
+				let tiff = self._encodeClipboardImage(
+					image,
+					type: UTType.tiff.identifier as CFString
+				) else {
+					return nil
+				}
+				return (png, tiff)
+			}
+
+			DispatchQueue.main.async {
+				guard generation == self._clipboardCopyGeneration else {
+					result(true)
+					return
+				}
+				guard let representations else {
+					result(FlutterError(
+						code: "image_decode_failed",
+						message: "The image could not be decoded for the clipboard.",
+						details: filepath
+					))
+					return
+				}
+
+				let item = NSPasteboardItem()
+				guard item.setData(representations.png, forType: .png),
+					  item.setData(representations.tiff, forType: .tiff) else {
+					result(FlutterError(
+						code: "clipboard_failed",
+						message: "The image representations could not be prepared.",
+						details: filepath
+					))
+					return
+				}
+
+				let pasteboard = NSPasteboard.general
+				pasteboard.clearContents()
+				guard pasteboard.writeObjects([item]) else {
+					result(FlutterError(
+						code: "clipboard_failed",
+						message: "The image could not be written to the clipboard.",
+						details: filepath
+					))
+					return
+				}
+				result(true)
+			}
+		}
+	}
+
+	private func _encodeClipboardImage(_ image: CGImage, type: CFString) -> Data? {
+		let data = NSMutableData()
+		guard let destination = CGImageDestinationCreateWithData(
+			data,
+			type,
+			1,
+			nil
+		) else {
+			return nil
+		}
+		CGImageDestinationAddImage(destination, image, nil)
+		guard CGImageDestinationFinalize(destination) else {
+			return nil
+		}
+		return data as Data
 	}
 	
 	

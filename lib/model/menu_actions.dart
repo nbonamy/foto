@@ -13,6 +13,7 @@ enum MenuAction {
   fileRename,
   editSelectAll,
   editCopy,
+  imageCopy,
   editPaste,
   editPasteMove,
   editDelete,
@@ -27,6 +28,15 @@ class MenuUtils {
   static SingleActivator cmdShortcut(LogicalKeyboardKey key) {
     return SingleActivator(
       key,
+      control: PlatformKeyboard.ctrlIsCommandModifier(),
+      meta: PlatformKeyboard.metaIsCommandModifier(),
+    );
+  }
+
+  static SingleActivator cmdShiftShortcut(LogicalKeyboardKey key) {
+    return SingleActivator(
+      key,
+      shift: true,
       control: PlatformKeyboard.ctrlIsCommandModifier(),
       meta: PlatformKeyboard.metaIsCommandModifier(),
     );

@@ -39,6 +39,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuEditCopy => 'Copy';
 
   @override
+  String get menuEditCopyItems => 'Copy Items';
+
+  @override
+  String get menuImageCopy => 'Copy Image';
+
+  @override
   String get menuEditPaste => 'Paste';
 
   @override
