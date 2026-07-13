@@ -30,6 +30,7 @@ class Browser extends StatefulWidget {
 class BrowserState extends State<Browser> {
   final MediaDb _mediaDb = MediaDb();
   final FocusNode _galleryFocusNode = FocusNode(debugLabel: 'browser gallery');
+  final ScrollController _sidebarScrollController = ScrollController();
   final Map<String, List<String>> _selectionsByPath = {};
   late HistoryModel _history;
   List<String>? _initialSelection;
@@ -45,6 +46,7 @@ class BrowserState extends State<Browser> {
   void dispose() {
     _history.removeListener(_onHistoryChange);
     _galleryFocusNode.dispose();
+    _sidebarScrollController.dispose();
     super.dispose();
   }
 
@@ -59,9 +61,12 @@ class BrowserState extends State<Browser> {
         decoration: const BoxDecoration(
           color: Color.fromRGBO(210, 207, 202, 1.0),
         ),
-        builder: (context, controller) {
+        builder: (context, _) {
+          // macos_ui rebuilds the entire MacosWindow on every notification
+          // from its sidebar controller. Keep Foto's scroll position local so
+          // scrolling only drives the viewport's render objects.
           return BrowserSidebar(
-            scrollController: controller,
+            scrollController: _sidebarScrollController,
             navigateToFolder: _navigateToFolder,
           );
         },

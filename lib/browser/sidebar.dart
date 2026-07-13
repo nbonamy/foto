@@ -5,8 +5,10 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/l10n/app_localizations.dart';
+import 'package:macos_ui/macos_ui.dart';
 import 'package:provider/provider.dart';
 
+import '../components/context_menu.dart' as ctxm;
 import '../model/favorites.dart';
 import '../model/history.dart';
 import '../utils/media_utils.dart';
@@ -45,6 +47,7 @@ class BrowserSidebar extends StatefulWidget {
 
 class _SidebarState extends State<BrowserSidebar> {
   String? _activeRoot;
+  final FocusNode _focusNode = FocusNode(debugLabel: 'browser sidebar');
   final List<RootNode> _devices = [];
   StreamSubscription<FileSystemEvent>? _volumesSubscription;
   Timer? _deviceRefreshDebounce;
@@ -60,6 +63,7 @@ class _SidebarState extends State<BrowserSidebar> {
   void dispose() {
     _deviceRefreshDebounce?.cancel();
     _volumesSubscription?.cancel();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -144,9 +148,14 @@ class _SidebarState extends State<BrowserSidebar> {
         _checkActiveRoot(context);
 
         // now build
-        return CustomScrollView(
-          controller: widget.scrollController,
-          slivers: _buildSidebarSlivers(context, history, favorites),
+        return Focus(
+          focusNode: _focusNode,
+          // The macOS default uses fast trackpad deceleration. An explicit
+          // BouncingScrollPhysics falls back to the slower iOS-style rate.
+          child: CustomScrollView(
+            controller: widget.scrollController,
+            slivers: _buildSidebarSlivers(context, history, favorites),
+          ),
         );
       },
     );
@@ -162,61 +171,48 @@ class _SidebarState extends State<BrowserSidebar> {
     // favorites
     List<String> favorites = favoritesModel.get;
     if (favorites.isNotEmpty) {
-      final favoritesList = SliverReorderableList(
-        itemCount: favorites.length,
-        proxyDecorator: (child, index, animation) {
-          return AnimatedBuilder(
-            animation: animation,
-            builder: (BuildContext context, Widget? child) {
-              final double animValue =
-                  Curves.easeInOut.transform(animation.value);
-              final double elevation = lerpDouble(0, 6, animValue)!;
-              return Material(
-                elevation: elevation,
+      final favoritesList = SizedBox(
+        height: favorites.length * FavoriteShortcut.rowExtent,
+        child: ReorderableListView.builder(
+          primary: false,
+          physics: const NeverScrollableScrollPhysics(),
+          buildDefaultDragHandles: false,
+          itemCount: favorites.length,
+          proxyDecorator: (child, index, animation) {
+            return AnimatedBuilder(
+              animation: animation,
+              builder: (BuildContext context, Widget? child) {
+                final double animValue =
+                    Curves.easeInOut.transform(animation.value);
+                final double elevation = lerpDouble(0, 6, animValue)!;
+                return Material(
+                  elevation: elevation,
+                  child: child,
+                );
+              },
+              child: Container(
+                color: Theme.of(context).highlightColor,
                 child: child,
-              );
-            },
-            child: Container(
-              color: Theme.of(context).highlightColor,
-              child: child,
-            ),
-          );
-        },
-        onReorder: (int oldIndex, int newIndex) {
-          if (newIndex != oldIndex) {
-            favoritesModel.move(oldIndex, newIndex);
-          }
-        },
-        itemBuilder: (context, index) {
-          final favorite = favorites[index];
-          return Stack(
-            key: Key(favorite),
-            children: [
-              BrowserTree(
-                root: favorite,
-                title: Utils.pathTitle(favorite),
-                assetName: SystemPath.getFolderNamedAsset(favorite),
-                selectedPath: favorite == _activeRoot ? historyModel.top : null,
-                onUpdate: onPathUpdated,
               ),
-              Positioned(
-                top: 4,
-                right: 12,
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.grab,
-                  child: ReorderableDragStartListener(
-                    index: index,
-                    child: const Icon(
-                      CupertinoIcons.bars,
-                      color: Color(0xFF86838A),
-                      size: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+            );
+          },
+          onReorder: (int oldIndex, int newIndex) {
+            if (newIndex != oldIndex) {
+              favoritesModel.move(oldIndex, newIndex);
+            }
+          },
+          itemBuilder: (context, index) {
+            final favorite = favorites[index];
+            return FavoriteShortcut(
+              key: Key(favorite),
+              path: favorite,
+              selected: favorite == _activeRoot,
+              reorderIndex: index,
+              onTap: () => onPathUpdated(favorite, favorite),
+              onRemove: () => favoritesModel.remove(favorite),
+            );
+          },
+        ),
       );
 
       sidebarContent.add(
@@ -224,7 +220,7 @@ class _SidebarState extends State<BrowserSidebar> {
           child: Section(title: AppLocalizations.of(context)!.favorites),
         ),
       );
-      sidebarContent.add(favoritesList);
+      sidebarContent.add(SliverToBoxAdapter(child: favoritesList));
     }
 
     // devices
@@ -233,22 +229,21 @@ class _SidebarState extends State<BrowserSidebar> {
         child: Section(title: AppLocalizations.of(context)!.devices),
       ),
     );
+    for (final device in _devices) {
+      sidebarContent.add(
+        BrowserTree(
+          key: ValueKey(device.path),
+          title: device.title,
+          root: device.path,
+          selectedPath: device.path == _activeRoot ? historyModel.top : null,
+          assetName: SystemPath.getFolderNamedAsset(device.path, isDrive: true),
+          onUpdate: onPathUpdated,
+          onRequestFocus: _focusNode.requestFocus,
+        ),
+      );
+    }
     sidebarContent.add(
-      SliverList.list(
-        children: [
-          for (final device in _devices)
-            BrowserTree(
-              title: device.title,
-              root: device.path,
-              selectedPath:
-                  device.path == _activeRoot ? historyModel.top : null,
-              assetName:
-                  SystemPath.getFolderNamedAsset(device.path, isDrive: true),
-              onUpdate: onPathUpdated,
-            ),
-          const SizedBox(height: 16),
-        ],
-      ),
+      const SliverToBoxAdapter(child: SizedBox(height: 16)),
     );
 
     // done
@@ -260,6 +255,114 @@ class _SidebarState extends State<BrowserSidebar> {
       _activeRoot = root;
     });
     widget.navigateToFolder(selectedPath);
+  }
+}
+
+class FavoriteShortcut extends StatelessWidget {
+  static const double rowExtent = 21;
+  static const double _iconSize = 16;
+
+  final String path;
+  final bool selected;
+  final int reorderIndex;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
+
+  const FavoriteShortcut({
+    super.key,
+    required this.path,
+    required this.selected,
+    required this.reorderIndex,
+    required this.onTap,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme.copyWith(
+          primary: const Color.fromARGB(255, 48, 105, 202),
+        );
+    final labelStyle = MacosTheme.of(context).typography.body.copyWith(
+          color: selected ? colorScheme.onPrimary : null,
+          fontSize: 12,
+        );
+    final row = Semantics(
+      button: true,
+      selected: selected,
+      label: Utils.pathTitle(path) ?? path,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.basic,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: selected ? colorScheme.primary : Colors.transparent,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            padding: const EdgeInsets.only(
+              left: 24,
+              right: 4,
+              top: 2.5,
+              bottom: 2.5,
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: _iconSize,
+                  height: _iconSize,
+                  child: Image.asset(
+                    SystemPath.getFolderNamedAsset(path),
+                    width: _iconSize,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    Utils.pathTitle(path) ?? path,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: labelStyle,
+                  ),
+                ),
+                MouseRegion(
+                  cursor: SystemMouseCursors.grab,
+                  child: ReorderableDragStartListener(
+                    index: reorderIndex,
+                    child: Icon(
+                      CupertinoIcons.bars,
+                      color: selected
+                          ? colorScheme.onPrimary
+                          : const Color(0xFF86838A),
+                      size: _iconSize,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    return SizedBox(
+      height: rowExtent,
+      child: Material(
+        type: MaterialType.transparency,
+        child: ctxm.ContextMenu(
+          menu: ctxm.Menu(
+            items: [
+              ctxm.MenuItem(
+                label: AppLocalizations.of(context)!.favoritesRemove,
+                onClick: (_) => onRemove(),
+              ),
+            ],
+          ),
+          child: row,
+        ),
+      ),
+    );
   }
 }
 

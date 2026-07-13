@@ -16,6 +16,8 @@ import '../utils/paths.dart';
 import '../utils/utils.dart';
 
 class BrowserTree extends StatefulWidget {
+  static const double rowExtent = 21;
+
   const BrowserTree({
     super.key,
     required this.root,
@@ -23,6 +25,7 @@ class BrowserTree extends StatefulWidget {
     this.assetName,
     this.selectedPath,
     required this.onUpdate,
+    this.onRequestFocus,
   });
 
   final String root;
@@ -30,6 +33,7 @@ class BrowserTree extends StatefulWidget {
   final String? assetName;
   final String? selectedPath;
   final void Function(String root, String selectedPath) onUpdate;
+  final VoidCallback? onRequestFocus;
 
   @override
   State<BrowserTree> createState() => _BrowserTreeState();
@@ -39,7 +43,6 @@ class _BrowserTreeState extends State<BrowserTree> {
   static const double _indent = 16;
   static const double _iconSize = 16;
 
-  final FocusNode _focusNode = FocusNode();
   final Set<String> _expandedPaths = {};
   final Map<String, List<Directory>> _folderCache = {};
   final Set<String> _loadingPaths = {};
@@ -63,14 +66,12 @@ class _BrowserTreeState extends State<BrowserTree> {
     if (widget.root != oldWidget.root ||
         widget.selectedPath != oldWidget.selectedPath) {
       _expandAncestorsOfSelection();
-      _reloadExpandedSubtree(widget.root);
     }
   }
 
   @override
   void dispose() {
     _cancelAllWatchers();
-    _focusNode.dispose();
     super.dispose();
   }
 
@@ -78,38 +79,69 @@ class _BrowserTreeState extends State<BrowserTree> {
   Widget build(BuildContext context) {
     return Consumer<FavoritesModel>(
       builder: (context, favorites, child) {
-        return Material(
-          type: MaterialType.transparency,
-          child: Focus(
-            focusNode: _focusNode,
-            debugLabel: widget.root,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: _buildNode(
+        final visibleNodes = _buildVisibleNodes();
+        return SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          sliver: SliverFixedExtentList.builder(
+            itemExtent: BrowserTree.rowExtent,
+            itemCount: visibleNodes.length,
+            itemBuilder: (context, index) {
+              return _buildNodeRow(
                 favorites: favorites,
-                path: widget.root,
-                label: widget.title ?? Utils.pathTitle(widget.root) ?? '',
-                assetName: widget.assetName,
-                depth: 0,
-              ),
-            ),
+                node: visibleNodes[index],
+              );
+            },
+            addAutomaticKeepAlives: false,
+            addRepaintBoundaries: true,
           ),
         );
       },
     );
   }
 
-  Widget _buildNode({
-    required FavoritesModel favorites,
-    required String path,
-    required String label,
-    required int depth,
-    String? assetName,
-  }) {
-    final isExpanded = _expandedPaths.contains(path);
-    if (isExpanded && !_folderCache.containsKey(path)) {
-      unawaited(_loadFolders(path));
+  List<_VisibleTreeNode> _buildVisibleNodes() {
+    final visibleNodes = <_VisibleTreeNode>[];
+    final pending = <_VisibleTreeNode>[
+      _VisibleTreeNode(
+        path: widget.root,
+        label: widget.title ?? Utils.pathTitle(widget.root) ?? '',
+        assetName: widget.assetName,
+        depth: 0,
+      ),
+    ];
+
+    while (pending.isNotEmpty) {
+      final node = pending.removeLast();
+      visibleNodes.add(node);
+
+      if (!_expandedPaths.contains(node.path)) continue;
+      final folders = _folderCache[node.path];
+      if (folders == null) {
+        unawaited(_loadFolders(node.path));
+        continue;
+      }
+
+      for (final folder in folders.reversed) {
+        pending.add(
+          _VisibleTreeNode(
+            path: folder.path,
+            label: Utils.pathTitle(folder.path) ?? '',
+            assetName: SystemPath.getFolderNamedAsset(folder.path),
+            depth: node.depth + 1,
+          ),
+        );
+      }
     }
+
+    return visibleNodes;
+  }
+
+  Widget _buildNodeRow({
+    required FavoritesModel favorites,
+    required _VisibleTreeNode node,
+  }) {
+    final path = node.path;
+    final isExpanded = _expandedPaths.contains(path);
     final isSelected = widget.selectedPath == path;
     final colorScheme = Theme.of(context).colorScheme.copyWith(
           primary: const Color.fromARGB(255, 48, 105, 202),
@@ -124,7 +156,7 @@ class _BrowserTreeState extends State<BrowserTree> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
-          _focusNode.requestFocus();
+          widget.onRequestFocus?.call();
           _updateSelectedPath(path);
         },
         child: Container(
@@ -133,7 +165,7 @@ class _BrowserTreeState extends State<BrowserTree> {
             borderRadius: BorderRadius.circular(4),
           ),
           padding: EdgeInsets.only(
-            left: depth * _indent,
+            left: node.depth * _indent,
             top: 2.5,
             bottom: 2.5,
           ),
@@ -161,14 +193,14 @@ class _BrowserTreeState extends State<BrowserTree> {
                 width: _iconSize,
                 height: _iconSize,
                 child: Image.asset(
-                  assetName ?? SystemPath.getFolderNamedAsset(null),
+                  node.assetName ?? SystemPath.getFolderNamedAsset(null),
                   width: _iconSize,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  label,
+                  node.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: labelStyle,
@@ -180,24 +212,12 @@ class _BrowserTreeState extends State<BrowserTree> {
       ),
     );
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ctxm.ContextMenu(
-          menu: _buildMenu(favorites, path),
-          child: row,
-        ),
-        if (isExpanded)
-          for (final folder in _folderCache[path] ?? const <Directory>[])
-            _buildNode(
-              favorites: favorites,
-              path: folder.path,
-              label: Utils.pathTitle(folder.path) ?? '',
-              assetName: SystemPath.getFolderNamedAsset(folder.path),
-              depth: depth + 1,
-            ),
-      ],
+    return Material(
+      type: MaterialType.transparency,
+      child: ctxm.ContextMenu(
+        menu: _buildMenu(favorites, path),
+        child: row,
+      ),
     );
   }
 
@@ -241,7 +261,7 @@ class _BrowserTreeState extends State<BrowserTree> {
   }
 
   void _toggleExpanded(String path) {
-    _focusNode.requestFocus();
+    widget.onRequestFocus?.call();
     setState(() {
       if (_expandedPaths.remove(path)) {
         _stopWatchingAtOrBelow(path);
@@ -378,4 +398,18 @@ class _BrowserTreeState extends State<BrowserTree> {
     _folderWatchers.clear();
     _reloadDebounces.clear();
   }
+}
+
+class _VisibleTreeNode {
+  const _VisibleTreeNode({
+    required this.path,
+    required this.label,
+    required this.assetName,
+    required this.depth,
+  });
+
+  final String path;
+  final String label;
+  final String? assetName;
+  final int depth;
 }
