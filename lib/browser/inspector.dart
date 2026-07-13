@@ -1,16 +1,21 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:exif/exif.dart';
 import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
 
 import '../components/theme.dart';
 import '../model/selection.dart';
 import '../utils/file_utils.dart';
+import '../utils/platform_utils.dart';
 import '../utils/utils.dart';
+import 'photo_metadata.dart';
 
 class InspectorValue {
   final String name;
@@ -24,6 +29,47 @@ class InspectorGroup {
 
   final String title;
   final List<InspectorValue> values;
+}
+
+class InspectorFact {
+  const InspectorFact(this.value);
+
+  final String value;
+}
+
+class InspectorSummary {
+  const InspectorSummary({
+    required this.filename,
+    required this.dateLabel,
+    required this.date,
+    required this.details,
+    required this.facts,
+  });
+
+  final String filename;
+  final String dateLabel;
+  final DateTime? date;
+  final String details;
+  final List<InspectorFact> facts;
+}
+
+typedef InspectorMapSnapshotLoader = Future<Uint8List?> Function(
+  PhotoLocation location,
+  bool dark,
+  double scale,
+);
+
+Future<Uint8List?> loadInspectorMapSnapshot(
+  PhotoLocation location,
+  bool dark,
+  double scale,
+) {
+  return PlatformUtils.renderMapSnapshot(
+    latitude: location.latitude,
+    longitude: location.longitude,
+    dark: dark,
+    scale: scale,
+  );
 }
 
 class InspectorMetadata {
@@ -131,7 +177,38 @@ class _InspectorState extends State<Inspector> {
       emptyMessage: t.inspectorEmpty,
       loadingLabel: t.inspectorLoading,
       loading: _isLoading,
+      summary: _currentFile == null ? null : _buildSummary(t),
+      location: photoLocationFromExif(_exifData ?? const {}),
+      technicalDetailsLabel: t.inspectorTechnicalDetails,
+      noLocationLabel: t.inspectorNoLocation,
+      mapUnavailableLabel: t.inspectorMapUnavailable,
       groups: _currentFile == null ? const [] : _buildGroups(t),
+    );
+  }
+
+  InspectorSummary _buildSummary(AppLocalizations t) {
+    final captureDate = captureDateFromExif(_exifData ?? const {});
+    final details = <String>[
+      if (_imageSize != null) '${_imageSize!.width} × ${_imageSize!.height}',
+      if (_fileSize != null) filesize(_fileSize),
+      p.extension(_currentFile!).replaceFirst('.', '').toUpperCase(),
+    ].where((value) => value.isNotEmpty).join('  •  ');
+    final facts = <InspectorFact>[
+      InspectorFact(_getExifTag('EXIF ISOSpeedRatings', prefix: 'ISO ')),
+      InspectorFact(
+        _getExifTag('EXIF FocalLength', parseRatio: true, suffix: ' mm'),
+      ),
+      InspectorFact(
+        _getExifTag('EXIF FNumber', parseRatio: true, prefix: 'f/'),
+      ),
+      InspectorFact(_getExifTag('EXIF ExposureTime', suffix: ' s')),
+    ].where((fact) => fact.value.isNotEmpty).toList(growable: false);
+    return InspectorSummary(
+      filename: Utils.pathTitle(_currentFile) ?? '',
+      dateLabel: captureDate == null ? t.inspectorCreated : t.inspectorCaptured,
+      date: captureDate ?? _creationDate,
+      details: details,
+      facts: facts,
     );
   }
 
@@ -155,7 +232,6 @@ class _InspectorState extends State<Inspector> {
         ),
       ]),
       InspectorGroup(t.inspectorCaptureSection, [
-        InspectorValue(t.exifCaptureDate, _getExifTag('EXIF DateTimeOriginal')),
         InspectorValue(
           t.exifExposureTime,
           _getExifTag('EXIF ExposureTime', suffix: ' s'),
@@ -281,6 +357,12 @@ class InspectorPanel extends StatelessWidget {
     required this.emptyMessage,
     required this.loadingLabel,
     required this.groups,
+    this.summary,
+    this.location,
+    this.technicalDetailsLabel = 'Technical details',
+    this.noLocationLabel = 'No location saved for this photo.',
+    this.mapUnavailableLabel = 'Map unavailable',
+    this.mapSnapshotLoader = loadInspectorMapSnapshot,
     this.loading = false,
   });
 
@@ -288,6 +370,12 @@ class InspectorPanel extends StatelessWidget {
   final String emptyMessage;
   final String loadingLabel;
   final List<InspectorGroup> groups;
+  final InspectorSummary? summary;
+  final PhotoLocation? location;
+  final String technicalDetailsLabel;
+  final String noLocationLabel;
+  final String mapUnavailableLabel;
+  final InspectorMapSnapshotLoader mapSnapshotLoader;
   final bool loading;
 
   @override
@@ -325,7 +413,7 @@ class InspectorPanel extends StatelessWidget {
             ),
           ),
           Divider(color: palette.divider),
-          if (groups.isEmpty)
+          if (summary == null && groups.isEmpty)
             Expanded(
               child: Center(
                 child: Padding(
@@ -371,6 +459,33 @@ class InspectorPanel extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                   ],
+                  if (summary != null) ...[
+                    _InspectorSummaryCard(summary: summary!),
+                    const SizedBox(height: 12),
+                    if (!loading) ...[
+                      _InspectorMapCard(
+                        location: location,
+                        noLocationLabel: noLocationLabel,
+                        mapUnavailableLabel: mapUnavailableLabel,
+                        snapshotLoader: mapSnapshotLoader,
+                      ),
+                      const SizedBox(height: 18),
+                    ],
+                  ],
+                  if (visibleGroups.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+                      child: Text(
+                        technicalDetailsLabel.toUpperCase(),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: palette.secondaryText,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 10,
+                              letterSpacing: 0.8,
+                            ),
+                      ),
+                    ),
+                  ],
                   for (var index = 0;
                       index < visibleGroups.length;
                       index += 1) ...[
@@ -382,6 +497,377 @@ class InspectorPanel extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _InspectorSummaryCard extends StatelessWidget {
+  const _InspectorSummaryCard({required this.summary});
+
+  final InspectorSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = FotoPalette.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final formattedDate = summary.date == null
+        ? null
+        : DateFormat.yMMMd(locale).add_jms().format(summary.date!);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: palette.elevatedSurface,
+        border: Border.all(color: palette.divider),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              summary.dateLabel.toUpperCase(),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: palette.secondaryText,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 10,
+                    letterSpacing: 0.8,
+                  ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              formattedDate ?? summary.filename,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: palette.primaryText,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
+                  ),
+            ),
+            if (formattedDate != null) ...[
+              const SizedBox(height: 5),
+              Text(
+                summary.filename,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: palette.secondaryText,
+                    ),
+              ),
+            ],
+            if (summary.details.isNotEmpty) ...[
+              const SizedBox(height: 3),
+              Text(
+                summary.details,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: palette.secondaryText,
+                      height: 1.25,
+                    ),
+              ),
+            ],
+            if (summary.facts.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final fact in summary.facts)
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: palette.selectionFill,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 5,
+                        ),
+                        child: Text(
+                          fact.value,
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: palette.primaryText,
+                            fontWeight: FontWeight.w600,
+                            fontFeatures: const [
+                              FontFeature.tabularFigures(),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InspectorMapCard extends StatefulWidget {
+  const _InspectorMapCard({
+    required this.location,
+    required this.noLocationLabel,
+    required this.mapUnavailableLabel,
+    required this.snapshotLoader,
+  });
+
+  final PhotoLocation? location;
+  final String noLocationLabel;
+  final String mapUnavailableLabel;
+  final InspectorMapSnapshotLoader snapshotLoader;
+
+  @override
+  State<_InspectorMapCard> createState() => _InspectorMapCardState();
+}
+
+class _InspectorMapCardState extends State<_InspectorMapCard> {
+  Uint8List? _snapshot;
+  bool _loading = false;
+  int _loadGeneration = 0;
+  String? _requestKey;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadIfNeeded();
+  }
+
+  @override
+  void didUpdateWidget(covariant _InspectorMapCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.location != widget.location ||
+        oldWidget.snapshotLoader != widget.snapshotLoader) {
+      _requestKey = null;
+      _loadIfNeeded();
+    }
+  }
+
+  void _loadIfNeeded() {
+    final location = widget.location;
+    if (location == null) {
+      _snapshot = null;
+      _loading = false;
+      _requestKey = null;
+      return;
+    }
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final scale = MediaQuery.devicePixelRatioOf(context).clamp(1.0, 3.0);
+    final key = '${location.latitude}:${location.longitude}:$dark:$scale';
+    if (_requestKey == key) return;
+    _requestKey = key;
+    _snapshot = null;
+    _loading = true;
+    final generation = ++_loadGeneration;
+    widget.snapshotLoader(location, dark, scale).then((snapshot) {
+      if (!mounted || generation != _loadGeneration) return;
+      setState(() {
+        _snapshot = snapshot;
+        _loading = false;
+      });
+    }).catchError((_) {
+      if (!mounted || generation != _loadGeneration) return;
+      setState(() {
+        _snapshot = null;
+        _loading = false;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = FotoPalette.of(context);
+    final location = widget.location;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    if (location == null) {
+      return _MapFallback(
+        icon: Icons.location_off_outlined,
+        label: widget.noLocationLabel,
+      );
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: SizedBox(
+        height: 150,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (_snapshot != null) ...[
+              CustomPaint(painter: _MapBackdropPainter(dark: dark)),
+              Image.memory(
+                _snapshot!,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                filterQuality: FilterQuality.medium,
+              ),
+            ] else
+              ColoredBox(
+                color: palette.elevatedSurface,
+                child: _loading
+                    ? Center(
+                        child: SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: palette.accent,
+                          ),
+                        ),
+                      )
+                    : _MapFallback(
+                        icon: Icons.map_outlined,
+                        label: widget.mapUnavailableLabel,
+                        compact: true,
+                      ),
+              ),
+            if (_snapshot != null) ...[
+              const Center(
+                child: Icon(
+                  Icons.location_on_rounded,
+                  color: Color(0xFF5D5FEF),
+                  size: 34,
+                  shadows: [
+                    Shadow(color: Color(0x80000000), blurRadius: 8),
+                  ],
+                ),
+              ),
+              const Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 48,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, Color(0x99000000)],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            Positioned(
+              left: 10,
+              bottom: 8,
+              child: Text(
+                '${location.latitude.toStringAsFixed(4)}, '
+                '${location.longitude.toStringAsFixed(4)}',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: _snapshot == null
+                          ? palette.secondaryText
+                          : Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                      shadows: _snapshot == null
+                          ? null
+                          : const [
+                              Shadow(color: Colors.black, blurRadius: 4),
+                            ],
+                    ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MapBackdropPainter extends CustomPainter {
+  const _MapBackdropPainter({required this.dark});
+
+  final bool dark;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final water = Paint()
+      ..color = dark ? const Color(0xFF1B3444) : const Color(0xFFAED8EA);
+    final land = Paint()
+      ..color = dark ? const Color(0xFF355044) : const Color(0xFFC9DFB3);
+    final road = Paint()
+      ..color = dark ? const Color(0xFF8B785F) : const Color(0xFFF0C979)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    canvas.drawRect(Offset.zero & size, water);
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, size.height * 0.2)
+        ..cubicTo(
+          size.width * 0.28,
+          size.height * 0.06,
+          size.width * 0.52,
+          size.height * 0.42,
+          size.width,
+          size.height * 0.12,
+        )
+        ..lineTo(size.width, size.height)
+        ..lineTo(0, size.height)
+        ..close(),
+      land,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(-10, size.height * 0.78)
+        ..cubicTo(
+          size.width * 0.3,
+          size.height * 0.56,
+          size.width * 0.62,
+          size.height * 0.74,
+          size.width + 10,
+          size.height * 0.34,
+        ),
+      road,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_MapBackdropPainter oldDelegate) =>
+      oldDelegate.dark != dark;
+}
+
+class _MapFallback extends StatelessWidget {
+  const _MapFallback({
+    required this.icon,
+    required this.label,
+    this.compact = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = FotoPalette.of(context);
+    return Container(
+      height: compact ? null : 92,
+      decoration: BoxDecoration(
+        color: palette.elevatedSurface,
+        border: Border.all(color: palette.divider),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 23, color: palette.secondaryText),
+              const SizedBox(height: 7),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: palette.secondaryText,
+                    ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

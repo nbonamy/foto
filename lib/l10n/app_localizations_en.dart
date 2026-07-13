@@ -180,6 +180,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inspectorImageSection => 'Image';
 
   @override
+  String get inspectorCaptured => 'Captured';
+
+  @override
+  String get inspectorCreated => 'Created';
+
+  @override
+  String get inspectorTechnicalDetails => 'Technical details';
+
+  @override
+  String get inspectorNoLocation => 'No location saved for this photo.';
+
+  @override
+  String get inspectorMapUnavailable => 'Map unavailable';
+
+  @override
   String get galleryLoading => 'Loading photos…';
 
   @override

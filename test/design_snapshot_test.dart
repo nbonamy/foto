@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,9 +7,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foto/browser/inspector.dart';
 import 'package:foto/browser/justified_gallery_view.dart';
 import 'package:foto/browser/justified_layout.dart';
+import 'package:foto/browser/photo_metadata.dart';
 import 'package:foto/components/theme.dart';
 import 'package:foto/components/toolbar.dart';
 import 'package:foto/components/window_shell.dart';
+
+final Uint8List _previewMapBytes = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=',
+);
 
 void main() {
   setUpAll(() async {
@@ -31,6 +37,9 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
 
       await tester.pumpWidget(_DesignPreview(brightness: brightness));
+      await tester.pump();
+      await tester.idle();
+      await tester.pump(const Duration(milliseconds: 100));
       await tester.pumpAndSettle();
 
       await expectLater(
@@ -312,6 +321,26 @@ class _PreviewInspector extends StatelessWidget {
       emptyMessage: '',
       loadingLabel: '',
       loading: false,
+      summary: InspectorSummary(
+        filename: 'DSC_4821.jpg',
+        dateLabel: 'Captured',
+        date: DateTime(2026, 7, 12, 18, 42),
+        details: '6000 × 4000  •  8.4 MB  •  JPEG',
+        facts: const [
+          InspectorFact('ISO 200'),
+          InspectorFact('28 mm'),
+          InspectorFact('f/2.8'),
+          InspectorFact('1/250 s'),
+        ],
+      ),
+      location: const PhotoLocation(
+        latitude: 64.1466,
+        longitude: -21.9426,
+      ),
+      technicalDetailsLabel: 'Technical details',
+      noLocationLabel: 'No location saved for this photo.',
+      mapUnavailableLabel: 'Map unavailable',
+      mapSnapshotLoader: _previewMapSnapshot,
       groups: [
         InspectorGroup('File', [
           InspectorValue('Name', 'DSC_4821.jpg'),
@@ -331,4 +360,12 @@ class _PreviewInspector extends StatelessWidget {
       ],
     );
   }
+}
+
+Future<Uint8List?> _previewMapSnapshot(
+  PhotoLocation location,
+  bool dark,
+  double scale,
+) {
+  return Future.value(_previewMapBytes);
 }

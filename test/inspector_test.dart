@@ -41,7 +41,7 @@ void main() {
 
     selection.set(['/photos/selected.webp']);
     await tester.pump();
-    expect(find.text('selected.webp'), findsOneWidget);
+    expect(find.text('selected.webp'), findsWidgets);
 
     await tester.pump(const Duration(milliseconds: 60));
     await tester.pump();

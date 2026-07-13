@@ -181,6 +181,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get inspectorImageSection => 'Image';
 
   @override
+  String get inspectorCaptured => 'Prise de vue';
+
+  @override
+  String get inspectorCreated => 'Création';
+
+  @override
+  String get inspectorTechnicalDetails => 'Détails techniques';
+
+  @override
+  String get inspectorNoLocation => 'Aucun lieu enregistré pour cette photo.';
+
+  @override
+  String get inspectorMapUnavailable => 'Carte indisponible';
+
+  @override
   String get galleryLoading => 'Chargement des photos…';
 
   @override

@@ -67,6 +67,11 @@
   "inspectorCaptureSection": "Capture",
   "inspectorCameraSection": "Camera",
   "inspectorImageSection": "Image",
+  "inspectorCaptured": "Captured",
+  "inspectorCreated": "Created",
+  "inspectorTechnicalDetails": "Technical details",
+  "inspectorNoLocation": "No location saved for this photo.",
+  "inspectorMapUnavailable": "Map unavailable",
   "galleryLoading": "Loading photos…",
   "galleryEmpty": "No photos in this folder.",
 

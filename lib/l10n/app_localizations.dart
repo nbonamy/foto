@@ -410,6 +410,36 @@ abstract class AppLocalizations {
   /// **'Image'**
   String get inspectorImageSection;
 
+  /// No description provided for @inspectorCaptured.
+  ///
+  /// In en, this message translates to:
+  /// **'Captured'**
+  String get inspectorCaptured;
+
+  /// No description provided for @inspectorCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get inspectorCreated;
+
+  /// No description provided for @inspectorTechnicalDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Technical details'**
+  String get inspectorTechnicalDetails;
+
+  /// No description provided for @inspectorNoLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'No location saved for this photo.'**
+  String get inspectorNoLocation;
+
+  /// No description provided for @inspectorMapUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Map unavailable'**
+  String get inspectorMapUnavailable;
+
   /// No description provided for @galleryLoading.
   ///
   /// In en, this message translates to:

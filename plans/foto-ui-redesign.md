@@ -10,7 +10,7 @@ Replace `macos_ui` with a Foto-owned desktop UI based on the airy gallery direct
 - Do not place blur, shaders, or animated effects inside thumbnail or sidebar scrolling subtrees.
 - Use glass-like translucency only for stable chrome surfaces: sidebar, toolbar, and inspector.
 - Do not add a third-party glass or desktop-widget library.
-- Do not add mockup-only features such as albums, maps, or histograms during this migration.
+- Do not add mockup-only features such as albums or histograms unless Nicolas explicitly promotes them into the product direction. The location map was promoted after reviewing the inspector mockup.
 - Add or update tests in every implementation increment.
 - Run focused tests after each edit, then `flutter analyze` and the full test suite before every commit.
 - Keep each commit independently buildable and revertible.
@@ -115,6 +115,8 @@ Commit: `feat: redesign foto metadata inspector`
 
 Inspector checkpoint: the inspector now uses compact grouped cards for file, capture, camera, and image data, filters empty values, and presents explicit empty and loading states. Focused inspector tests, analyzer, all 88 tests, and a macOS debug build passed.
 
+Capture-context checkpoint: the inspector now leads with the capture date, filename, dimensions, size, format, and the most useful exposure facts. Embedded EXIF GPS coordinates produce an on-demand native MapKit snapshot with appearance-aware rendering; missing or invalid GPS data stays a clear, non-failing state. Technical file, capture, camera, and image tables follow under an explicit secondary heading. GPS/date parsing, native-channel arguments, hierarchy, and light/dark rendered output are covered by tests. Analyzer, all 104 tests, and the macOS debug build passed.
+
 ## Phase 7: dialogs and remaining controls
 
 - [x] Replace `MacosAlertDialog`, `MacosSheet`, `PushButton`, and `MacosTextField` with Foto-owned Material-based components.
@@ -175,3 +177,5 @@ Until explicit merge approval, the redesign exists only in `/Users/nbonamy/src/f
 - Worker isolates should return primitive DTOs, not third-party metadata objects whose sendability is outside Foto's control; partial metadata failures must not erase already available file information.
 - Borderless screen-sized windows still participate in macOS window levels. Covering the menu bar requires a temporary level change as well as the full screen frame, followed by exact restoration on exit.
 - Fullscreen overlays should own their typography and safe-area behavior instead of inheriting browser theme defaults; a focused golden catches font fallback, spacing, and overflow regressions that structural widget tests miss.
+- An inspector should answer human questions before exposing storage and EXIF structure: when was this taken, where was it taken, and what are the few capture facts that matter. Full metadata remains available, but it should not define the top-level hierarchy.
+- Platform-native MapKit snapshots keep the Flutter dependency surface small and render in both appearances. A lightweight backdrop prevents decode latency from flashing an empty card while the real snapshot remains location-driven and on demand.
