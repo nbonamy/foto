@@ -152,19 +152,22 @@ void main() {
     final mapCenter = tester.getCenter(
       find.byKey(const ValueKey('inspector-map-surface')),
     );
-    await tester.sendEventToBinding(
-      PointerScrollEvent(
-        position: mapCenter,
-        kind: PointerDeviceKind.trackpad,
-        scrollDelta: const Offset(0, 20),
-      ),
+    final trackpad = await tester.createGesture(
+      kind: PointerDeviceKind.trackpad,
     );
+    await trackpad.panZoomStart(mapCenter);
+    await trackpad.panZoomUpdate(
+      mapCenter,
+      pan: const Offset(0, -20),
+    );
+    await tester.pump();
+    await trackpad.panZoomEnd();
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pumpAndSettle();
 
     expect(requestedLocations, hasLength(2));
     expect(requestedLocations[1], requestedLocations[0]);
-    expect(requestedDistances, [60000, 125000]);
+    expect(requestedDistances, [60000, 30000]);
     expect(inspectorScrollable.position.pixels, 0);
   });
 }

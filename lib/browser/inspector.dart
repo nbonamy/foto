@@ -565,6 +565,7 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
   String? _requestKey;
   int _zoomIndex = 3;
   double _scrollAccumulator = 0;
+  double _trackpadPanAccumulator = 0;
   Timer? _zoomDebounce;
 
   @override
@@ -635,18 +636,34 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
       if (_scrollAccumulator.abs() < 12) return;
       final direction = _scrollAccumulator < 0 ? 1 : -1;
       _scrollAccumulator = 0;
-      final nextZoom = (_zoomIndex + direction).clamp(
-        0,
-        _zoomDistances.length - 1,
-      );
-      if (nextZoom == _zoomIndex) return;
-      setState(() => _zoomIndex = nextZoom);
-      _zoomDebounce?.cancel();
-      _zoomDebounce = Timer(const Duration(milliseconds: 90), () {
-        if (!mounted) return;
-        _requestKey = null;
-        _loadIfNeeded(preserveSnapshot: true);
-      });
+      _queueZoomStep(direction);
+    });
+  }
+
+  void _handleTrackpadPanZoom(PointerPanZoomUpdateEvent event) {
+    _trackpadPanAccumulator += event.panDelta.dy;
+    if (_trackpadPanAccumulator.abs() < 12) return;
+    final direction = _trackpadPanAccumulator < 0 ? 1 : -1;
+    _trackpadPanAccumulator = 0;
+    _queueZoomStep(direction);
+  }
+
+  void _handleTrackpadPanZoomEnd() {
+    _trackpadPanAccumulator = 0;
+  }
+
+  void _queueZoomStep(int direction) {
+    final nextZoom = (_zoomIndex + direction).clamp(
+      0,
+      _zoomDistances.length - 1,
+    );
+    if (nextZoom == _zoomIndex) return;
+    setState(() => _zoomIndex = nextZoom);
+    _zoomDebounce?.cancel();
+    _zoomDebounce = Timer(const Duration(milliseconds: 90), () {
+      if (!mounted) return;
+      _requestKey = null;
+      _loadIfNeeded(preserveSnapshot: true);
     });
   }
 
@@ -661,97 +678,143 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
         label: widget.noLocationLabel,
       );
     }
-    return Listener(
+    return RawGestureDetector(
       key: const ValueKey('inspector-map-surface'),
       behavior: HitTestBehavior.opaque,
-      onPointerSignal: _handlePointerSignal,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: SizedBox(
-          height: 150,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (_snapshot != null) ...[
-                CustomPaint(painter: _MapBackdropPainter(dark: dark)),
-                Image.memory(
-                  _snapshot!,
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true,
-                  filterQuality: FilterQuality.medium,
-                ),
-              ] else
-                ColoredBox(
-                  color: palette.elevatedSurface,
-                  child: _loading
-                      ? Center(
-                          child: SizedBox.square(
-                            dimension: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: palette.accent,
-                            ),
-                          ),
-                        )
-                      : _MapFallback(
-                          icon: Icons.map_outlined,
-                          label: widget.mapUnavailableLabel,
-                          compact: true,
-                        ),
-                ),
-              if (_snapshot != null) ...[
-                const Center(
-                  child: Icon(
-                    Icons.location_on_rounded,
-                    color: Color(0xFF5D5FEF),
-                    size: 34,
-                    shadows: [
-                      Shadow(color: Color(0x80000000), blurRadius: 8),
-                    ],
+      gestures: <Type, GestureRecognizerFactory>{
+        _MapTrackpadZoomGestureRecognizer: GestureRecognizerFactoryWithHandlers<
+            _MapTrackpadZoomGestureRecognizer>(
+          _MapTrackpadZoomGestureRecognizer.new,
+          (recognizer) {
+            recognizer
+              ..onUpdate = _handleTrackpadPanZoom
+              ..onEnd = _handleTrackpadPanZoomEnd;
+          },
+        ),
+      },
+      child: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerSignal: _handlePointerSignal,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: SizedBox(
+            height: 150,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (_snapshot != null) ...[
+                  CustomPaint(painter: _MapBackdropPainter(dark: dark)),
+                  Image.memory(
+                    _snapshot!,
+                    fit: BoxFit.cover,
+                    gaplessPlayback: true,
+                    filterQuality: FilterQuality.medium,
                   ),
-                ),
-                const Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  height: 48,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Color(0x99000000)],
+                ] else
+                  ColoredBox(
+                    color: palette.elevatedSurface,
+                    child: _loading
+                        ? Center(
+                            child: SizedBox.square(
+                              dimension: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: palette.accent,
+                              ),
+                            ),
+                          )
+                        : _MapFallback(
+                            icon: Icons.map_outlined,
+                            label: widget.mapUnavailableLabel,
+                            compact: true,
+                          ),
+                  ),
+                if (_snapshot != null) ...[
+                  const Center(
+                    child: Icon(
+                      Icons.location_on_rounded,
+                      color: Color(0xFF5D5FEF),
+                      size: 34,
+                      shadows: [
+                        Shadow(color: Color(0x80000000), blurRadius: 8),
+                      ],
+                    ),
+                  ),
+                  const Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: 48,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, Color(0x99000000)],
+                        ),
                       ),
                     ),
                   ),
+                ],
+                Positioned(
+                  left: 10,
+                  bottom: 8,
+                  child: Text(
+                    '${location.latitude.toStringAsFixed(4)}, '
+                    '${location.longitude.toStringAsFixed(4)}',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: _snapshot == null
+                              ? palette.secondaryText
+                              : Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                          shadows: _snapshot == null
+                              ? null
+                              : const [
+                                  Shadow(color: Colors.black, blurRadius: 4),
+                                ],
+                        ),
+                  ),
                 ),
               ],
-              Positioned(
-                left: 10,
-                bottom: 8,
-                child: Text(
-                  '${location.latitude.toStringAsFixed(4)}, '
-                  '${location.longitude.toStringAsFixed(4)}',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: _snapshot == null
-                            ? palette.secondaryText
-                            : Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                        shadows: _snapshot == null
-                            ? null
-                            : const [
-                                Shadow(color: Colors.black, blurRadius: 4),
-                              ],
-                      ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+class _MapTrackpadZoomGestureRecognizer extends OneSequenceGestureRecognizer {
+  _MapTrackpadZoomGestureRecognizer();
+
+  ValueChanged<PointerPanZoomUpdateEvent>? onUpdate;
+  VoidCallback? onEnd;
+
+  @override
+  bool isPointerAllowed(PointerDownEvent event) => false;
+
+  @override
+  void addAllowedPointerPanZoom(PointerPanZoomStartEvent event) {
+    startTrackingPointer(event.pointer, event.transform);
+    resolvePointer(event.pointer, GestureDisposition.accepted);
+  }
+
+  @override
+  void handleEvent(PointerEvent event) {
+    if (event is PointerPanZoomUpdateEvent) {
+      onUpdate?.call(event);
+    } else if (event is PointerPanZoomEndEvent) {
+      onEnd?.call();
+      stopTrackingPointer(event.pointer);
+    }
+  }
+
+  @override
+  void didStopTrackingLastPointer(int pointer) {}
+
+  @override
+  String get debugDescription => 'map trackpad zoom';
 }
 
 class _MapBackdropPainter extends CustomPainter {

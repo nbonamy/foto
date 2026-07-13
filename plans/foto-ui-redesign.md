@@ -81,6 +81,8 @@ Commit: `feat: replace browser toolbar with foto controls`
 
 Segmented-control refinement: grouped toolbar actions no longer render as individual rounded pills. The group owns and clips the outer radius while every contained button uses square edges; standalone toolbar buttons retain their own rounded shape.
 
+Toolbar hierarchy refinement: sidebar, folder visibility, and inspector remain the three grouped state toggles. Sorting is now a separate labeled menu that exposes the active criterion as “Sort by Date” or “Sort by Name” instead of hiding it behind a fourth glyph.
+
 ## Phase 4: sidebar redesign
 
 - [x] Restyle Favorites and Devices with the airy gallery hierarchy in light and dark modes.
@@ -117,7 +119,7 @@ Commit: `feat: redesign foto metadata inspector`
 
 Inspector checkpoint: the inspector now uses compact grouped cards for file, capture, camera, and image data, filters empty values, and presents explicit empty and loading states. Focused inspector tests, analyzer, all 88 tests, and a macOS debug build passed.
 
-Capture-context checkpoint: the inspector now leads with one user-facing card containing only the capture date and its map. Embedded EXIF GPS coordinates produce an on-demand native MapKit snapshot with appearance-aware rendering; missing or invalid GPS data stays a clear, non-failing state. Wheel and trackpad scrolling over the map steps through debounced zoom distances while every snapshot remains centered on the pinned coordinate. The map owns an opaque pointer hit surface so it wins wheel gestures over the enclosing inspector scroll view. Filename, dimensions, file size, format, exposure, camera, and image metadata remain available only in the explicitly secondary technical tables. GPS/date parsing, native-channel arguments, hierarchy, interaction, and light/dark rendered output are covered by tests. Analyzer, all 104 tests, and the macOS debug build passed.
+Capture-context checkpoint: the inspector now leads with one user-facing card containing only the capture date and its map. Embedded EXIF GPS coordinates produce an on-demand native MapKit snapshot with appearance-aware rendering; missing or invalid GPS data stays a clear, non-failing state. Wheel and trackpad scrolling over the map steps through debounced zoom distances while every snapshot remains centered on the pinned coordinate. Mouse wheels use pointer signals, while macOS trackpads use a dedicated recognizer for Flutter's pan/zoom event sequence so the map wins the gesture arena over the enclosing inspector scroll view. Filename, dimensions, file size, format, exposure, camera, and image metadata remain available only in the explicitly secondary technical tables. GPS/date parsing, native-channel arguments, hierarchy, interaction, and light/dark rendered output are covered by tests. Analyzer, all 104 tests, and the macOS debug build passed.
 
 ## Phase 7: dialogs and remaining controls
 
