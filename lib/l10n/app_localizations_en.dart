@@ -186,9 +186,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inspectorCreated => 'Created';
 
   @override
-  String get inspectorTechnicalDetails => 'Technical details';
-
-  @override
   String get inspectorNoLocation => 'No location saved for this photo.';
 
   @override

@@ -85,8 +85,7 @@ void main() {
     expect(find.text('sunrise.jpg'), findsOneWidget);
   });
 
-  testWidgets('capture context and map precede technical details',
-      (tester) async {
+  testWidgets('capture card precedes metadata sections', (tester) async {
     const png =
         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
     PhotoLocation? requestedLocation;
@@ -96,7 +95,6 @@ void main() {
           title: 'Info',
           emptyMessage: 'Select a photo',
           loadingLabel: 'Loading metadata',
-          technicalDetailsLabel: 'Technical details',
           noLocationLabel: 'No location',
           mapUnavailableLabel: 'Map unavailable',
           summary: InspectorSummary(
@@ -128,12 +126,12 @@ void main() {
     expect(find.text('ISO 100'), findsNothing);
     expect(find.text('4032 × 5040  •  20.3 MB  •  JPEG'), findsNothing);
     expect(find.text('64.1466, -21.9426'), findsOneWidget);
-    expect(find.text('TECHNICAL DETAILS'), findsOneWidget);
+    expect(find.text('TECHNICAL DETAILS'), findsNothing);
     expect(find.byType(Image), findsOneWidget);
     expect(requestedLocation?.latitude, 64.1466);
     expect(
       tester.getTopLeft(find.text('CAPTURED')).dy,
-      lessThan(tester.getTopLeft(find.text('TECHNICAL DETAILS')).dy),
+      lessThan(tester.getTopLeft(find.text('CAMERA')).dy),
     );
   });
 }

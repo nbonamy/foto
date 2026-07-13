@@ -166,7 +166,6 @@ class _InspectorState extends State<Inspector> {
       loading: _isLoading,
       summary: _currentFile == null ? null : _buildSummary(t),
       location: photoLocationFromExif(_exifData ?? const {}),
-      technicalDetailsLabel: t.inspectorTechnicalDetails,
       noLocationLabel: t.inspectorNoLocation,
       mapUnavailableLabel: t.inspectorMapUnavailable,
       groups: _currentFile == null ? const [] : _buildGroups(t),
@@ -328,7 +327,6 @@ class InspectorPanel extends StatelessWidget {
     required this.groups,
     this.summary,
     this.location,
-    this.technicalDetailsLabel = 'Technical details',
     this.noLocationLabel = 'No location saved for this photo.',
     this.mapUnavailableLabel = 'Map unavailable',
     this.mapSnapshotLoader = loadInspectorMapSnapshot,
@@ -341,7 +339,6 @@ class InspectorPanel extends StatelessWidget {
   final List<InspectorGroup> groups;
   final InspectorSummary? summary;
   final PhotoLocation? location;
-  final String technicalDetailsLabel;
   final String noLocationLabel;
   final String mapUnavailableLabel;
   final InspectorMapSnapshotLoader mapSnapshotLoader;
@@ -438,20 +435,6 @@ class InspectorPanel extends StatelessWidget {
                       showMap: !loading,
                     ),
                     const SizedBox(height: 18),
-                  ],
-                  if (visibleGroups.isNotEmpty) ...[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-                      child: Text(
-                        technicalDetailsLabel.toUpperCase(),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: palette.secondaryText,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 10,
-                              letterSpacing: 0.8,
-                            ),
-                      ),
-                    ),
                   ],
                   for (var index = 0;
                       index < visibleGroups.length;

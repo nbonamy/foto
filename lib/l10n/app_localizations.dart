@@ -422,12 +422,6 @@ abstract class AppLocalizations {
   /// **'Created'**
   String get inspectorCreated;
 
-  /// No description provided for @inspectorTechnicalDetails.
-  ///
-  /// In en, this message translates to:
-  /// **'Technical details'**
-  String get inspectorTechnicalDetails;
-
   /// No description provided for @inspectorNoLocation.
   ///
   /// In en, this message translates to:

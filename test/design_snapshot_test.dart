@@ -329,7 +329,6 @@ class _PreviewInspector extends StatelessWidget {
         latitude: 64.1466,
         longitude: -21.9426,
       ),
-      technicalDetailsLabel: 'Technical details',
       noLocationLabel: 'No location saved for this photo.',
       mapUnavailableLabel: 'Map unavailable',
       mapSnapshotLoader: _previewMapSnapshot,
