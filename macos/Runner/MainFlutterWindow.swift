@@ -12,6 +12,7 @@ private struct WindowedState {
   let isMovable: Bool
   let isMovableByWindowBackground: Bool
   let hasShadow: Bool
+  let level: NSWindow.Level
   let titleVisibility: NSWindow.TitleVisibility
   let titlebarAppearsTransparent: Bool
   let toolbarVisible: Bool?
@@ -136,6 +137,7 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
       isMovable: isMovable,
       isMovableByWindowBackground: isMovableByWindowBackground,
       hasShadow: hasShadow,
+      level: level,
       titleVisibility: titleVisibility,
       titlebarAppearsTransparent: titlebarAppearsTransparent,
       toolbarVisible: toolbar?.isVisible
@@ -158,6 +160,7 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
     isMovableByWindowBackground = false
     hasShadow = false
     styleMask = [.borderless]
+    level = NSWindow.Level(rawValue: NSWindow.Level.mainMenu.rawValue + 1)
     setFrame(targetScreen.frame, display: true, animate: false)
     if #available(macOS 14.0, *) {
       NSApp.activate()
@@ -192,6 +195,7 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
     isMovable = state.isMovable
     isMovableByWindowBackground = state.isMovableByWindowBackground
     hasShadow = state.hasShadow
+    level = state.level
     if let toolbarVisible = state.toolbarVisible {
       toolbar?.isVisible = toolbarVisible
     }
