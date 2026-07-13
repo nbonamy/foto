@@ -550,6 +550,7 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
   static const _minimumDistance = 350.0;
   static const _maximumDistance = 500000.0;
   static const _zoomSensitivity = 0.006;
+  static const _snapshotOverscan = 2.0;
 
   Uint8List? _snapshot;
   bool _loading = false;
@@ -598,7 +599,8 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
     }
     final dark = Theme.of(context).brightness == Brightness.dark;
     final scale = MediaQuery.devicePixelRatioOf(context).clamp(1.0, 3.0);
-    final distance = _targetDistance;
+    final distance = (_targetDistance * _snapshotOverscan)
+        .clamp(_minimumDistance, _maximumDistance);
     final key =
         '${location.latitude}:${location.longitude}:$dark:$scale:$distance';
     if (_requestKey == key) return;

@@ -135,7 +135,7 @@ void main() {
     expect(find.text('TECHNICAL DETAILS'), findsNothing);
     expect(find.byType(Image), findsOneWidget);
     expect(requestedLocations.single.latitude, 64.1466);
-    expect(requestedDistances, [60000]);
+    expect(requestedDistances, [120000]);
     expect(
       tester.getTopLeft(find.text('CAPTURED')).dy,
       lessThan(tester.getTopLeft(find.text('CAMERA')).dy),
@@ -186,8 +186,32 @@ void main() {
 
     expect(requestedLocations, hasLength(2));
     expect(requestedLocations[1], requestedLocations[0]);
-    expect(requestedDistances.first, 60000);
-    expect(requestedDistances.last, inExclusiveRange(30000, 40000));
+    expect(requestedDistances.first, 120000);
+    expect(requestedDistances.last, inExclusiveRange(60000, 70000));
+    expect(inspectorScrollable.position.pixels, 0);
+
+    final zoomOutTrackpad = await tester.createGesture(
+      kind: PointerDeviceKind.trackpad,
+    );
+    await zoomOutTrackpad.panZoomStart(mapCenter);
+    await zoomOutTrackpad.panZoomUpdate(
+      mapCenter,
+      pan: const Offset(0, 100),
+    );
+    await tester.pump();
+
+    final zoomOutTransform = tester.widget<Transform>(
+      find.byKey(const ValueKey('inspector-map-zoom-transform')),
+    );
+    expect(zoomOutTransform.transform.getMaxScaleOnAxis(), greaterThan(1));
+    expect(requestedLocations, hasLength(2));
+
+    await zoomOutTrackpad.panZoomEnd();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+
+    expect(requestedLocations, hasLength(3));
+    expect(requestedDistances.last, inExclusiveRange(110000, 130000));
     expect(inspectorScrollable.position.pixels, 0);
   });
 }
