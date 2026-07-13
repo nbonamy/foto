@@ -60,21 +60,21 @@ Commit: `feat: add foto light and dark theme foundations`
 
 ## Phase 2: custom window shell
 
-- [ ] Replace `MacosApp` with `MaterialApp` while preserving localization, providers, navigation, and platform menus.
-- [ ] Add a Foto-owned window shell with stable sidebar, toolbar, gallery, and inspector regions.
-- [ ] Add a lightweight resizable split pane for the inspector.
-- [ ] Keep native window dragging limited to toolbar background regions that contain no controls.
-- [ ] Hoist sidebar visibility into `BrowserState`; remove the `MacosWindowScope` dependency.
-- [ ] Preserve gallery focus and current selection while toggling panels.
+- [x] Replace `MacosApp` with `MaterialApp` while preserving localization, providers, navigation, and platform menus.
+- [x] Add a Foto-owned window shell with stable sidebar, toolbar, gallery, and inspector regions.
+- [x] Add a lightweight resizable split pane for the inspector.
+- [x] Keep native window dragging limited to toolbar background regions that contain no controls.
+- [x] Hoist sidebar visibility into `BrowserState`; remove the `MacosWindowScope` dependency.
+- [x] Preserve gallery focus and current selection while toggling panels.
 - [ ] Add widget tests for minimum/wide layouts, sidebar visibility, inspector resizing, focus preservation, and both brightnesses.
 
 Commit: `feat: add foto window shell and split panes`
 
 ## Phase 3: toolbar and controls
 
-- [ ] Add Foto icon buttons, grouped controls, tooltips, hover/pressed/focus states, and popup menus.
-- [ ] Replace the back button and folder, sidebar, inspector, and sort controls.
-- [ ] Preserve every existing callback and localized label.
+- [x] Add Foto icon buttons, grouped controls, tooltips, hover/pressed/focus states, and popup menus.
+- [x] Replace the back button and folder, sidebar, inspector, and sort controls.
+- [x] Preserve every existing callback and localized label.
 - [ ] Add widget tests for each action, selected state, disabled state, tooltip, popup selection, and keyboard activation.
 
 Commit: `feat: replace browser toolbar with foto controls`
@@ -92,7 +92,7 @@ Commit: `feat: redesign foto sidebar navigation`
 ## Phase 5: gallery redesign
 
 - [x] Make the gallery image-first with responsive justified rows, refined spacing, and no persistent image labels.
-- [ ] Add semantic hover, focus, selection-ring, rename, folder, loading, and empty states.
+- [x] Add semantic hover, focus, selection-ring, rename, folder, loading, and empty states.
 - [x] Keep lazy row construction and predictable, testable geometry.
 - [x] Avoid per-tile blur, shader masks, and expensive animated shadows.
 - [ ] Add widget tests for image/folder tiles, rename behavior, light/dark selection, empty/loading states, and bounded child creation for large lists. Bounded construction is now covered; the remaining states still need focused coverage.
@@ -144,11 +144,11 @@ Appearance checkpoint: System remains the persisted default, the View menu expos
 
 ## Phase 9: final verification
 
-- [ ] Run `dart format --output=none --set-exit-if-changed lib test`.
-- [ ] Run `flutter analyze`.
-- [ ] Run every focused UI test suite.
-- [ ] Run the complete `flutter test` suite.
-- [ ] Build the macOS debug and release applications.
+- [x] Run `dart format --output=none --set-exit-if-changed lib test`.
+- [x] Run `flutter analyze`.
+- [x] Run every focused UI test suite.
+- [x] Run the complete `flutter test` suite.
+- [x] Build the macOS debug and release applications.
 - [ ] Manually verify System, Light, and Dark modes at minimum and wide window sizes.
 - [ ] Manually verify navigation, selection, rename, copy/paste/move/delete, context menus, inspector, sidebar, viewer transitions, fullscreen, and shortcuts.
 - [ ] Profile a large folder and confirm that sidebar/gallery scrolling remains lazy and does not trigger shell-wide rebuilds.
@@ -162,4 +162,9 @@ Until explicit merge approval, the redesign exists only in `/Users/nbonamy/src/f
 
 ## Key learnings
 
-Append durable lessons here at the end of implementation. Focus on reusable Flutter desktop patterns, performance boundaries, theme architecture, testing strategy, and worktree/commit practices rather than a list of changed files.
+- A batch directory scan is only fast if the gallery does not immediately undo the win with per-file EXIF work. Network-sensitive metadata must remain visible-item or selection driven.
+- Justified rows can keep photographic variety without sacrificing virtualization: compute small indexed row geometry eagerly, but construct only the visible row widgets.
+- Decoded thumbnail dimensions are the cheapest trustworthy aspect-ratio source. Stable placeholder ratios prevent a uniform-grid flash without a separate metadata pass.
+- A semantic `ThemeExtension` keeps owned chrome coherent across light and dark appearances and makes removing a UI framework dependency incremental rather than all-or-nothing.
+- Deterministic light/dark golden previews are valuable when host screenshot permissions are unavailable, while focused geometry and channel-call tests protect the performance properties the screenshots cannot show.
+- Keeping every migration checkpoint in an unpushed worktree branch made aggressive replacement safe: stable `main` never moved, and each verified slice remains independently reversible.
