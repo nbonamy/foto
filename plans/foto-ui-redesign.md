@@ -158,6 +158,8 @@ Commit: `test: lock foto ui behavior and performance`
 
 Post-redesign regression checkpoint: the fullscreen viewer now saves and restores the normal window level while temporarily rendering above the macOS menu bar. The inspector keeps EXIF objects on the main isolate, transfers only primitive image dimensions from its worker isolate, and has a selection-driven widget regression test. Focused tests, analyzer, all 96 tests, and the macOS debug build passed before relaunching the rebuilt app.
 
+Fullscreen-info checkpoint: the viewer overlay no longer depends on inherited browser typography or the legacy neon-green style. It owns explicit 13-point SF system typography with fallbacks, regular weight, stable leading, tabular numerals, safe-area spacing, long-path truncation, and a dark rounded surface. Preference reactivity and the rendered overlay are covered by focused and golden tests; analyzer, all 99 tests, and the macOS debug build passed.
+
 ## Cancellation strategy
 
 Until explicit merge approval, the redesign exists only in `/Users/nbonamy/src/foto-ui-redesign` on `codex/foto-ui-redesign`. Failure is cheap: stop work, keep `main` at stable commit `3abfe9a` or later, and delete the worktree and branch after confirmation. No redesign commit will be pushed or merged automatically.
@@ -172,3 +174,4 @@ Until explicit merge approval, the redesign exists only in `/Users/nbonamy/src/f
 - Keeping every migration checkpoint in an unpushed worktree branch made aggressive replacement safe: stable `main` never moved, and each verified slice remains independently reversible.
 - Worker isolates should return primitive DTOs, not third-party metadata objects whose sendability is outside Foto's control; partial metadata failures must not erase already available file information.
 - Borderless screen-sized windows still participate in macOS window levels. Covering the menu bar requires a temporary level change as well as the full screen frame, followed by exact restoration on exit.
+- Fullscreen overlays should own their typography and safe-area behavior instead of inheriting browser theme defaults; a focused golden catches font fallback, spacing, and overflow regressions that structural widget tests miss.
