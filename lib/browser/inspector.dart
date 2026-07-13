@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:exif/exif.dart';
@@ -545,32 +546,22 @@ class _InspectorMapCard extends StatefulWidget {
 }
 
 class _InspectorMapCardState extends State<_InspectorMapCard> {
-  static const _zoomDistances = <double>[
-    500000,
-    250000,
-    125000,
-    60000,
-    30000,
-    15000,
-    7500,
-    3500,
-    1500,
-    750,
-    350,
-  ];
+  static const _defaultDistance = 60000.0;
+  static const _minimumDistance = 350.0;
+  static const _maximumDistance = 500000.0;
+  static const _zoomSensitivity = 0.006;
 
   Uint8List? _snapshot;
   bool _loading = false;
   int _loadGeneration = 0;
   String? _requestKey;
-  int _zoomIndex = 3;
-  double _scrollAccumulator = 0;
-  double _trackpadPanAccumulator = 0;
-  Timer? _zoomDebounce;
+  double _targetDistance = _defaultDistance;
+  double _snapshotDistance = _defaultDistance;
+  Timer? _snapshotRefreshTimer;
 
   @override
   void dispose() {
-    _zoomDebounce?.cancel();
+    _snapshotRefreshTimer?.cancel();
     super.dispose();
   }
 
@@ -586,9 +577,10 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
     if (oldWidget.location != widget.location ||
         oldWidget.snapshotLoader != widget.snapshotLoader) {
       if (oldWidget.location != widget.location) {
-        _zoomIndex = 3;
+        _targetDistance = _defaultDistance;
+        _snapshotDistance = _defaultDistance;
       }
-      _zoomDebounce?.cancel();
+      _snapshotRefreshTimer?.cancel();
       _requestKey = null;
       _loadIfNeeded();
     }
@@ -600,11 +592,13 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
       _snapshot = null;
       _loading = false;
       _requestKey = null;
+      _targetDistance = _defaultDistance;
+      _snapshotDistance = _defaultDistance;
       return;
     }
     final dark = Theme.of(context).brightness == Brightness.dark;
     final scale = MediaQuery.devicePixelRatioOf(context).clamp(1.0, 3.0);
-    final distance = _zoomDistances[_zoomIndex];
+    final distance = _targetDistance;
     final key =
         '${location.latitude}:${location.longitude}:$dark:$scale:$distance';
     if (_requestKey == key) return;
@@ -618,6 +612,7 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
       if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _snapshot = snapshot;
+        _snapshotDistance = distance;
         _loading = false;
       });
     }).catchError((_) {
@@ -632,39 +627,42 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
   void _handlePointerSignal(PointerSignalEvent event) {
     if (event is! PointerScrollEvent || event.scrollDelta.dy == 0) return;
     GestureBinding.instance.pointerSignalResolver.register(event, (_) {
-      _scrollAccumulator += event.scrollDelta.dy;
-      if (_scrollAccumulator.abs() < 12) return;
-      final direction = _scrollAccumulator < 0 ? 1 : -1;
-      _scrollAccumulator = 0;
-      _queueZoomStep(direction);
+      _applyZoomDelta(event.scrollDelta.dy.clamp(-40, 40));
     });
   }
 
   void _handleTrackpadPanZoom(PointerPanZoomUpdateEvent event) {
-    _trackpadPanAccumulator += event.panDelta.dy;
-    if (_trackpadPanAccumulator.abs() < 12) return;
-    final direction = _trackpadPanAccumulator < 0 ? 1 : -1;
-    _trackpadPanAccumulator = 0;
-    _queueZoomStep(direction);
+    _applyZoomDelta(event.panDelta.dy);
   }
 
   void _handleTrackpadPanZoomEnd() {
-    _trackpadPanAccumulator = 0;
+    _scheduleSnapshotRefresh(immediate: true);
   }
 
-  void _queueZoomStep(int direction) {
-    final nextZoom = (_zoomIndex + direction).clamp(
-      0,
-      _zoomDistances.length - 1,
+  void _applyZoomDelta(double delta) {
+    if (delta == 0) return;
+    final nextDistance = (_targetDistance * math.exp(delta * _zoomSensitivity))
+        .clamp(_minimumDistance, _maximumDistance);
+    if (nextDistance == _targetDistance) return;
+    setState(() => _targetDistance = nextDistance);
+    _scheduleSnapshotRefresh();
+  }
+
+  void _scheduleSnapshotRefresh({bool immediate = false}) {
+    if (immediate) {
+      _snapshotRefreshTimer?.cancel();
+    } else if (_snapshotRefreshTimer != null) {
+      return;
+    }
+    _snapshotRefreshTimer = Timer(
+      immediate ? Duration.zero : const Duration(milliseconds: 80),
+      () {
+        _snapshotRefreshTimer = null;
+        if (!mounted) return;
+        _requestKey = null;
+        _loadIfNeeded(preserveSnapshot: true);
+      },
     );
-    if (nextZoom == _zoomIndex) return;
-    setState(() => _zoomIndex = nextZoom);
-    _zoomDebounce?.cancel();
-    _zoomDebounce = Timer(const Duration(milliseconds: 90), () {
-      if (!mounted) return;
-      _requestKey = null;
-      _loadIfNeeded(preserveSnapshot: true);
-    });
   }
 
   @override
@@ -672,6 +670,7 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
     final palette = FotoPalette.of(context);
     final location = widget.location;
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final visualScale = (_snapshotDistance / _targetDistance).clamp(0.65, 1.55);
     if (location == null) {
       return _MapFallback(
         icon: Icons.location_off_outlined,
@@ -704,11 +703,15 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
               children: [
                 if (_snapshot != null) ...[
                   CustomPaint(painter: _MapBackdropPainter(dark: dark)),
-                  Image.memory(
-                    _snapshot!,
-                    fit: BoxFit.cover,
-                    gaplessPlayback: true,
-                    filterQuality: FilterQuality.medium,
+                  Transform.scale(
+                    key: const ValueKey('inspector-map-zoom-transform'),
+                    scale: visualScale,
+                    child: Image.memory(
+                      _snapshot!,
+                      fit: BoxFit.cover,
+                      gaplessPlayback: true,
+                      filterQuality: FilterQuality.medium,
+                    ),
                   ),
                 ] else
                   ColoredBox(

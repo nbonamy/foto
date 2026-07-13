@@ -161,13 +161,20 @@ void main() {
       pan: const Offset(0, -20),
     );
     await tester.pump();
+
+    final zoomTransform = tester.widget<Transform>(
+      find.byKey(const ValueKey('inspector-map-zoom-transform')),
+    );
+    expect(zoomTransform.transform.getMaxScaleOnAxis(), greaterThan(1));
+
     await trackpad.panZoomEnd();
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pumpAndSettle();
 
     expect(requestedLocations, hasLength(2));
     expect(requestedLocations[1], requestedLocations[0]);
-    expect(requestedDistances, [60000, 30000]);
+    expect(requestedDistances.first, 60000);
+    expect(requestedDistances.last, inExclusiveRange(50000, 60000));
     expect(inspectorScrollable.position.pixels, 0);
   });
 }
