@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import '../model/media.dart';
 import '../model/preferences.dart';
 import 'database.dart';
+import 'file_utils.dart';
 
 class MediaUtils {
   static const Set<String> imageExtensions = {
@@ -87,46 +88,23 @@ class MediaUtils {
         return [];
       }
 
-      // get files
-      final dir = Directory(path);
-      final entities =
-          await dir.list(recursive: false, followLinks: false).toList();
-      List<FileSystemEntity> filtered = entities.where((entity) {
-        if (MediaUtils.shouldExcludeFileOrDir(entity.path)) {
+      final entries = await FileUtils.scanDirectory(path);
+      final filtered = entries.where((entry) {
+        if (MediaUtils.shouldExcludeFileOrDir(entry.path)) {
           return false;
-        } else if (entity is Directory) {
+        } else if (entry.entityType == FileSystemEntityType.directory) {
           return includeDirs;
-        } else if (entity is File) {
-          return MediaUtils.isImage(entity.path);
+        } else if (entry.entityType == FileSystemEntityType.file) {
+          return MediaUtils.isImage(entry.path);
         } else {
           return false;
         }
       }).toList();
 
-      // now convert to media items using database
-      List<MediaItem> items = [];
-      for (var entity in filtered) {
-        try {
-          if (mediaDb != null) {
-            MediaItem mediaItem = await mediaDb.get(entity.path);
-            items.add(mediaItem);
-          } else {
-            items.add(await MediaItem.forEntity(entity));
-          }
-        } catch (error) {
-          debugPrint('Unable to read ${entity.path}: $error');
-        }
-      }
-
-      if (sortCriteria == SortCriteria.chronological) {
-        for (final item in items.where((item) => item.isFile())) {
-          try {
-            await item.getCaptureDate();
-          } catch (error) {
-            debugPrint('Unable to read capture date for ${item.path}: $error');
-          }
-        }
-      }
+      final items = filtered
+          .map((entry) =>
+              mediaDb?.getScanned(entry) ?? MediaItem.forMetadata(entry))
+          .toList();
 
       sortMediaItems(
         items,

@@ -8,6 +8,7 @@ import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' as p;
 
 import '../components/dialogs.dart';
+import '../model/file_metadata.dart';
 import 'platform_utils.dart';
 
 class FileUtils {
@@ -31,6 +32,44 @@ class FileUtils {
     return DateTime.fromMicrosecondsSinceEpoch(
       (epoch * Duration.microsecondsPerSecond).round(),
     );
+  }
+
+  static Future<List<FileMetadata>> scanDirectory(String path) async {
+    try {
+      final entries = await _mChannel.invokeMethod<List<Object?>>(
+            'scanDirectory',
+            path,
+          ) ??
+          const <Object?>[];
+      return entries
+          .map((entry) => FileMetadata.fromPlatformMap(
+                Map<Object?, Object?>.from(entry! as Map),
+              ))
+          .toList(growable: false);
+    } on MissingPluginException {
+      return _scanDirectoryFallback(path);
+    }
+  }
+
+  static Future<List<FileMetadata>> _scanDirectoryFallback(String path) async {
+    final entities = await Directory(path)
+        .list(recursive: false, followLinks: false)
+        .toList();
+    final entries = await Future.wait(
+      entities.where((entity) => entity is File || entity is Directory).map(
+        (entity) async {
+          final stat = await entity.stat();
+          return FileMetadata(
+            path: entity.path,
+            entityType: stat.type,
+            creationDate: stat.changed,
+            modificationDate: stat.modified,
+            size: entity is File ? stat.size : null,
+          );
+        },
+      ),
+    );
+    return entries;
   }
 
   static Future<bool> confirmDelete(

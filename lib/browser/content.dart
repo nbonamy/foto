@@ -18,6 +18,7 @@ class BrowserContent extends StatefulWidget {
   final Function navigateToFolder;
   final Function viewImages;
   final MenuActionStream menuActionStream;
+  final FocusNode galleryFocusNode;
   final List<String>? initialSelection;
 
   const BrowserContent({
@@ -26,6 +27,7 @@ class BrowserContent extends StatefulWidget {
     required this.path,
     required this.canNavigateBack,
     required this.menuActionStream,
+    required this.galleryFocusNode,
     required this.navigateToFolder,
     required this.viewImages,
     this.initialSelection,
@@ -64,6 +66,7 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
                 scrollController: scrollController,
                 menuActionStream: widget.menuActionStream,
                 initialSelection: widget.initialSelection,
+                focusNode: widget.galleryFocusNode,
               );
             },
           )

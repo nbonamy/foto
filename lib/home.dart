@@ -309,6 +309,7 @@ class _HomeState extends State<Home> with WindowListener {
           setState(() {});
         }
         await _exitInstantFullScreen();
+        _restoreBrowserFocus();
       }
     }
   }
@@ -372,6 +373,14 @@ class _HomeState extends State<Home> with WindowListener {
     if (route?.isActive == true) {
       Navigator.of(context).removeRoute(route!);
     }
+  }
+
+  void _restoreBrowserFocus() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !isViewerActive) {
+        _keyBrowser.currentState?.requestFocus();
+      }
+    });
   }
 
   @override

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:foto/l10n/app_localizations.dart';
@@ -31,6 +33,7 @@ class ImageGallery extends StatefulWidget {
   final BuildContext navigatorContext;
   final ScrollController scrollController;
   final MenuActionStream menuActionStream;
+  final FocusNode focusNode;
   final List<String>? initialSelection;
 
   const ImageGallery({
@@ -41,6 +44,7 @@ class ImageGallery extends StatefulWidget {
     required this.executeItem,
     required this.scrollController,
     required this.menuActionStream,
+    required this.focusNode,
     this.initialSelection,
   });
 
@@ -52,7 +56,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   List<MediaItem>? _items;
   Future<List<MediaItem>>? _itemsFuture;
   int _loadGeneration = 0;
-  final Set<String> _metadataLoading = {};
+  final Map<MediaItem, Future<void>> _captureDateLoading = {};
   final Set<String> _pendingModifiedPaths = {};
   String? _fileBeingRenamed;
 
@@ -65,8 +69,9 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   StreamSubscription<FileSystemEvent>? _dirSubscription;
   Timer? _reloadDebounce;
 
-  final FocusNode _focusNode = FocusNode();
   late AutoScrollController _autoScrollController;
+
+  FocusNode get _focusNode => widget.focusNode;
 
   Offset? _dragSelectOrig;
   Rect? _dragSelectRect;
@@ -125,7 +130,6 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
 
   void _subscribeToSelection() {
     _selectionModel = SelectionModel.of(context);
-    _selectionModel.addListener(_onSelectionChange);
   }
 
   void _initSelection() {
@@ -171,8 +175,6 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     _stopWatchDir();
     cancelMenuSubscription();
     _preferences.removeListener(_onPrefsChange);
-    _selectionModel.removeListener(_onSelectionChange);
-    _focusNode.dispose();
     _autoScrollController.dispose();
     super.dispose();
   }
@@ -260,15 +262,6 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     }
   }
 
-  void _onSelectionChange() {
-    if (_items != null && selection.length == 1) {
-      int index = _items!.indexWhere((it) => it.path == selection[0]);
-      if (index != -1 && _autoScrollController.hasClients) {
-        unawaited(_autoScrollController.scrollToIndex(index));
-      }
-    }
-  }
-
   Future<List<MediaItem>> _getItems() async {
     return _itemsFuture ??= _loadItems();
   }
@@ -295,22 +288,71 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
         selection.where(itemPaths.contains).toList(growable: false),
       );
     }
-    unawaited(_loadMediaInfo(items, generation));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && generation == _loadGeneration) {
+        unawaited(_loadCaptureDates(items, generation));
+      }
+    });
     return items;
   }
 
-  Future<void> _loadMediaInfo(List<MediaItem> items, int generation) async {
-    for (final mediaItem in items) {
-      if (!mounted || generation != _loadGeneration) return;
-      if (mediaItem.mediaInfoParsed || !_metadataLoading.add(mediaItem.path)) {
+  Future<void> _loadCaptureDates(
+    List<MediaItem> items,
+    int generation,
+  ) async {
+    if (_sortCriteria != SortCriteria.chronological) return;
+    var nextIndex = 0;
+    Future<void> worker() async {
+      while (mounted && generation == _loadGeneration) {
+        if (nextIndex >= items.length) return;
+        final mediaItem = items[nextIndex++];
+        if (mediaItem.captureDateParsed) continue;
+        try {
+          await _ensureCaptureDate(mediaItem);
+        } catch (error) {
+          debugPrint(
+            'Unable to read capture date for ${mediaItem.path}: $error',
+          );
+        }
+      }
+    }
+
+    await Future.wait(
+      List.generate(min(4, items.length), (_) => worker()),
+    );
+    if (!mounted || generation != _loadGeneration || _items == null) return;
+    if (_sortCriteria == SortCriteria.chronological) {
+      final sorted = List<MediaItem>.of(_items!);
+      MediaUtils.sortMediaItems(
+        sorted,
+        sortCriteria: _sortCriteria,
+        sortReversed: _sortReversed,
+      );
+      if (!listEquals(
+        sorted.map((item) => item.path).toList(growable: false),
+        _items!.map((item) => item.path).toList(growable: false),
+      )) {
+        setState(() => _items = sorted);
+      }
+    }
+  }
+
+  Future<void> _ensureCaptureDate(MediaItem mediaItem) async {
+    while (!mediaItem.captureDateParsed) {
+      final existingLoad = _captureDateLoading[mediaItem];
+      if (existingLoad != null) {
+        await existingLoad;
         continue;
       }
+
+      final load = mediaItem.getCaptureDate();
+      _captureDateLoading[mediaItem] = load;
       try {
-        await mediaItem.getMediaInfo();
-      } catch (error) {
-        debugPrint('Unable to read metadata for ${mediaItem.path}: $error');
+        await load;
       } finally {
-        _metadataLoading.remove(mediaItem.path);
+        if (identical(_captureDateLoading[mediaItem], load)) {
+          _captureDateLoading.remove(mediaItem);
+        }
       }
     }
   }
@@ -365,44 +407,42 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
         behavior: HitTestBehavior.translucent,
         child: Stack(
           children: [
-            Consumer<SelectionModel>(
-              builder: (context, selectionModel, child) {
-                return FutureBuilder(
-                    future: _getItems(),
-                    builder: (context, snapshot) {
-                      if (_items == null) return const SizedBox();
-                      // merge selections
-                      var selection =
-                          _mergeSelections(selectionModel.get, _dragSelection);
-                      return GridView.builder(
-                        shrinkWrap: true,
-                        controller: _autoScrollController,
-                        padding: const EdgeInsets.all(16),
-                        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: Thumbnail.thumbnailWidth(),
-                          mainAxisExtent: Thumbnail.thumbnailHeight(),
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                        ),
-                        itemCount: _items?.length,
-                        itemBuilder: (context, index) {
-                          MediaItem media = _items![index];
-                          return AutoScrollTag(
-                            key: Key(media.path),
-                            index: _items!.indexOf(media),
-                            controller: _autoScrollController,
+            FutureBuilder(
+              future: _getItems(),
+              builder: (context, snapshot) {
+                if (_items == null) return const SizedBox();
+                return GridView.builder(
+                  shrinkWrap: true,
+                  controller: _autoScrollController,
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: Thumbnail.thumbnailWidth(),
+                    mainAxisExtent: Thumbnail.thumbnailHeight(),
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                  ),
+                  itemCount: _items?.length,
+                  itemBuilder: (context, index) {
+                    final media = _items![index];
+                    return Selector<SelectionModel, bool>(
+                      selector: (_, selectionModel) =>
+                          selectionModel.contains(media.path),
+                      builder: (context, selected, child) {
+                        final isSelected = _dragSelection.contains(media.path)
+                            ? !selected
+                            : selected;
+                        return AutoScrollTag(
+                          key: Key(media.path),
+                          index: index,
+                          controller: _autoScrollController,
+                          child: Listener(
+                            onPointerDown: (event) {
+                              if (event.buttons & kPrimaryMouseButton != 0) {
+                                _selectFromPointer(media);
+                              }
+                            },
                             child: GestureDetector(
-                              onTapDown: (_) {
-                                _focusNode.requestFocus();
-                                setState(() {
-                                  _fileBeingRenamed = null;
-                                  if (_extendSelection) {
-                                    selectionModel.toggle(media.path);
-                                  } else {
-                                    selectionModel.set([media.path]);
-                                  }
-                                });
-                              },
+                              onTap: () {},
                               onDoubleTap: () {
                                 _focusNode.requestFocus();
                                 _handleDoubleTap(media);
@@ -420,7 +460,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
                                         Thumbnail(
                                       key: media.key,
                                       media: media,
-                                      selected: selection.contains(media.path),
+                                      selected: isSelected,
                                       rename: _fileBeingRenamed == media.path,
                                       onRenamed: _onFileRenamed,
                                     ),
@@ -428,10 +468,12 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
                                 ),
                               ),
                             ),
-                          );
-                        },
-                      );
-                    });
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
               },
             ),
             _getSelectionRect(),
@@ -486,9 +528,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
       onBeforeShowMenu: () {
         SelectionModel selectionModel = _selectionModel;
         if (selectionModel.contains(media.path) == false) {
-          setState(() {
-            selectionModel.set([media.path]);
-          });
+          selectionModel.set([media.path]);
           return true;
         }
         return false;
@@ -590,10 +630,26 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
 
   void _handleTap() {
     _focusNode.requestFocus();
-    setState(() {
-      _selectionModel.clear();
-      _fileBeingRenamed = null;
-    });
+    _selectionModel.clear();
+    if (_fileBeingRenamed != null) {
+      setState(() {
+        _fileBeingRenamed = null;
+      });
+    }
+  }
+
+  void _selectFromPointer(MediaItem media) {
+    _focusNode.requestFocus();
+    if (_fileBeingRenamed != null) {
+      setState(() {
+        _fileBeingRenamed = null;
+      });
+    }
+    if (_extendSelection) {
+      _selectionModel.toggle(media.path);
+    } else {
+      _selectionModel.set([media.path]);
+    }
   }
 
   void _handleDoubleTap(MediaItem media) {
@@ -601,9 +657,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
       widget.executeItem(folder: media.path);
     } else {
       if (!selection.contains(media.path)) {
-        setState(() {
-          _selectionModel.set([media.path]);
-        });
+        _selectionModel.set([media.path]);
       }
       List<String> images =
           (_items ?? []).where((m) => m.isFile()).map((m) => m.path).toList();
@@ -759,9 +813,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
         selection.add(item.path);
       }
     }
-    setState(() {
-      _selectionModel.set(selection);
-    });
+    _selectionModel.set(selection);
   }
 
   void _copyToClipboard() {

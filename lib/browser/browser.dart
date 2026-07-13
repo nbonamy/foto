@@ -29,6 +29,7 @@ class Browser extends StatefulWidget {
 
 class BrowserState extends State<Browser> {
   final MediaDb _mediaDb = MediaDb();
+  final FocusNode _galleryFocusNode = FocusNode(debugLabel: 'browser gallery');
   final Map<String, List<String>> _selectionsByPath = {};
   late HistoryModel _history;
   List<String>? _initialSelection;
@@ -43,6 +44,7 @@ class BrowserState extends State<Browser> {
   @override
   void dispose() {
     _history.removeListener(_onHistoryChange);
+    _galleryFocusNode.dispose();
     super.dispose();
   }
 
@@ -71,6 +73,7 @@ class BrowserState extends State<Browser> {
         canNavigateBack: _history.canPop,
         menuActionStream: widget.menuActionStream,
         initialSelection: _initialSelection,
+        galleryFocusNode: _galleryFocusNode,
         navigateToFolder: _navigateToFolder,
         viewImages: widget.viewImages,
       ),
@@ -97,6 +100,10 @@ class BrowserState extends State<Browser> {
     _initialSelection = [filepath];
     _selectionsByPath[folder] = [filepath];
     _history.reset(folder, notify: true);
+  }
+
+  void requestFocus() {
+    _galleryFocusNode.requestFocus();
   }
 
   void _onHistoryChange() {

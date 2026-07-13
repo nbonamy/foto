@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import '../model/file_metadata.dart';
 import '../model/media.dart';
 
 class MediaDb {
@@ -26,5 +27,23 @@ class MediaDb {
     // store and return
     _cache[filepath] = info;
     return info;
+  }
+
+  MediaItem getScanned(FileMetadata metadata) {
+    final cached = _cache[metadata.path];
+    final sizeMatches = cached?.fileSize == null ||
+        metadata.size == null ||
+        cached?.fileSize == metadata.size;
+    if (cached != null &&
+        cached.entityType == metadata.entityType &&
+        cached.modificationDate == metadata.modificationDate &&
+        sizeMatches) {
+      cached.fileSize ??= metadata.size;
+      return cached;
+    }
+
+    final media = MediaItem.forMetadata(metadata);
+    _cache[metadata.path] = media;
+    return media;
   }
 }

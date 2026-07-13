@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:flutter/material.dart';
 
@@ -7,6 +8,7 @@ import '../utils/file_utils.dart';
 import '../utils/image_utils.dart';
 import '../utils/paths.dart';
 import '../utils/utils.dart';
+import 'file_metadata.dart';
 
 class MediaItem {
   final String path;
@@ -19,6 +21,7 @@ class MediaItem {
   int? fileSize;
   Image? thumbnail;
   final ValueNotifier<int> updateCounter = ValueNotifier<int>(0);
+  int _metadataGeneration = 0;
 
   static Future<MediaItem> forEntity(FileSystemEntity entity) {
     if (entity is File) {
@@ -36,6 +39,7 @@ class MediaItem {
       modificationDate: await FileUtils.getModificationDate(filepath),
       mediaInfoParsed: false,
       captureDateParsed: false,
+      thumbnail: _fileThumbnail(File(filepath)),
     );
   }
 
@@ -48,6 +52,22 @@ class MediaItem {
       thumbnail: Image.asset(SystemPath.getFolderNamedAsset(folderpath)),
       mediaInfoParsed: true,
       captureDateParsed: true,
+    );
+  }
+
+  static MediaItem forMetadata(FileMetadata metadata) {
+    final isFile = metadata.entityType == FileSystemEntityType.file;
+    return MediaItem(
+      path: metadata.path,
+      entityType: metadata.entityType,
+      creationDate: metadata.creationDate,
+      modificationDate: metadata.modificationDate,
+      mediaInfoParsed: !isFile,
+      captureDateParsed: !isFile,
+      fileSize: isFile ? metadata.size : null,
+      thumbnail: isFile
+          ? _fileThumbnail(File(metadata.path))
+          : Image.asset(SystemPath.getFolderNamedAsset(metadata.path)),
     );
   }
 
@@ -110,22 +130,50 @@ class MediaItem {
     await evictFromCache();
   }
 
-  Future<void> getMediaInfo() async {
-    await getCaptureDate();
-    fileSize = (await File(path).stat()).size;
-    imageSize = Utils.imageSize(path);
-    thumbnail = _fileThumbnail(File(path));
-    mediaInfoParsed = true;
-    updateCounter.value += 1;
+  Future<void> getMediaInfo({bool loadCaptureDate = true}) async {
+    final generation = _metadataGeneration;
+    DateTime? loadedCaptureDate;
+    if (loadCaptureDate && !captureDateParsed) {
+      loadedCaptureDate = await ImageUtils.getCreationDate(path);
+    }
+
+    int? loadedFileSize;
+    SizeInt? loadedImageSize;
+    if (!mediaInfoParsed) {
+      loadedFileSize = fileSize ?? (await File(path).stat()).size;
+      loadedImageSize = await Isolate.run(() => Utils.imageSize(path));
+    }
+    if (generation != _metadataGeneration) return;
+
+    var changed = false;
+    if (loadedCaptureDate != null) {
+      creationDate = loadedCaptureDate;
+      captureDateParsed = true;
+      changed = true;
+    }
+    if (loadedImageSize != null) {
+      fileSize = loadedFileSize;
+      imageSize = loadedImageSize;
+      mediaInfoParsed = true;
+      thumbnail ??= _fileThumbnail(File(path));
+      changed = true;
+    }
+    if (changed) {
+      updateCounter.value += 1;
+    }
   }
 
   Future<void> getCaptureDate() async {
     if (!isFile() || captureDateParsed) return;
-    creationDate = await ImageUtils.getCreationDate(path);
+    final generation = _metadataGeneration;
+    final loadedCreationDate = await ImageUtils.getCreationDate(path);
+    if (generation != _metadataGeneration) return;
+    creationDate = loadedCreationDate;
     captureDateParsed = true;
   }
 
   void _invalidateMediaInfo() {
+    _metadataGeneration += 1;
     captureDateParsed = false;
     mediaInfoParsed = false;
     fileSize = null;

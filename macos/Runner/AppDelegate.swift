@@ -185,19 +185,135 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 		}
 	}
 	
-	func _fileUtilsHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
+	func _fileUtilsHandler(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
 		guard let filepath = call.arguments as? String else {
 			result(FlutterError(code: "invalid_path", message: "A valid filesystem path is required.", details: nil))
 			return
 		}
-		if ("getCreationDate" == call.method), let datetime = FileUtils.getCreationDate(forFile: filepath) {
-			result(datetime.timeIntervalSince1970);
-		} else if ("getModificationDate" == call.method), let datetime = FileUtils.getModificationDate(forFile: filepath) {
-			result(datetime.timeIntervalSince1970);
-		} else if (call.method == "getCreationDate" || call.method == "getModificationDate") {
-			result(FlutterError(code: "date_failed", message: "The file date could not be read.", details: filepath))
+		if ("scanDirectory" == call.method) {
+			_scanDirectory(filepath, result)
+		} else if ("getCreationDate" == call.method) {
+			_fileDate(filepath, method: call.method, result) {
+				FileUtils.getCreationDate(forFile: filepath)
+			}
+		} else if ("getModificationDate" == call.method) {
+			_fileDate(filepath, method: call.method, result) {
+				FileUtils.getModificationDate(forFile: filepath)
+			}
 		} else {
 			result(FlutterMethodNotImplemented)
+		}
+	}
+
+	private func _fileDate(
+		_ filepath: String,
+		method: String,
+		_ result: @escaping FlutterResult,
+		loader: @escaping () -> Date?
+	) {
+		DispatchQueue.global(qos: .utility).async {
+			let datetime = loader()
+			DispatchQueue.main.async {
+				guard let datetime else {
+					result(FlutterError(
+						code: "date_failed",
+						message: "The file date could not be read.",
+						details: ["method": method, "path": filepath]
+					))
+					return
+				}
+				result(datetime.timeIntervalSince1970)
+			}
+		}
+	}
+
+	private func _scanDirectory(_ filepath: String, _ result: @escaping FlutterResult) {
+		guard !filepath.isEmpty else {
+			result(FlutterError(code: "invalid_path", message: "A valid directory path is required.", details: filepath))
+			return
+		}
+
+		DispatchQueue.global(qos: .userInitiated).async {
+			do {
+				let directoryURL = URL(fileURLWithPath: filepath, isDirectory: true)
+				let directoryValues = try directoryURL.resourceValues(forKeys: [
+					.isDirectoryKey,
+					.isSymbolicLinkKey,
+				])
+				guard directoryValues.isDirectory == true,
+					  directoryValues.isSymbolicLink != true else {
+					DispatchQueue.main.async {
+						result(FlutterError(
+							code: "invalid_path",
+							message: "The path is not a readable directory.",
+							details: filepath
+						))
+					}
+					return
+				}
+
+				let resourceKeys: [URLResourceKey] = [
+					.isDirectoryKey,
+					.isRegularFileKey,
+					.isSymbolicLinkKey,
+					.creationDateKey,
+					.contentModificationDateKey,
+					.fileSizeKey,
+				]
+				let urls = try FileManager.default.contentsOfDirectory(
+					at: directoryURL,
+					includingPropertiesForKeys: resourceKeys,
+					options: []
+				)
+
+				var entries: [[String: Any]] = []
+				entries.reserveCapacity(urls.count)
+				for url in urls {
+					let values: URLResourceValues
+					do {
+						values = try url.resourceValues(forKeys: Set(resourceKeys))
+					} catch {
+						continue
+					}
+					guard values.isSymbolicLink != true else { continue }
+
+					let type: String
+					if values.isDirectory == true {
+						type = "directory"
+					} else if values.isRegularFile == true {
+						type = "file"
+					} else {
+						continue
+					}
+
+					let modificationDate = values.contentModificationDate
+						?? values.creationDate
+						?? Date(timeIntervalSince1970: 0)
+					let creationDate = values.creationDate ?? modificationDate
+					var entry: [String: Any] = [
+						"path": url.path,
+						"type": type,
+						"creationDate": creationDate.timeIntervalSince1970,
+						"modificationDate": modificationDate.timeIntervalSince1970,
+					]
+					if type == "file", let fileSize = values.fileSize {
+						entry["size"] = fileSize
+					}
+					entries.append(entry)
+				}
+
+				DispatchQueue.main.async {
+					result(entries)
+				}
+			} catch {
+				DispatchQueue.main.async {
+					result(FlutterError(
+						code: "scan_failed",
+						message: error.localizedDescription,
+						details: filepath
+					))
+				}
+			}
 		}
 	}
 
@@ -215,12 +331,24 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 				result
 			)
 		} else if ("getCreationDate" == call.method) {
-			guard let filepath = call.arguments as? String,
-				  let datetime = ImageUtils.getCreationDate(forImage: filepath) else {
-				result(FlutterError(code: "date_failed", message: "The image date could not be read.", details: call.arguments))
+			guard let filepath = call.arguments as? String else {
+				result(FlutterError(code: "invalid_path", message: "A valid filesystem path is required.", details: nil))
 				return
 			}
-			result(datetime.timeIntervalSince1970);
+			DispatchQueue.global(qos: .utility).async {
+				let datetime = ImageUtils.getCreationDate(forImage: filepath)
+				DispatchQueue.main.async {
+					guard let datetime else {
+						result(FlutterError(
+							code: "date_failed",
+							message: "The image date could not be read.",
+							details: filepath
+						))
+						return
+					}
+					result(datetime.timeIntervalSince1970)
+				}
+			}
 		} else if ("transformImage" == call.method) {
 			guard let args = call.arguments as? [String:Any],
 				  let filepath = args["filepath"] as? String,

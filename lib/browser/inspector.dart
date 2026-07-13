@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:exif/exif.dart';
 import 'package:filesize/filesize.dart';
@@ -16,6 +18,13 @@ class InspectorValue {
   InspectorValue(this.name, this.value);
 }
 
+class _InspectorFileMetadata {
+  final SizeInt imageSize;
+  final Map<String, IfdTag> exifData;
+
+  const _InspectorFileMetadata(this.imageSize, this.exifData);
+}
+
 class Inspector extends StatefulWidget {
   const Inspector({super.key});
 
@@ -31,6 +40,7 @@ class _InspectorState extends State<Inspector> {
   Map<String, IfdTag>? _exifData;
   late SelectionModel _selectionModel;
   int _loadGeneration = 0;
+  Timer? _loadDebounce;
 
   @override
   void initState() {
@@ -42,6 +52,7 @@ class _InspectorState extends State<Inspector> {
 
   @override
   void dispose() {
+    _loadDebounce?.cancel();
     _selectionModel.removeListener(_onSelectionChange);
     super.dispose();
   }
@@ -209,8 +220,9 @@ class _InspectorState extends State<Inspector> {
     );
   }
 
-  void _onSelectionChange() async {
+  void _onSelectionChange() {
     final int generation = ++_loadGeneration;
+    _loadDebounce?.cancel();
     final Selection selection = SelectionModel.of(context).get;
 
     if (selection.length != 1) {
@@ -231,26 +243,37 @@ class _InspectorState extends State<Inspector> {
       });
     }
 
+    _loadDebounce = Timer(const Duration(milliseconds: 50), () {
+      unawaited(_loadMetadata(filePath, generation));
+    });
+  }
+
+  Future<void> _loadMetadata(String filePath, int generation) async {
     try {
       final File file = File(filePath);
-      final FileStat fileStats = await file.stat();
-      final DateTime creationDate = await FileUtils.getCreationDate(filePath);
-      final SizeInt imageSize = Utils.imageSize(filePath);
-      Map<String, IfdTag> exifData = const {};
-      try {
-        exifData = await readExifFromBytes(await file.readAsBytes());
-      } catch (_) {
-        // Formats such as WebP may have no EXIF block. Their basic file and
-        // image metadata should still remain visible in the inspector.
-      }
+      final fileStatsFuture = file.stat();
+      final creationDateFuture = FileUtils.getCreationDate(filePath);
+      final metadataFuture = Isolate.run(() async {
+        Map<String, IfdTag> exifData = const {};
+        try {
+          exifData = await readExifFromFile(File(filePath));
+        } catch (_) {
+          // Formats such as WebP may have no EXIF block. Their basic file and
+          // image metadata should still remain visible in the inspector.
+        }
+        return _InspectorFileMetadata(Utils.imageSize(filePath), exifData);
+      });
+      final fileStats = await fileStatsFuture;
+      final creationDate = await creationDateFuture;
+      final metadata = await metadataFuture;
 
       if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _currentFile = filePath;
         _fileStats = fileStats;
         _creationDate = creationDate;
-        _imageSize = imageSize;
-        _exifData = exifData;
+        _imageSize = metadata.imageSize;
+        _exifData = metadata.exifData;
       });
     } catch (_) {
       if (!mounted || generation != _loadGeneration) return;

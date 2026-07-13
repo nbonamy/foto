@@ -144,28 +144,26 @@ class _SidebarState extends State<BrowserSidebar> {
         _checkActiveRoot(context);
 
         // now build
-        return ListView(
+        return CustomScrollView(
           controller: widget.scrollController,
-          children: buildSidebar(context, history, favorites),
+          slivers: _buildSidebarSlivers(context, history, favorites),
         );
       },
     );
   }
 
-  List<Widget> buildSidebar(
+  List<Widget> _buildSidebarSlivers(
     BuildContext context,
     HistoryModel historyModel,
     FavoritesModel favoritesModel,
   ) {
-    // sidebar content
-    List<Widget> sidebarContent = [];
+    final sidebarContent = <Widget>[];
 
     // favorites
     List<String> favorites = favoritesModel.get;
     if (favorites.isNotEmpty) {
-      ReorderableListView favoritesList = ReorderableListView(
-        shrinkWrap: true,
-        buildDefaultDragHandles: false,
+      final favoritesList = SliverReorderableList(
+        itemCount: favorites.length,
         proxyDecorator: (child, index, animation) {
           return AnimatedBuilder(
             animation: animation,
@@ -189,62 +187,67 @@ class _SidebarState extends State<BrowserSidebar> {
             favoritesModel.move(oldIndex, newIndex);
           }
         },
-        children: favorites.map(
-          (favorite) {
-            return Stack(
-              key: Key(favorite),
-              children: [
-                BrowserTree(
-                  root: favorite,
-                  title: Utils.pathTitle(favorite),
-                  assetName: SystemPath.getFolderNamedAsset(favorite),
-                  selectedPath:
-                      favorite == _activeRoot ? historyModel.top : null,
-                  onUpdate: onPathUpdated,
-                ),
-                Positioned(
-                  top: 4,
-                  right: 12,
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.grab,
-                    child: ReorderableDragStartListener(
-                      index: favorites.indexOf(favorite),
-                      child: const Icon(
-                        CupertinoIcons.bars,
-                        color: Color(0xFF86838A),
-                        size: 16,
-                      ),
+        itemBuilder: (context, index) {
+          final favorite = favorites[index];
+          return Stack(
+            key: Key(favorite),
+            children: [
+              BrowserTree(
+                root: favorite,
+                title: Utils.pathTitle(favorite),
+                assetName: SystemPath.getFolderNamedAsset(favorite),
+                selectedPath: favorite == _activeRoot ? historyModel.top : null,
+                onUpdate: onPathUpdated,
+              ),
+              Positioned(
+                top: 4,
+                right: 12,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.grab,
+                  child: ReorderableDragStartListener(
+                    index: index,
+                    child: const Icon(
+                      CupertinoIcons.bars,
+                      color: Color(0xFF86838A),
+                      size: 16,
                     ),
                   ),
                 ),
-              ],
-            );
-          },
-        ).toList(),
+              ),
+            ],
+          );
+        },
       );
 
-      // add this
-      sidebarContent
-          .add(Section(title: AppLocalizations.of(context)!.favorites));
+      sidebarContent.add(
+        SliverToBoxAdapter(
+          child: Section(title: AppLocalizations.of(context)!.favorites),
+        ),
+      );
       sidebarContent.add(favoritesList);
     }
 
     // devices
-    sidebarContent.add(Section(title: AppLocalizations.of(context)!.devices));
-    for (var device in _devices) {
-      sidebarContent.add(
-        BrowserTree(
-          title: device.title,
-          root: device.path,
-          selectedPath: device.path == _activeRoot ? historyModel.top : null,
-          assetName: SystemPath.getFolderNamedAsset(device.path, isDrive: true),
-          onUpdate: onPathUpdated,
-        ),
-      );
-    }
     sidebarContent.add(
-      const SizedBox(
-        height: 16,
+      SliverToBoxAdapter(
+        child: Section(title: AppLocalizations.of(context)!.devices),
+      ),
+    );
+    sidebarContent.add(
+      SliverList.list(
+        children: [
+          for (final device in _devices)
+            BrowserTree(
+              title: device.title,
+              root: device.path,
+              selectedPath:
+                  device.path == _activeRoot ? historyModel.top : null,
+              assetName:
+                  SystemPath.getFolderNamedAsset(device.path, isDrive: true),
+              onUpdate: onPathUpdated,
+            ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
 
