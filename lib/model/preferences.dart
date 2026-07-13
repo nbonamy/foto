@@ -15,6 +15,10 @@ enum SortCriteria {
 }
 
 class Preferences extends ChangeNotifier {
+  static ThemeMode get defaultThemeMode {
+    return ThemeMode.system;
+  }
+
   static OverlayLevel get defaultOverlayLevel {
     return OverlayLevel.image;
   }
@@ -47,6 +51,20 @@ class Preferences extends ChangeNotifier {
 
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
+  }
+
+  ThemeMode get themeMode {
+    return _enumPreference(
+      'appearance.theme_mode',
+      ThemeMode.values,
+      Preferences.defaultThemeMode,
+    );
+  }
+
+  set themeMode(ThemeMode mode) {
+    if (themeMode == mode) return;
+    _prefs.setInt('appearance.theme_mode', mode.index);
+    notifyListeners();
   }
 
   OverlayLevel get overlayLevel {

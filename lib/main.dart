@@ -74,9 +74,6 @@ class FotoApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => AppTheme(),
-        ),
-        ChangeNotifierProvider(
           create: (_) => preferences,
         ),
         ChangeNotifierProvider(
@@ -90,12 +87,15 @@ class FotoApp extends StatelessWidget {
         )
       ],
       builder: (context, _) {
-        final appTheme = context.watch<AppTheme>();
+        final themeMode = context.select<Preferences, ThemeMode>(
+          (preferences) => preferences.themeMode,
+        );
         return MacosApp(
           title: 'foto',
           theme: MacosThemeData.light(),
           darkTheme: MacosThemeData.dark(),
-          themeMode: appTheme.mode,
+          themeMode: themeMode,
+          scrollBehavior: const FotoScrollBehavior(),
           debugShowCheckedModeBanner: false,
           //color: Colors.black,
           localizationsDelegates: const [

@@ -46,11 +46,13 @@ Commit: `chore: add foto ui redesign plan`
 
 ## Phase 1: theme foundation
 
-- [ ] Replace the current mutable `AppTheme` shell with semantic Foto theme definitions.
-- [ ] Add complete light and dark `ThemeData` plus a `ThemeExtension` for Foto-specific surfaces and interaction colors.
-- [ ] Persist System, Light, and Dark appearance through `Preferences`.
-- [ ] Configure macOS-appropriate typography, focus treatment, tooltips, menus, and scroll behavior.
-- [ ] Add tests for token completeness, brightness, contrast-critical pairs, preference defaults, persistence, and invalid stored values.
+- [x] Replace the current mutable `AppTheme` shell with semantic Foto theme definitions.
+- [x] Add complete light and dark `ThemeData` plus a `ThemeExtension` for Foto-specific surfaces and interaction colors.
+- [x] Persist System, Light, and Dark appearance through `Preferences`.
+- [x] Configure macOS-appropriate typography, focus treatment, tooltips, menus, and scroll behavior.
+- [x] Add tests for token completeness, brightness, contrast-critical pairs, preference defaults, persistence, and invalid stored values.
+
+Phase 1 verification: focused theme and preference tests passed, `flutter analyze` passed, formatting was clean, and all 70 tests passed.
 
 Commit: `feat: add foto light and dark theme foundations`
 

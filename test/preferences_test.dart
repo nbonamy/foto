@@ -1,5 +1,4 @@
-import 'dart:ui';
-
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foto/model/preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,12 +15,42 @@ void main() {
 
   test('invalid enum values fall back to defaults', () async {
     final preferences = await preferencesWith({
+      'appearance.theme_mode': 999,
       'viewer.overlayLevel': 999,
       'browser.sort.criteria': -1,
     });
 
+    expect(preferences.themeMode, Preferences.defaultThemeMode);
     expect(preferences.overlayLevel, Preferences.defaultOverlayLevel);
     expect(preferences.sortCriteria, Preferences.defaultSortCriteria);
+  });
+
+  test('appearance defaults to system and restores a saved mode', () async {
+    expect((await preferencesWith({})).themeMode, ThemeMode.system);
+
+    final preferences = await preferencesWith({
+      'appearance.theme_mode': ThemeMode.dark.index,
+    });
+    expect(preferences.themeMode, ThemeMode.dark);
+  });
+
+  test('appearance changes persist and notify only once', () async {
+    final preferences = await preferencesWith({});
+    var notifications = 0;
+    preferences.addListener(() => notifications += 1);
+
+    preferences.themeMode = ThemeMode.system;
+    expect(notifications, 0);
+
+    preferences.themeMode = ThemeMode.dark;
+    expect(notifications, 1);
+    expect(preferences.themeMode, ThemeMode.dark);
+
+    final stored = await SharedPreferences.getInstance();
+    expect(
+      stored.getInt('appearance.theme_mode'),
+      ThemeMode.dark.index,
+    );
   });
 
   test('invalid slideshow duration falls back to the default', () async {
