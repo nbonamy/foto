@@ -79,6 +79,8 @@ Commit: `feat: add foto window shell and split panes`
 
 Commit: `feat: replace browser toolbar with foto controls`
 
+Segmented-control refinement: grouped toolbar actions no longer render as individual rounded pills. The group owns and clips the outer radius while every contained button uses square edges; standalone toolbar buttons retain their own rounded shape.
+
 ## Phase 4: sidebar redesign
 
 - [x] Restyle Favorites and Devices with the airy gallery hierarchy in light and dark modes.

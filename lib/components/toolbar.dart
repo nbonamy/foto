@@ -76,10 +76,26 @@ class _FotoToolbarGroup extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(2),
-        child: Row(mainAxisSize: MainAxisSize.min, children: children),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: _FotoToolbarSegmentScope(
+            child: Row(mainAxisSize: MainAxisSize.min, children: children),
+          ),
+        ),
       ),
     );
   }
+}
+
+class _FotoToolbarSegmentScope extends InheritedWidget {
+  const _FotoToolbarSegmentScope({required super.child});
+
+  static bool contains(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_FotoToolbarSegmentScope>() !=
+      null;
+
+  @override
+  bool updateShouldNotify(_FotoToolbarSegmentScope oldWidget) => false;
 }
 
 class FotoToolbarButton extends StatelessWidget {
@@ -99,6 +115,7 @@ class FotoToolbarButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = FotoPalette.of(context);
+    final segmented = _FotoToolbarSegmentScope.contains(context);
     return IconButton(
       icon: Icon(icon, size: 17),
       tooltip: tooltip,
@@ -122,7 +139,10 @@ class FotoToolbarButton extends StatelessWidget {
         }),
         overlayColor: const WidgetStatePropertyAll(Colors.transparent),
         shape: WidgetStatePropertyAll(
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          RoundedRectangleBorder(
+            borderRadius:
+                segmented ? BorderRadius.zero : BorderRadius.circular(8),
+          ),
         ),
       ),
     );

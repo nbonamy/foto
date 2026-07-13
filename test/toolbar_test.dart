@@ -53,4 +53,63 @@ void main() {
     final button = tester.widget<IconButton>(find.byType(IconButton));
     expect(button.isSelected, isTrue);
   });
+
+  testWidgets('segmented toolbar buttons have square individual shapes',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: FotoTheme.light,
+        home: Scaffold(
+          body: FotoToolbar(
+            title: 'Pictures',
+            actions: [
+              FotoToolbarButton(
+                icon: Icons.view_sidebar_outlined,
+                tooltip: 'Sidebar',
+                onPressed: () {},
+              ),
+              FotoToolbarButton(
+                icon: Icons.folder_outlined,
+                tooltip: 'Folder',
+                onPressed: () {},
+              ),
+              FotoToolbarButton(
+                icon: Icons.info_outline,
+                tooltip: 'Info',
+                onPressed: () {},
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final buttons = tester.widgetList<IconButton>(find.byType(IconButton));
+    for (final button in buttons) {
+      final shape = button.style!.shape!.resolve(<WidgetState>{})!
+          as RoundedRectangleBorder;
+      expect(shape.borderRadius, BorderRadius.zero);
+    }
+  });
+
+  testWidgets('standalone toolbar button keeps its own rounded shape',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: FotoTheme.light,
+        home: Scaffold(
+          body: FotoToolbarButton(
+            icon: Icons.chevron_left,
+            tooltip: 'Back',
+            onPressed: () {},
+          ),
+        ),
+      ),
+    );
+
+    final button = tester.widget<IconButton>(find.byType(IconButton));
+    final shape = button.style!.shape!.resolve(<WidgetState>{})!
+        as RoundedRectangleBorder;
+    expect(shape.borderRadius, BorderRadius.circular(8));
+  });
 }
