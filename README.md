@@ -1,45 +1,53 @@
 # foto
 
-Image browser and viewer written in Flutter.
+A fast, focused photo browser for macOS, built with Flutter.
 
-Currently only developed and tested for MacOS.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="test/goldens/foto-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="test/goldens/foto-light.png">
+  <img alt="foto showing a justified photo gallery and metadata inspector" src="test/goldens/foto-light.png">
+</picture>
 
-![foto](img/screenshot.jpg)
+## Highlights
 
+- Dynamic justified gallery with lazy rendering for large photo collections
+- Fast navigation through favorites, local disks, and network locations
+- Capture-focused inspector with date, GPS location, and native MapKit snapshot
+- Detailed file, exposure, camera, and image metadata
+- Full-screen photo viewer with zoom, rotation, and clipboard actions
+- File copy, move, rename, and delete plus folder copy, move, and delete
+- Custom light and dark appearances that follow the macOS system setting
 
-## Instructions
+foto is currently developed and tested for macOS.
 
-```
+## Run locally
+
+Install [Flutter](https://docs.flutter.dev/get-started/install/macos), then run:
+
+```sh
 flutter pub get
 flutter run -d macos
 ```
 
-To build in Release mode and install in your Applications folder:
+## Build and install
 
-```
+Build foto in release mode and install it in `/Applications`:
+
+```sh
 make deploy
 ```
 
-## TODO
+## Verify changes
 
-- [x] Favorites ordering
-- [ ] ~~Get folder icons from NSWorkspace~~ (too slow)
-- [x] Photo viewer with zoom
-- [ ] Exif cache database
-- [ ] Black background
-- [x] Selection info palette
-- File operations:
-  - [x] delete
-  - [x] clipboard
-  - [x] rename
-  - [x] move
-- Folder operations
-  - [x] delete
-  - [x] clipboard
-  - [ ] rename
-  - [x] move
-- Image manipulations
-  - [x] rotations
-  - [ ] resize
-  - [ ] convert
-- [ ] Set as wallpaper
+```sh
+flutter analyze
+flutter test
+flutter build macos --debug
+```
+
+## Roadmap
+
+- EXIF metadata cache
+- Folder rename
+- Image resize and format conversion
+- Set an image as the desktop wallpaper
