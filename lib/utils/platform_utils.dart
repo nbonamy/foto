@@ -63,6 +63,7 @@ class PlatformUtils {
     double width = 560,
     double height = 300,
     double scale = 2,
+    double distanceMeters = 60000,
   }) {
     return _mChannel.invokeMethod<Uint8List>('renderMapSnapshot', {
       'latitude': latitude,
@@ -71,6 +72,7 @@ class PlatformUtils {
       'width': width,
       'height': height,
       'scale': scale,
+      'distance': distanceMeters,
     });
   }
 

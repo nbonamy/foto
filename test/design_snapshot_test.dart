@@ -357,6 +357,7 @@ Future<Uint8List?> _previewMapSnapshot(
   PhotoLocation location,
   bool dark,
   double scale,
+  double distanceMeters,
 ) {
   return Future.value(_previewMapBytes);
 }

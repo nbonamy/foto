@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:exif/exif.dart';
 import 'package:filesize/filesize.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
@@ -44,18 +45,21 @@ typedef InspectorMapSnapshotLoader = Future<Uint8List?> Function(
   PhotoLocation location,
   bool dark,
   double scale,
+  double distanceMeters,
 );
 
 Future<Uint8List?> loadInspectorMapSnapshot(
   PhotoLocation location,
   bool dark,
   double scale,
+  double distanceMeters,
 ) {
   return PlatformUtils.renderMapSnapshot(
     latitude: location.latitude,
     longitude: location.longitude,
     dark: dark,
     scale: scale,
+    distanceMeters: distanceMeters,
   );
 }
 
@@ -541,10 +545,33 @@ class _InspectorMapCard extends StatefulWidget {
 }
 
 class _InspectorMapCardState extends State<_InspectorMapCard> {
+  static const _zoomDistances = <double>[
+    500000,
+    250000,
+    125000,
+    60000,
+    30000,
+    15000,
+    7500,
+    3500,
+    1500,
+    750,
+    350,
+  ];
+
   Uint8List? _snapshot;
   bool _loading = false;
   int _loadGeneration = 0;
   String? _requestKey;
+  int _zoomIndex = 3;
+  double _scrollAccumulator = 0;
+  Timer? _zoomDebounce;
+
+  @override
+  void dispose() {
+    _zoomDebounce?.cancel();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -557,12 +584,16 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.location != widget.location ||
         oldWidget.snapshotLoader != widget.snapshotLoader) {
+      if (oldWidget.location != widget.location) {
+        _zoomIndex = 3;
+      }
+      _zoomDebounce?.cancel();
       _requestKey = null;
       _loadIfNeeded();
     }
   }
 
-  void _loadIfNeeded() {
+  void _loadIfNeeded({bool preserveSnapshot = false}) {
     final location = widget.location;
     if (location == null) {
       _snapshot = null;
@@ -572,13 +603,17 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
     }
     final dark = Theme.of(context).brightness == Brightness.dark;
     final scale = MediaQuery.devicePixelRatioOf(context).clamp(1.0, 3.0);
-    final key = '${location.latitude}:${location.longitude}:$dark:$scale';
+    final distance = _zoomDistances[_zoomIndex];
+    final key =
+        '${location.latitude}:${location.longitude}:$dark:$scale:$distance';
     if (_requestKey == key) return;
     _requestKey = key;
-    _snapshot = null;
+    if (!preserveSnapshot) {
+      _snapshot = null;
+    }
     _loading = true;
     final generation = ++_loadGeneration;
-    widget.snapshotLoader(location, dark, scale).then((snapshot) {
+    widget.snapshotLoader(location, dark, scale, distance).then((snapshot) {
       if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _snapshot = snapshot;
@@ -589,6 +624,28 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
       setState(() {
         _snapshot = null;
         _loading = false;
+      });
+    });
+  }
+
+  void _handlePointerSignal(PointerSignalEvent event) {
+    if (event is! PointerScrollEvent || event.scrollDelta.dy == 0) return;
+    GestureBinding.instance.pointerSignalResolver.register(event, (_) {
+      _scrollAccumulator += event.scrollDelta.dy;
+      if (_scrollAccumulator.abs() < 12) return;
+      final direction = _scrollAccumulator < 0 ? 1 : -1;
+      _scrollAccumulator = 0;
+      final nextZoom = (_zoomIndex + direction).clamp(
+        0,
+        _zoomDistances.length - 1,
+      );
+      if (nextZoom == _zoomIndex) return;
+      setState(() => _zoomIndex = nextZoom);
+      _zoomDebounce?.cancel();
+      _zoomDebounce = Timer(const Duration(milliseconds: 90), () {
+        if (!mounted) return;
+        _requestKey = null;
+        _loadIfNeeded(preserveSnapshot: true);
       });
     });
   }
@@ -604,88 +661,91 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
         label: widget.noLocationLabel,
       );
     }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(14),
-      child: SizedBox(
-        height: 150,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (_snapshot != null) ...[
-              CustomPaint(painter: _MapBackdropPainter(dark: dark)),
-              Image.memory(
-                _snapshot!,
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
-                filterQuality: FilterQuality.medium,
-              ),
-            ] else
-              ColoredBox(
-                color: palette.elevatedSurface,
-                child: _loading
-                    ? Center(
-                        child: SizedBox.square(
-                          dimension: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: palette.accent,
-                          ),
-                        ),
-                      )
-                    : _MapFallback(
-                        icon: Icons.map_outlined,
-                        label: widget.mapUnavailableLabel,
-                        compact: true,
-                      ),
-              ),
-            if (_snapshot != null) ...[
-              const Center(
-                child: Icon(
-                  Icons.location_on_rounded,
-                  color: Color(0xFF5D5FEF),
-                  size: 34,
-                  shadows: [
-                    Shadow(color: Color(0x80000000), blurRadius: 8),
-                  ],
+    return Listener(
+      onPointerSignal: _handlePointerSignal,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          height: 150,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (_snapshot != null) ...[
+                CustomPaint(painter: _MapBackdropPainter(dark: dark)),
+                Image.memory(
+                  _snapshot!,
+                  fit: BoxFit.cover,
+                  gaplessPlayback: true,
+                  filterQuality: FilterQuality.medium,
                 ),
-              ),
-              const Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: 48,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.transparent, Color(0x99000000)],
+              ] else
+                ColoredBox(
+                  color: palette.elevatedSurface,
+                  child: _loading
+                      ? Center(
+                          child: SizedBox.square(
+                            dimension: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: palette.accent,
+                            ),
+                          ),
+                        )
+                      : _MapFallback(
+                          icon: Icons.map_outlined,
+                          label: widget.mapUnavailableLabel,
+                          compact: true,
+                        ),
+                ),
+              if (_snapshot != null) ...[
+                const Center(
+                  child: Icon(
+                    Icons.location_on_rounded,
+                    color: Color(0xFF5D5FEF),
+                    size: 34,
+                    shadows: [
+                      Shadow(color: Color(0x80000000), blurRadius: 8),
+                    ],
+                  ),
+                ),
+                const Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 48,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Color(0x99000000)],
+                      ),
                     ),
                   ),
                 ),
+              ],
+              Positioned(
+                left: 10,
+                bottom: 8,
+                child: Text(
+                  '${location.latitude.toStringAsFixed(4)}, '
+                  '${location.longitude.toStringAsFixed(4)}',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: _snapshot == null
+                            ? palette.secondaryText
+                            : Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                        shadows: _snapshot == null
+                            ? null
+                            : const [
+                                Shadow(color: Colors.black, blurRadius: 4),
+                              ],
+                      ),
+                ),
               ),
             ],
-            Positioned(
-              left: 10,
-              bottom: 8,
-              child: Text(
-                '${location.latitude.toStringAsFixed(4)}, '
-                '${location.longitude.toStringAsFixed(4)}',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: _snapshot == null
-                          ? palette.secondaryText
-                          : Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                      shadows: _snapshot == null
-                          ? null
-                          : const [
-                              Shadow(color: Colors.black, blurRadius: 4),
-                            ],
-                    ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foto/browser/inspector.dart';
@@ -88,7 +89,8 @@ void main() {
   testWidgets('capture card precedes metadata sections', (tester) async {
     const png =
         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
-    PhotoLocation? requestedLocation;
+    final requestedLocations = <PhotoLocation>[];
+    final requestedDistances = <double>[];
     await tester.pumpWidget(
       harness(
         InspectorPanel(
@@ -105,8 +107,9 @@ void main() {
             latitude: 64.1466,
             longitude: -21.9426,
           ),
-          mapSnapshotLoader: (location, dark, scale) async {
-            requestedLocation = location;
+          mapSnapshotLoader: (location, dark, scale, distanceMeters) async {
+            requestedLocations.add(location);
+            requestedDistances.add(distanceMeters);
             return base64Decode(png);
           },
           groups: [
@@ -128,10 +131,25 @@ void main() {
     expect(find.text('64.1466, -21.9426'), findsOneWidget);
     expect(find.text('TECHNICAL DETAILS'), findsNothing);
     expect(find.byType(Image), findsOneWidget);
-    expect(requestedLocation?.latitude, 64.1466);
+    expect(requestedLocations.single.latitude, 64.1466);
+    expect(requestedDistances, [60000]);
     expect(
       tester.getTopLeft(find.text('CAPTURED')).dy,
       lessThan(tester.getTopLeft(find.text('CAMERA')).dy),
     );
+
+    final mapCenter = tester.getCenter(find.byType(Image));
+    await tester.sendEventToBinding(
+      PointerScrollEvent(
+        position: mapCenter,
+        scrollDelta: const Offset(0, -20),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+
+    expect(requestedLocations, hasLength(2));
+    expect(requestedLocations[1], requestedLocations[0]);
+    expect(requestedDistances, [60000, 30000]);
   });
 }

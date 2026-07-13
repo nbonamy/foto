@@ -161,12 +161,14 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 				return
 			}
 			let dark = arguments["dark"] as? Bool ?? false
+			let distance = arguments["distance"] as? Double ?? 60_000
 			_renderMapSnapshot(
 				latitude: latitude,
 				longitude: longitude,
 				width: width,
 				height: height,
 				scale: scale,
+				distance: distance,
 				dark: dark,
 				result
 			)
@@ -230,15 +232,17 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 		width: Double,
 		height: Double,
 		scale: Double,
+		distance: Double,
 		dark: Bool,
 		_ result: @escaping FlutterResult
 	) {
 		let options = MKMapSnapshotter.Options()
 		let center = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+		let clampedDistance = max(350, min(distance, 500_000))
 		options.region = MKCoordinateRegion(
 			center: center,
-			latitudinalMeters: 60_000,
-			longitudinalMeters: 60_000
+			latitudinalMeters: clampedDistance,
+			longitudinalMeters: clampedDistance
 		)
 		let requestedScale = max(1, min(scale, 3))
 		options.size = NSSize(

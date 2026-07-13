@@ -117,6 +117,7 @@ void main() {
       longitude: -21.9426,
       dark: true,
       scale: 2,
+      distanceMeters: 30000,
     );
 
     expect(received?.method, 'renderMapSnapshot');
@@ -127,6 +128,7 @@ void main() {
       'width': 560.0,
       'height': 300.0,
       'scale': 2.0,
+      'distance': 30000.0,
     });
     expect(bytes, [1, 2, 3]);
   });
