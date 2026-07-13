@@ -26,15 +26,72 @@ class InspectorGroup {
   final List<InspectorValue> values;
 }
 
-class _InspectorFileMetadata {
-  final SizeInt imageSize;
-  final Map<String, IfdTag> exifData;
+class InspectorMetadata {
+  const InspectorMetadata({
+    required this.fileSize,
+    required this.creationDate,
+    required this.imageSize,
+    required this.exifData,
+  });
 
-  const _InspectorFileMetadata(this.imageSize, this.exifData);
+  final int fileSize;
+  final DateTime creationDate;
+  final SizeInt? imageSize;
+  final Map<String, IfdTag> exifData;
+}
+
+typedef InspectorMetadataLoader = Future<InspectorMetadata> Function(
+  String filePath,
+);
+
+Future<InspectorMetadata> loadInspectorMetadata(String filePath) async {
+  final file = File(filePath);
+  final fileStatsFuture = file.stat();
+  final creationDateFuture = _loadCreationDate(filePath);
+  final imageSizeFuture = Isolate.run<List<int>?>(() {
+    try {
+      final size = Utils.imageSize(filePath);
+      return [size.width, size.height];
+    } catch (_) {
+      return null;
+    }
+  });
+  final exifFuture = () async {
+    Map<String, IfdTag> exifData = const {};
+    try {
+      exifData = await readExifFromFile(file);
+    } catch (_) {
+      // Basic file metadata remains useful for formats without EXIF.
+    }
+    return exifData;
+  }();
+  final fileStats = await fileStatsFuture;
+  final imageDimensions = await imageSizeFuture;
+  return InspectorMetadata(
+    fileSize: fileStats.size,
+    creationDate: await creationDateFuture ?? fileStats.changed,
+    imageSize: imageDimensions == null
+        ? null
+        : SizeInt(imageDimensions[0], imageDimensions[1]),
+    exifData: await exifFuture,
+  );
+}
+
+Future<DateTime?> _loadCreationDate(String filePath) async {
+  try {
+    return await FileUtils.getCreationDate(filePath);
+  } catch (_) {
+    return null;
+  }
 }
 
 class Inspector extends StatefulWidget {
-  const Inspector({super.key});
+  const Inspector({
+    super.key,
+    this.metadataLoader = loadInspectorMetadata,
+  });
+
+  final InspectorMetadataLoader metadataLoader;
 
   @override
   State<StatefulWidget> createState() => _InspectorState();
@@ -42,7 +99,7 @@ class Inspector extends StatefulWidget {
 
 class _InspectorState extends State<Inspector> {
   String? _currentFile;
-  FileStat? _fileStats;
+  int? _fileSize;
   DateTime? _creationDate;
   SizeInt? _imageSize;
   Map<String, IfdTag>? _exifData;
@@ -84,7 +141,7 @@ class _InspectorState extends State<Inspector> {
         InspectorValue(t.exifFileName, Utils.pathTitle(_currentFile) ?? ''),
         InspectorValue(
           t.exifFileSize,
-          _fileStats?.size == null ? '' : filesize(_fileStats?.size),
+          _fileSize == null ? '' : filesize(_fileSize),
         ),
         InspectorValue(
           t.exifCreationDate,
@@ -159,7 +216,7 @@ class _InspectorState extends State<Inspector> {
     if (mounted) {
       setState(() {
         _currentFile = filePath;
-        _fileStats = null;
+        _fileSize = null;
         _creationDate = null;
         _imageSize = null;
         _exifData = null;
@@ -174,28 +231,13 @@ class _InspectorState extends State<Inspector> {
 
   Future<void> _loadMetadata(String filePath, int generation) async {
     try {
-      final File file = File(filePath);
-      final fileStatsFuture = file.stat();
-      final creationDateFuture = FileUtils.getCreationDate(filePath);
-      final metadataFuture = Isolate.run(() async {
-        Map<String, IfdTag> exifData = const {};
-        try {
-          exifData = await readExifFromFile(File(filePath));
-        } catch (_) {
-          // Formats such as WebP may have no EXIF block. Their basic file and
-          // image metadata should still remain visible in the inspector.
-        }
-        return _InspectorFileMetadata(Utils.imageSize(filePath), exifData);
-      });
-      final fileStats = await fileStatsFuture;
-      final creationDate = await creationDateFuture;
-      final metadata = await metadataFuture;
+      final metadata = await widget.metadataLoader(filePath);
 
       if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _currentFile = filePath;
-        _fileStats = fileStats;
-        _creationDate = creationDate;
+        _fileSize = metadata.fileSize;
+        _creationDate = metadata.creationDate;
         _imageSize = metadata.imageSize;
         _exifData = metadata.exifData;
         _isLoading = false;
@@ -208,7 +250,7 @@ class _InspectorState extends State<Inspector> {
 
   void _clearSelection() {
     _currentFile = null;
-    _fileStats = null;
+    _fileSize = null;
     _creationDate = null;
     _imageSize = null;
     _exifData = null;
