@@ -8,10 +8,12 @@ import 'package:foto/browser/photo_metadata.dart';
 import 'package:foto/components/theme.dart';
 
 void main() {
-  Widget harness(Widget child, ThemeData theme) {
+  Widget harness(Widget child, ThemeData theme, {double height = 600}) {
     return MaterialApp(
       theme: theme,
-      home: Scaffold(body: SizedBox(width: 320, height: 600, child: child)),
+      home: Scaffold(
+        body: SizedBox(width: 320, height: height, child: child),
+      ),
     );
   }
 
@@ -119,6 +121,7 @@ void main() {
           ],
         ),
         FotoTheme.light,
+        height: 360,
       ),
     );
     await tester.pumpAndSettle();
@@ -138,11 +141,22 @@ void main() {
       lessThan(tester.getTopLeft(find.text('CAMERA')).dy),
     );
 
-    final mapCenter = tester.getCenter(find.byType(Image));
+    final inspectorScrollable = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byType(InspectorPanel),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(inspectorScrollable.position.pixels, 0);
+
+    final mapCenter = tester.getCenter(
+      find.byKey(const ValueKey('inspector-map-surface')),
+    );
     await tester.sendEventToBinding(
       PointerScrollEvent(
         position: mapCenter,
-        scrollDelta: const Offset(0, -20),
+        kind: PointerDeviceKind.trackpad,
+        scrollDelta: const Offset(0, 20),
       ),
     );
     await tester.pump(const Duration(milliseconds: 100));
@@ -150,6 +164,7 @@ void main() {
 
     expect(requestedLocations, hasLength(2));
     expect(requestedLocations[1], requestedLocations[0]);
-    expect(requestedDistances, [60000, 30000]);
+    expect(requestedDistances, [60000, 125000]);
+    expect(inspectorScrollable.position.pixels, 0);
   });
 }

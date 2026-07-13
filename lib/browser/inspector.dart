@@ -662,6 +662,8 @@ class _InspectorMapCardState extends State<_InspectorMapCard> {
       );
     }
     return Listener(
+      key: const ValueKey('inspector-map-surface'),
+      behavior: HitTestBehavior.opaque,
       onPointerSignal: _handlePointerSignal,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
