@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/l10n/app_localizations.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:provider/provider.dart';
 
+import '../components/theme.dart';
+import '../components/toolbar.dart';
+import '../components/window_shell.dart';
 import '../model/menu_actions.dart';
 import '../model/preferences.dart';
 import '../utils/database.dart';
@@ -20,6 +22,8 @@ class BrowserContent extends StatefulWidget {
   final MenuActionStream menuActionStream;
   final FocusNode galleryFocusNode;
   final List<String>? initialSelection;
+  final bool showSidebar;
+  final VoidCallback toggleSidebar;
 
   const BrowserContent({
     super.key,
@@ -28,6 +32,8 @@ class BrowserContent extends StatefulWidget {
     required this.canNavigateBack,
     required this.menuActionStream,
     required this.galleryFocusNode,
+    required this.showSidebar,
+    required this.toggleSidebar,
     required this.navigateToFolder,
     required this.viewImages,
     this.initialSelection,
@@ -54,44 +60,34 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
   Widget build(BuildContext context) {
     return Consumer<Preferences>(
       builder: (_, prefs, __) {
-        // start with content area
-        List<Widget> widgets = [
-          ContentArea(
-            builder: (context, scrollController) {
-              return ImageGallery(
-                path: widget.path,
-                mediaDb: widget.mediaDb,
-                navigatorContext: context,
-                executeItem: executeItem,
-                scrollController: scrollController,
-                menuActionStream: widget.menuActionStream,
-                initialSelection: widget.initialSelection,
-                focusNode: widget.galleryFocusNode,
-              );
-            },
-          )
-        ];
-
-        // resizable panel depends on prefs
-        if (prefs.showInspector) {
-          widgets.add(
-            ResizablePane(
-              minSize: 180,
-              startSize: 250,
-              windowBreakpoint: 700,
-              resizableSide: ResizableSide.left,
-              builder: (_, __) => const Inspector(),
+        final palette = FotoPalette.of(context);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            buildToolbar(),
+            Expanded(
+              child: FotoSplitView(
+                trailing: prefs.showInspector
+                    ? ColoredBox(
+                        color: palette.sidebarSurface,
+                        child: const Inspector(),
+                      )
+                    : null,
+                child: ColoredBox(
+                  color: palette.canvas,
+                  child: ImageGallery(
+                    path: widget.path,
+                    mediaDb: widget.mediaDb,
+                    navigatorContext: context,
+                    executeItem: executeItem,
+                    menuActionStream: widget.menuActionStream,
+                    initialSelection: widget.initialSelection,
+                    focusNode: widget.galleryFocusNode,
+                  ),
+                ),
+              ),
             ),
-          );
-        }
-
-        // done
-        return MacosOverlayFilter(
-          borderRadius: BorderRadius.zero,
-          child: MacosScaffold(
-            toolBar: buildToolbar(),
-            children: widgets,
-          ),
+          ],
         );
       },
     );
@@ -123,71 +119,78 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
     }
   }
 
-  ToolBar buildToolbar() {
-    const String tickOnPrefix = '✓';
-    const String tickOffPrefix = '   ';
+  Widget buildToolbar() {
     Preferences prefs = Preferences.of(context);
     AppLocalizations t = AppLocalizations.of(context)!;
-    return ToolBar(
-      title: Text(
-        Utils.pathTitle(widget.path) ?? '',
-        overflow: TextOverflow.ellipsis,
-        maxLines: 1,
-      ),
-      titleWidth: 256.0,
+    return FotoToolbar(
+      title: Utils.pathTitle(widget.path) ?? '',
       leading: widget.canNavigateBack
-          ? MacosBackButton(
+          ? FotoToolbarButton(
+              icon: CupertinoIcons.back,
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
               onPressed: () => executeItem(folder: '..'),
-              fillColor: Colors.transparent,
             )
           : null,
       actions: [
-        ToolBarIconButton(
-          icon: const MacosIcon(CupertinoIcons.sidebar_left),
-          onPressed: _toggleSidebar,
-          label: t.toolbarToggleSidebar,
-          showLabel: false,
+        FotoToolbarButton(
+          icon: CupertinoIcons.sidebar_left,
+          onPressed: widget.toggleSidebar,
+          tooltip: t.toolbarToggleSidebar,
+          selected: widget.showSidebar,
         ),
-        ToolBarIconButton(
-          icon: const MacosIcon(CupertinoIcons.folder),
+        FotoToolbarButton(
+          icon: CupertinoIcons.folder,
           onPressed: _toggleShowFolders,
-          label: t.toolbarToggleFolders,
-          showLabel: false,
+          tooltip: t.toolbarToggleFolders,
+          selected: prefs.showFolders,
         ),
-        ToolBarIconButton(
-          icon: const MacosIcon(CupertinoIcons.info_circle),
+        FotoToolbarButton(
+          icon: CupertinoIcons.info_circle,
           onPressed: _toggleInspector,
-          label: t.toolbarToggleInspector,
-          showLabel: false,
+          tooltip: t.toolbarToggleInspector,
+          selected: prefs.showInspector,
         ),
-        ToolBarPullDownButton(
-          label: t.sortTitle,
-          icon: CupertinoIcons.sort_down_circle,
-          tooltipMessage: t.sortTitle,
-          items: [
-            MacosPulldownMenuItem(
-              label: t.sortCriteriaAlphabetical,
-              title: Text(
-                  '${(prefs.sortCriteria == SortCriteria.alphabetical) ? tickOnPrefix : tickOffPrefix} ${t.sortCriteriaAlphabetical}'),
-              onTap: () => _setSortCriteria(SortCriteria.alphabetical),
-            ),
-            MacosPulldownMenuItem(
-              label: t.sortCriteriaChronological,
-              title: Text(
-                  '${(prefs.sortCriteria == SortCriteria.chronological) ? tickOnPrefix : tickOffPrefix} ${t.sortCriteriaChronological}'),
-              onTap: () => _setSortCriteria(SortCriteria.chronological),
-            ),
-            const MacosPulldownMenuDivider(),
-            MacosPulldownMenuItem(
-              label: t.sortOrderReverse,
-              title: Text(
-                  '${prefs.sortReversed ? tickOnPrefix : tickOffPrefix} ${t.sortOrderReverse}'),
-              onTap: _toggleSortOrder,
-            ),
-          ],
+        SizedBox.square(
+          dimension: 34,
+          child: PopupMenuButton<_SortAction>(
+            tooltip: t.sortTitle,
+            padding: EdgeInsets.zero,
+            iconSize: 17,
+            icon: const Icon(CupertinoIcons.sort_down_circle),
+            onSelected: _applySortAction,
+            itemBuilder: (context) => [
+              CheckedPopupMenuItem(
+                value: _SortAction.alphabetical,
+                checked: prefs.sortCriteria == SortCriteria.alphabetical,
+                child: Text(t.sortCriteriaAlphabetical),
+              ),
+              CheckedPopupMenuItem(
+                value: _SortAction.chronological,
+                checked: prefs.sortCriteria == SortCriteria.chronological,
+                child: Text(t.sortCriteriaChronological),
+              ),
+              const PopupMenuDivider(),
+              CheckedPopupMenuItem(
+                value: _SortAction.reverse,
+                checked: prefs.sortReversed,
+                child: Text(t.sortOrderReverse),
+              ),
+            ],
+          ),
         ),
       ],
     );
+  }
+
+  void _applySortAction(_SortAction action) {
+    switch (action) {
+      case _SortAction.alphabetical:
+        _setSortCriteria(SortCriteria.alphabetical);
+      case _SortAction.chronological:
+        _setSortCriteria(SortCriteria.chronological);
+      case _SortAction.reverse:
+        _toggleSortOrder();
+    }
   }
 
   void _setSortCriteria(SortCriteria sortCriteria) {
@@ -200,10 +203,6 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
     prefs.sortReversed = !prefs.sortReversed;
   }
 
-  void _toggleSidebar() {
-    MacosWindowScope.of(context).toggleSidebar();
-  }
-
   void _toggleShowFolders() {
     Preferences prefs = Preferences.of(context);
     prefs.showFolders = !prefs.showFolders;
@@ -213,4 +212,10 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
     Preferences prefs = Preferences.of(context);
     prefs.showInspector = !prefs.showInspector;
   }
+}
+
+enum _SortAction {
+  alphabetical,
+  chronological,
+  reverse,
 }

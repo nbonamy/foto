@@ -31,7 +31,6 @@ class ImageGallery extends StatefulWidget {
   final MediaDb mediaDb;
   final Function executeItem;
   final BuildContext navigatorContext;
-  final ScrollController scrollController;
   final MenuActionStream menuActionStream;
   final FocusNode focusNode;
   final List<String>? initialSelection;
@@ -42,7 +41,6 @@ class ImageGallery extends StatefulWidget {
     required this.mediaDb,
     required this.navigatorContext,
     required this.executeItem,
-    required this.scrollController,
     required this.menuActionStream,
     required this.focusNode,
     this.initialSelection,

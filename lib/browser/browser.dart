@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:path/path.dart' as p;
 
+import '../components/window_shell.dart';
 import '../model/favorites.dart';
 import '../model/history.dart';
 import '../model/menu_actions.dart';
@@ -34,6 +34,7 @@ class BrowserState extends State<Browser> {
   final Map<String, List<String>> _selectionsByPath = {};
   late HistoryModel _history;
   List<String>? _initialSelection;
+  bool _showSidebar = true;
 
   @override
   void initState() {
@@ -55,21 +56,11 @@ class BrowserState extends State<Browser> {
     // we need a path
     _initLocation(context);
 
-    Widget window = MacosWindow(
-      sidebar: Sidebar(
-        minWidth: 250,
-        decoration: const BoxDecoration(
-          color: Color.fromRGBO(210, 207, 202, 1.0),
-        ),
-        builder: (context, _) {
-          // macos_ui rebuilds the entire MacosWindow on every notification
-          // from its sidebar controller. Keep Foto's scroll position local so
-          // scrolling only drives the viewport's render objects.
-          return BrowserSidebar(
-            scrollController: _sidebarScrollController,
-            navigateToFolder: _navigateToFolder,
-          );
-        },
+    return FotoWindowShell(
+      showSidebar: _showSidebar,
+      sidebar: BrowserSidebar(
+        scrollController: _sidebarScrollController,
+        navigateToFolder: _navigateToFolder,
       ),
       child: BrowserContent(
         key: ValueKey(_history.top),
@@ -79,12 +70,16 @@ class BrowserState extends State<Browser> {
         menuActionStream: widget.menuActionStream,
         initialSelection: _initialSelection,
         galleryFocusNode: _galleryFocusNode,
+        showSidebar: _showSidebar,
+        toggleSidebar: _toggleSidebar,
         navigateToFolder: _navigateToFolder,
         viewImages: widget.viewImages,
       ),
     );
+  }
 
-    return window;
+  void _toggleSidebar() {
+    setState(() => _showSidebar = !_showSidebar);
   }
 
   void _navigateToFolder(String path) {

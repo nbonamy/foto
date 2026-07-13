@@ -90,24 +90,29 @@ class FotoApp extends StatelessWidget {
         final themeMode = context.select<Preferences, ThemeMode>(
           (preferences) => preferences.themeMode,
         );
-        return MacosApp(
+        return MaterialApp(
           title: 'foto',
-          theme: MacosThemeData.light(),
-          darkTheme: MacosThemeData.dark(),
+          theme: FotoTheme.light,
+          darkTheme: FotoTheme.dark,
           themeMode: themeMode,
           scrollBehavior: const FotoScrollBehavior(),
           debugShowCheckedModeBanner: false,
-          //color: Colors.black,
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          supportedLocales: const [
-            Locale('en', ''),
-            Locale('fr', ''),
-          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) {
+            final brightness = Theme.of(context).brightness;
+            return MacosTheme(
+              data: brightness == Brightness.dark
+                  ? MacosThemeData.dark()
+                  : MacosThemeData.light(),
+              child: child!,
+            );
+          },
           home: Home(args: args),
         );
       },
