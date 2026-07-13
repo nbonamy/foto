@@ -156,6 +156,8 @@ Appearance checkpoint: System remains the persisted default, the View menu expos
 
 Commit: `test: lock foto ui behavior and performance`
 
+Post-redesign regression checkpoint: the fullscreen viewer now saves and restores the normal window level while temporarily rendering above the macOS menu bar. The inspector keeps EXIF objects on the main isolate, transfers only primitive image dimensions from its worker isolate, and has a selection-driven widget regression test. Focused tests, analyzer, all 96 tests, and the macOS debug build passed before relaunching the rebuilt app.
+
 ## Cancellation strategy
 
 Until explicit merge approval, the redesign exists only in `/Users/nbonamy/src/foto-ui-redesign` on `codex/foto-ui-redesign`. Failure is cheap: stop work, keep `main` at stable commit `3abfe9a` or later, and delete the worktree and branch after confirmation. No redesign commit will be pushed or merged automatically.
@@ -168,3 +170,5 @@ Until explicit merge approval, the redesign exists only in `/Users/nbonamy/src/f
 - A semantic `ThemeExtension` keeps owned chrome coherent across light and dark appearances and makes removing a UI framework dependency incremental rather than all-or-nothing.
 - Deterministic light/dark golden previews are valuable when host screenshot permissions are unavailable, while focused geometry and channel-call tests protect the performance properties the screenshots cannot show.
 - Keeping every migration checkpoint in an unpushed worktree branch made aggressive replacement safe: stable `main` never moved, and each verified slice remains independently reversible.
+- Worker isolates should return primitive DTOs, not third-party metadata objects whose sendability is outside Foto's control; partial metadata failures must not erase already available file information.
+- Borderless screen-sized windows still participate in macOS window levels. Covering the menu bar requires a temporary level change as well as the full screen frame, followed by exact restoration on exit.
