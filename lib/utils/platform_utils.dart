@@ -56,6 +56,24 @@ class PlatformUtils {
     await _invokeInstantFullScreen('exitInstantFullScreen');
   }
 
+  static Future<Uint8List?> renderMapSnapshot({
+    required double latitude,
+    required double longitude,
+    required bool dark,
+    double width = 560,
+    double height = 300,
+    double scale = 2,
+  }) {
+    return _mChannel.invokeMethod<Uint8List>('renderMapSnapshot', {
+      'latitude': latitude,
+      'longitude': longitude,
+      'dark': dark,
+      'width': width,
+      'height': height,
+      'scale': scale,
+    });
+  }
+
   static Future<void> _invokeInstantFullScreen(String method) async {
     final changed = await _mChannel.invokeMethod<bool>(method) ?? false;
     if (!changed) {

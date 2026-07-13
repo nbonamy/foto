@@ -104,6 +104,33 @@ void main() {
     );
   });
 
+  test('map snapshots forward location appearance and pixel scale', () async {
+    MethodCall? received;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+      received = call;
+      return Uint8List.fromList([1, 2, 3]);
+    });
+
+    final bytes = await PlatformUtils.renderMapSnapshot(
+      latitude: 64.1466,
+      longitude: -21.9426,
+      dark: true,
+      scale: 2,
+    );
+
+    expect(received?.method, 'renderMapSnapshot');
+    expect(received?.arguments, {
+      'latitude': 64.1466,
+      'longitude': -21.9426,
+      'dark': true,
+      'width': 560.0,
+      'height': 300.0,
+      'scale': 2.0,
+    });
+    expect(bytes, [1, 2, 3]);
+  });
+
   test('instant fullscreen reports native failures', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (_) async => false);

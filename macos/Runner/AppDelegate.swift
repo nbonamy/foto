@@ -2,6 +2,7 @@ import Cocoa
 import CryptoKit
 import FlutterMacOS
 import ImageIO
+import MapKit
 import UniformTypeIdentifiers
 
 extension NSBitmapImageRep {
@@ -118,7 +119,7 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 		}
 	}
 	
-	func _platformUtilsHandler(_ call: FlutterMethodCall, _ result: FlutterResult) {
+	func _platformUtilsHandler(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
 		if ("setAppearance" == call.method) {
 			guard let appearance = call.arguments as? String,
 				  let window = mainFlutterWindow else {
@@ -149,6 +150,26 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 				return
 			}
 			result(window.exitInstantFullScreen())
+		} else if ("renderMapSnapshot" == call.method) {
+			guard let arguments = call.arguments as? [String: Any],
+				  let latitude = arguments["latitude"] as? Double,
+				  let longitude = arguments["longitude"] as? Double,
+				  let width = arguments["width"] as? Double,
+				  let height = arguments["height"] as? Double,
+				  let scale = arguments["scale"] as? Double else {
+				result(FlutterError(code: "invalid_map_location", message: "Map coordinates and dimensions are required.", details: call.arguments))
+				return
+			}
+			let dark = arguments["dark"] as? Bool ?? false
+			_renderMapSnapshot(
+				latitude: latitude,
+				longitude: longitude,
+				width: width,
+				height: height,
+				scale: scale,
+				dark: dark,
+				result
+			)
 		} else if ("moveToTrash" == call.method) {
 			guard let filepath = call.arguments as? String else {
 				result(FlutterError(
@@ -200,6 +221,49 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 			result(true);
 		} else {
 			result(FlutterMethodNotImplemented)
+		}
+	}
+
+	private func _renderMapSnapshot(
+		latitude: Double,
+		longitude: Double,
+		width: Double,
+		height: Double,
+		scale: Double,
+		dark: Bool,
+		_ result: @escaping FlutterResult
+	) {
+		let options = MKMapSnapshotter.Options()
+		let center = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+		options.region = MKCoordinateRegion(
+			center: center,
+			latitudinalMeters: 60_000,
+			longitudinalMeters: 60_000
+		)
+		let requestedScale = max(1, min(scale, 3))
+		options.size = NSSize(
+			width: max(1, width) * requestedScale,
+			height: max(1, height) * requestedScale
+		)
+		options.mapType = .standard
+		options.showsBuildings = true
+		if #available(macOS 10.15, *) {
+			options.pointOfInterestFilter = .excludingAll
+		}
+		options.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+
+		MKMapSnapshotter(options: options).start { snapshot, error in
+			DispatchQueue.main.async {
+				if let error {
+					result(FlutterError(code: "map_snapshot_failed", message: error.localizedDescription, details: nil))
+					return
+				}
+				guard let png = snapshot?.image.png else {
+					result(nil)
+					return
+				}
+				result(FlutterStandardTypedData(bytes: png))
+			}
 		}
 	}
 	
