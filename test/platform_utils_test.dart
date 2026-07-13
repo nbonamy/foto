@@ -133,6 +133,43 @@ void main() {
     expect(bytes, [1, 2, 3]);
   });
 
+  test('thumbnail cache forwards stable source metadata', () async {
+    MethodCall? received;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+      received = call;
+      return '/Users/test/Library/Caches/com.nabocorp.foto/thumb.jpg';
+    });
+
+    final cachedPath = await PlatformUtils.resolveCachedThumbnail(
+      path: '/Volumes/Photos/image.jpg',
+      modificationDate: DateTime.fromMicrosecondsSinceEpoch(1234567),
+      fileSize: 987654,
+    );
+
+    expect(received?.method, 'resolveCachedThumbnail');
+    expect(received?.arguments, {
+      'path': '/Volumes/Photos/image.jpg',
+      'modificationMicros': 1234567,
+      'fileSize': 987654,
+      'pixelSize': 960,
+    });
+    expect(cachedPath, endsWith('thumb.jpg'));
+  });
+
+  test('thumbnail cache clear requires native confirmation', () async {
+    final methods = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+      methods.add(call.method);
+      return true;
+    });
+
+    await PlatformUtils.clearThumbnailCache();
+
+    expect(methods, ['clearThumbnailCache']);
+  });
+
   test('instant fullscreen reports native failures', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (_) async => false);

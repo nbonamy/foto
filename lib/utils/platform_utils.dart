@@ -76,6 +76,42 @@ class PlatformUtils {
     });
   }
 
+  static Future<String> resolveCachedThumbnail({
+    required String path,
+    required DateTime modificationDate,
+    required int? fileSize,
+    int pixelSize = 960,
+  }) async {
+    final cachedPath = await _mChannel.invokeMethod<String>(
+      'resolveCachedThumbnail',
+      {
+        'path': path,
+        'modificationMicros': modificationDate.microsecondsSinceEpoch,
+        'fileSize': fileSize ?? -1,
+        'pixelSize': pixelSize,
+      },
+    );
+    if (cachedPath == null || cachedPath.isEmpty) {
+      throw PlatformException(
+        code: 'thumbnail_cache_failed',
+        message: 'The thumbnail cache returned no file.',
+        details: path,
+      );
+    }
+    return cachedPath;
+  }
+
+  static Future<void> clearThumbnailCache() async {
+    final cleared =
+        await _mChannel.invokeMethod<bool>('clearThumbnailCache') ?? false;
+    if (!cleared) {
+      throw PlatformException(
+        code: 'thumbnail_cache_clear_failed',
+        message: 'The thumbnail cache could not be cleared.',
+      );
+    }
+  }
+
   static Future<void> _invokeInstantFullScreen(String method) async {
     final changed = await _mChannel.invokeMethod<bool>(method) ?? false;
     if (!changed) {

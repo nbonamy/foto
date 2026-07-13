@@ -21,6 +21,261 @@ extension Data {
     }
 }
 
+private enum ThumbnailCacheError: LocalizedError {
+	case cacheDirectoryUnavailable
+	case sourceUnavailable(String)
+	case thumbnailGenerationFailed(String)
+	case thumbnailEncodingFailed(String)
+
+	var errorDescription: String? {
+		switch self {
+		case .cacheDirectoryUnavailable:
+			return "The macOS cache directory is unavailable."
+		case .sourceUnavailable(let path):
+			return "The source image is unavailable: \(path)"
+		case .thumbnailGenerationFailed(let path):
+			return "A thumbnail could not be generated for: \(path)"
+		case .thumbnailEncodingFailed(let path):
+			return "A thumbnail could not be encoded for: \(path)"
+		}
+	}
+}
+
+private final class ThumbnailDiskCache {
+	private struct CacheEntry {
+		let url: URL
+		let size: Int
+		let lastAccess: Date
+	}
+
+	private let cacheVersion = "v1"
+	private let cacheLimitBytes = 1024 * 1024 * 1024
+	private let cacheTargetBytes = 900 * 1024 * 1024
+	private let fileManager = FileManager.default
+	private let workerQueue: OperationQueue = {
+		let queue = OperationQueue()
+		queue.name = "com.nabocorp.foto.thumbnail-cache.workers"
+		queue.qualityOfService = .userInitiated
+		queue.maxConcurrentOperationCount = 2
+		return queue
+	}()
+	private let maintenanceQueue = DispatchQueue(
+		label: "com.nabocorp.foto.thumbnail-cache.maintenance",
+		qos: .utility
+	)
+	private let pruneLock = NSLock()
+	private var pruneScheduled = false
+
+	init() {
+		schedulePrune()
+	}
+
+	func resolve(
+		path: String,
+		modificationMicros: Int64,
+		fileSize: Int64,
+		pixelSize: Int,
+		completion: @escaping (Result<URL, Error>) -> Void
+	) {
+		workerQueue.addOperation { [weak self] in
+			guard let self else { return }
+			do {
+				let url = try self.resolveSynchronously(
+					path: path,
+					modificationMicros: modificationMicros,
+					fileSize: fileSize,
+					pixelSize: pixelSize
+				)
+				DispatchQueue.main.async { completion(.success(url)) }
+			} catch {
+				DispatchQueue.main.async { completion(.failure(error)) }
+			}
+		}
+	}
+
+	func clear(completion: @escaping (Result<Void, Error>) -> Void) {
+		workerQueue.addBarrierBlock { [weak self] in
+			guard let self else { return }
+			do {
+				let directory = try self.cacheDirectory()
+				if self.fileManager.fileExists(atPath: directory.path) {
+					try self.fileManager.removeItem(at: directory)
+				}
+				DispatchQueue.main.async { completion(.success(())) }
+			} catch {
+				DispatchQueue.main.async { completion(.failure(error)) }
+			}
+		}
+	}
+
+	private func resolveSynchronously(
+		path: String,
+		modificationMicros: Int64,
+		fileSize: Int64,
+		pixelSize: Int
+	) throws -> URL {
+		let directory = try cacheDirectory()
+		try fileManager.createDirectory(
+			at: directory,
+			withIntermediateDirectories: true
+		)
+		let sourceURL = URL(fileURLWithPath: path)
+		let preservesAlpha = ["gif", "png", "tif", "tiff", "webp"]
+			.contains(sourceURL.pathExtension.lowercased())
+		let fileExtension = preservesAlpha ? "png" : "jpg"
+		let identity = [
+			cacheVersion,
+			path,
+			String(modificationMicros),
+			String(fileSize),
+			String(pixelSize),
+		].joined(separator: "\u{0}")
+		let hash = Data(identity.utf8).sha256
+		let cachedURL = directory
+			.appendingPathComponent(hash)
+			.appendingPathExtension(fileExtension)
+
+		if fileManager.fileExists(atPath: cachedURL.path) {
+			touch(cachedURL)
+			return cachedURL
+		}
+
+		guard let source = CGImageSourceCreateWithURL(sourceURL as CFURL, [
+			kCGImageSourceShouldCache: false,
+		] as CFDictionary) else {
+			throw ThumbnailCacheError.sourceUnavailable(path)
+		}
+		let options: [CFString: Any] = [
+			kCGImageSourceCreateThumbnailFromImageAlways: true,
+			kCGImageSourceCreateThumbnailWithTransform: true,
+			kCGImageSourceThumbnailMaxPixelSize: max(1, pixelSize),
+			kCGImageSourceShouldCacheImmediately: true,
+		]
+		guard let thumbnail = CGImageSourceCreateThumbnailAtIndex(
+			source,
+			0,
+			options as CFDictionary
+		) else {
+			throw ThumbnailCacheError.thumbnailGenerationFailed(path)
+		}
+
+		let temporaryURL = directory
+			.appendingPathComponent(UUID().uuidString)
+			.appendingPathExtension("\(fileExtension).tmp")
+		let outputType = preservesAlpha ? UTType.png.identifier : UTType.jpeg.identifier
+		guard let destination = CGImageDestinationCreateWithURL(
+			temporaryURL as CFURL,
+			outputType as CFString,
+			1,
+			nil
+		) else {
+			throw ThumbnailCacheError.thumbnailEncodingFailed(path)
+		}
+		let properties: [CFString: Any] = preservesAlpha
+			? [:]
+			: [kCGImageDestinationLossyCompressionQuality: 0.82]
+		CGImageDestinationAddImage(destination, thumbnail, properties as CFDictionary)
+		guard CGImageDestinationFinalize(destination) else {
+			try? fileManager.removeItem(at: temporaryURL)
+			throw ThumbnailCacheError.thumbnailEncodingFailed(path)
+		}
+
+		do {
+			if fileManager.fileExists(atPath: cachedURL.path) {
+				try fileManager.removeItem(at: temporaryURL)
+			} else {
+				try fileManager.moveItem(at: temporaryURL, to: cachedURL)
+			}
+		} catch {
+			try? fileManager.removeItem(at: temporaryURL)
+			throw error
+		}
+		touch(cachedURL)
+		schedulePrune()
+		return cachedURL
+	}
+
+	private func cacheDirectory() throws -> URL {
+		guard let root = fileManager.urls(
+			for: .cachesDirectory,
+			in: .userDomainMask
+		).first else {
+			throw ThumbnailCacheError.cacheDirectoryUnavailable
+		}
+		let bundleIdentifier = Bundle.main.bundleIdentifier ?? "com.nabocorp.foto"
+		return root
+			.appendingPathComponent(bundleIdentifier, isDirectory: true)
+			.appendingPathComponent("thumbnails", isDirectory: true)
+			.appendingPathComponent(cacheVersion, isDirectory: true)
+	}
+
+	private func touch(_ url: URL) {
+		try? fileManager.setAttributes(
+			[.modificationDate: Date()],
+			ofItemAtPath: url.path
+		)
+	}
+
+	private func schedulePrune() {
+		pruneLock.lock()
+		guard !pruneScheduled else {
+			pruneLock.unlock()
+			return
+		}
+		pruneScheduled = true
+		pruneLock.unlock()
+		maintenanceQueue.async { [weak self] in
+			guard let self else { return }
+			defer {
+				self.pruneLock.lock()
+				self.pruneScheduled = false
+				self.pruneLock.unlock()
+			}
+			self.pruneIfNeeded()
+		}
+	}
+
+	private func pruneIfNeeded() {
+		guard let directory = try? cacheDirectory(),
+			  let enumerator = fileManager.enumerator(
+				at: directory,
+				includingPropertiesForKeys: [
+					.fileSizeKey,
+					.contentModificationDateKey,
+					.isRegularFileKey,
+				],
+				options: [.skipsHiddenFiles]
+			  ) else {
+			return
+		}
+		var entries: [CacheEntry] = []
+		var totalSize = 0
+		for case let url as URL in enumerator {
+			if url.pathExtension == "tmp" { continue }
+			guard let values = try? url.resourceValues(forKeys: [
+				.fileSizeKey,
+				.contentModificationDateKey,
+				.isRegularFileKey,
+			]), values.isRegularFile == true else {
+				continue
+			}
+			let size = values.fileSize ?? 0
+			totalSize += size
+			entries.append(CacheEntry(
+				url: url,
+				size: size,
+				lastAccess: values.contentModificationDate ?? .distantPast
+			))
+		}
+		guard totalSize > cacheLimitBytes else { return }
+		for entry in entries.sorted(by: { $0.lastAccess < $1.lastAccess }) {
+			try? fileManager.removeItem(at: entry.url)
+			totalSize -= entry.size
+			if totalSize <= cacheTargetBytes { break }
+		}
+	}
+}
+
 @main
 class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 	
@@ -29,6 +284,7 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 	var _latestFile:String?;
 	var _cachedIcons:Set<String> = [];
 	var _clipboardCopyGeneration: UInt64 = 0;
+	private let _thumbnailCache = ThumbnailDiskCache()
 	
 	override func applicationDidFinishLaunching(_ notification: Notification) {
 		guard let rootController = mainFlutterWindow?.contentViewController else {
@@ -150,6 +406,49 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 				return
 			}
 			result(window.exitInstantFullScreen())
+		} else if ("resolveCachedThumbnail" == call.method) {
+			guard let arguments = call.arguments as? [String: Any],
+				  let path = arguments["path"] as? String,
+				  let modificationMicros = arguments["modificationMicros"] as? NSNumber,
+				  let fileSize = arguments["fileSize"] as? NSNumber,
+				  let pixelSize = arguments["pixelSize"] as? NSNumber else {
+				result(FlutterError(
+					code: "invalid_thumbnail_request",
+					message: "Thumbnail source metadata is required.",
+					details: call.arguments
+				))
+				return
+			}
+			_thumbnailCache.resolve(
+				path: path,
+				modificationMicros: modificationMicros.int64Value,
+				fileSize: fileSize.int64Value,
+				pixelSize: pixelSize.intValue
+			) { outcome in
+				switch outcome {
+				case .success(let url):
+					result(url.path)
+				case .failure(let error):
+					result(FlutterError(
+						code: "thumbnail_cache_failed",
+						message: error.localizedDescription,
+						details: path
+					))
+				}
+			}
+		} else if ("clearThumbnailCache" == call.method) {
+			_thumbnailCache.clear { outcome in
+				switch outcome {
+				case .success:
+					result(true)
+				case .failure(let error):
+					result(FlutterError(
+						code: "thumbnail_cache_clear_failed",
+						message: error.localizedDescription,
+						details: nil
+					))
+				}
+			}
 		} else if ("renderMapSnapshot" == call.method) {
 			guard let arguments = call.arguments as? [String: Any],
 				  let latitude = arguments["latitude"] as? Double,
