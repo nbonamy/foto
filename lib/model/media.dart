@@ -3,7 +3,6 @@ import 'dart:isolate';
 
 import 'package:flutter/material.dart';
 
-import '../browser/thumbnail.dart';
 import '../utils/file_utils.dart';
 import '../utils/image_utils.dart';
 import '../utils/paths.dart';
@@ -18,6 +17,7 @@ class MediaItem {
   DateTime creationDate;
   DateTime modificationDate;
   SizeInt? imageSize;
+  double? previewAspectRatio;
   int? fileSize;
   Image? thumbnail;
   final ValueNotifier<int> updateCounter = ValueNotifier<int>(0);
@@ -85,6 +85,24 @@ class MediaItem {
 
   String get title {
     return Utils.pathTitle(path)!;
+  }
+
+  double get aspectRatio {
+    final size = imageSize;
+    if (size != null && size.width > 0 && size.height > 0) {
+      return size.width / size.height;
+    }
+    final previewRatio = previewAspectRatio;
+    if (previewRatio != null && previewRatio.isFinite && previewRatio > 0) {
+      return previewRatio;
+    }
+    if (isDir()) return 1.15;
+
+    // Give unloaded network images stable, varied placeholder geometry. The
+    // real ratio replaces this value when the visible thumbnail decodes, so
+    // no extra network read is needed merely to lay out the folder.
+    final unit = (path.hashCode & 0x3FF) / 0x3FF;
+    return 0.82 + unit * 1.08;
   }
 
   bool isFile() {
@@ -183,7 +201,7 @@ class MediaItem {
   static Image _fileThumbnail(File file) {
     return Image.file(
       file,
-      cacheHeight: Thumbnail.thumbnailHeight().toInt(),
+      cacheHeight: 480,
     );
   }
 }

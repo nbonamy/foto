@@ -10,7 +10,6 @@ import 'package:foto/l10n/app_localizations.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
-import 'package:scroll_to_index/scroll_to_index.dart';
 
 import '../components/context_menu.dart' as ctxm;
 import '../components/selectable.dart';
@@ -24,6 +23,7 @@ import '../utils/image_utils.dart';
 import '../utils/media_utils.dart';
 import '../utils/platform_keyboard.dart';
 import '../utils/platform_utils.dart';
+import 'justified_layout.dart';
 import 'thumbnail.dart';
 
 class ImageGallery extends StatefulWidget {
@@ -67,7 +67,9 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   StreamSubscription<FileSystemEvent>? _dirSubscription;
   Timer? _reloadDebounce;
 
-  late AutoScrollController _autoScrollController;
+  final ScrollController _galleryScrollController = ScrollController();
+  JustifiedGalleryLayout? _galleryLayout;
+  Timer? _aspectRelayoutDebounce;
 
   FocusNode get _focusNode => widget.focusNode;
 
@@ -98,7 +100,6 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     _subscribeToMenu();
     _subscribeToSelection();
     _subscribeToPreferences();
-    _initAutoScrollController();
     _initSelection();
     _watchDir();
     _findPhotoshop();
@@ -159,21 +160,14 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     }
   }
 
-  void _initAutoScrollController() {
-    _autoScrollController = AutoScrollController(
-      viewportBoundaryGetter: () =>
-          Rect.fromLTRB(0, 0, 0, MediaQuery.of(context).padding.bottom),
-      axis: Axis.vertical,
-    );
-  }
-
   @override
   void dispose() {
     _reloadDebounce?.cancel();
+    _aspectRelayoutDebounce?.cancel();
     _stopWatchDir();
     cancelMenuSubscription();
     _preferences.removeListener(_onPrefsChange);
-    _autoScrollController.dispose();
+    _galleryScrollController.dispose();
     super.dispose();
   }
 
@@ -409,62 +403,49 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
               future: _getItems(),
               builder: (context, snapshot) {
                 if (_items == null) return const SizedBox();
-                return GridView.builder(
-                  shrinkWrap: true,
-                  controller: _autoScrollController,
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: Thumbnail.thumbnailWidth(),
-                    mainAxisExtent: Thumbnail.thumbnailHeight(),
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                  ),
-                  itemCount: _items?.length,
-                  itemBuilder: (context, index) {
-                    final media = _items![index];
-                    return Selector<SelectionModel, bool>(
-                      selector: (_, selectionModel) =>
-                          selectionModel.contains(media.path),
-                      builder: (context, selected, child) {
-                        final isSelected = _dragSelection.contains(media.path)
-                            ? !selected
-                            : selected;
-                        return AutoScrollTag(
-                          key: Key(media.path),
-                          index: index,
-                          controller: _autoScrollController,
-                          child: Listener(
-                            onPointerDown: (event) {
-                              if (event.buttons & kPrimaryMouseButton != 0) {
-                                _selectFromPointer(media);
-                              }
-                            },
-                            child: GestureDetector(
-                              onTap: () {},
-                              onDoubleTap: () {
-                                _focusNode.requestFocus();
-                                _handleDoubleTap(media);
-                              },
-                              child: _getContextMenu(
-                                context,
-                                media: media,
-                                child: Selectable(
-                                  id: media.path,
-                                  onMountElement: _elements.add,
-                                  onUnmountElement: _elements.remove,
-                                  child: ValueListenableBuilder<int>(
-                                    valueListenable: media.updateCounter,
-                                    builder: (context, value, child) =>
-                                        Thumbnail(
-                                      key: media.key,
-                                      media: media,
-                                      selected: isSelected,
-                                      rename: _fileBeingRenamed == media.path,
-                                      onRenamed: _onFileRenamed,
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    const padding = 16.0;
+                    const spacing = 8.0;
+                    final items = _items!;
+                    final layout = JustifiedGalleryLayout.compute(
+                      aspectRatios:
+                          items.map((item) => item.aspectRatio).toList(),
+                      availableWidth:
+                          max(0, constraints.maxWidth - padding * 2),
+                      spacing: spacing,
+                    );
+                    _galleryLayout = layout;
+                    return ListView.builder(
+                      controller: _galleryScrollController,
+                      padding: const EdgeInsets.all(padding),
+                      itemCount: layout.rows.length,
+                      itemBuilder: (context, rowIndex) {
+                        final row = layout.rows[rowIndex];
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            bottom: rowIndex == layout.rows.length - 1
+                                ? 0
+                                : spacing,
+                          ),
+                          child: SizedBox(
+                            height: row.height,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                for (var itemIndex = 0;
+                                    itemIndex < row.items.length;
+                                    itemIndex += 1) ...[
+                                  if (itemIndex > 0)
+                                    const SizedBox(width: spacing),
+                                  SizedBox(
+                                    width: row.items[itemIndex].width,
+                                    child: _buildGalleryItem(
+                                      items[row.items[itemIndex].index],
                                     ),
                                   ),
-                                ),
-                              ),
+                                ],
+                              ],
                             ),
                           ),
                         );
@@ -479,6 +460,58 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
         ),
       ),
     );
+  }
+
+  Widget _buildGalleryItem(MediaItem media) {
+    return Selector<SelectionModel, bool>(
+      selector: (_, selectionModel) => selectionModel.contains(media.path),
+      builder: (context, selected, child) {
+        final isSelected =
+            _dragSelection.contains(media.path) ? !selected : selected;
+        return Listener(
+          key: Key(media.path),
+          onPointerDown: (event) {
+            if (event.buttons & kPrimaryMouseButton != 0) {
+              _selectFromPointer(media);
+            }
+          },
+          child: GestureDetector(
+            onTap: () {},
+            onDoubleTap: () {
+              _focusNode.requestFocus();
+              _handleDoubleTap(media);
+            },
+            child: _getContextMenu(
+              context,
+              media: media,
+              child: Selectable(
+                id: media.path,
+                onMountElement: _elements.add,
+                onUnmountElement: _elements.remove,
+                child: ValueListenableBuilder<int>(
+                  valueListenable: media.updateCounter,
+                  builder: (context, value, child) => Thumbnail(
+                    key: media.key,
+                    media: media,
+                    selected: isSelected,
+                    rename: _fileBeingRenamed == media.path,
+                    onRenamed: _onFileRenamed,
+                    onAspectRatioChanged: (_) => _scheduleAspectRelayout(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _scheduleAspectRelayout() {
+    _aspectRelayoutDebounce?.cancel();
+    _aspectRelayoutDebounce = Timer(const Duration(milliseconds: 48), () {
+      if (mounted) setState(() {});
+    });
   }
 
   Widget _getContextMenu(
@@ -748,12 +781,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
       int index = _selectionIndex();
       index = min(index + 1, _items!.length - 1);
       _selectionModel.set([_items![index].path]);
-      if (_autoScrollController.hasClients) {
-        unawaited(_autoScrollController.scrollToIndex(
-          index,
-          preferPosition: AutoScrollPosition.middle,
-        ));
-      }
+      _scrollToItem(index);
     }
   }
 
@@ -762,13 +790,24 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
       int index = _selectionIndex();
       index = max(index - 1, 0);
       _selectionModel.set([_items![index].path]);
-      if (_autoScrollController.hasClients) {
-        unawaited(_autoScrollController.scrollToIndex(
-          index,
-          preferPosition: AutoScrollPosition.middle,
-        ));
-      }
+      _scrollToItem(index);
     }
+  }
+
+  void _scrollToItem(int index) {
+    final row = _galleryLayout?.rowForItem(index);
+    if (row == null || !_galleryScrollController.hasClients) return;
+    final position = _galleryScrollController.position;
+    final target =
+        (16 + row.offset - (position.viewportDimension - row.height) / 2)
+            .clamp(position.minScrollExtent, position.maxScrollExtent);
+    unawaited(
+      _galleryScrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+      ),
+    );
   }
 
   void _rename(String path) {

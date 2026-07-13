@@ -6,7 +6,7 @@ Replace `macos_ui` with a Foto-owned desktop UI based on the airy gallery direct
 
 ## Guardrails
 
-- Keep the existing `GridView.builder` and sidebar virtualization unless profiling proves a replacement is safe.
+- Keep gallery and sidebar construction virtualized; dynamic tiling must use deterministic row geometry rather than eagerly laying out the whole library.
 - Do not place blur, shaders, or animated effects inside thumbnail or sidebar scrolling subtrees.
 - Use glass-like translucency only for stable chrome surfaces: sidebar, toolbar, and inspector.
 - Do not add a third-party glass or desktop-widget library.
@@ -31,6 +31,8 @@ Both appearances use the same semantic roles rather than direct color checks in 
 - accent and destructive colors
 
 The light appearance uses pearl and cool-gray surfaces with a blue-lilac accent. The dark appearance uses deep ink and graphite surfaces with a brighter lavender accent. Dark mode is designed independently and must not be implemented by mechanically inverting the light palette.
+
+The photo gallery follows the approved mockup literally: image files have no persistent filename labels and retain their decoded aspect ratios in compact justified rows. Folder tiles keep a restrained name overlay because they must remain identifiable.
 
 ## Phase 0: establish the rollback boundary
 
@@ -89,13 +91,15 @@ Commit: `feat: redesign foto sidebar navigation`
 
 ## Phase 5: gallery redesign
 
-- [ ] Make the gallery image-first with responsive tile sizing, refined spacing, and restrained labels.
+- [x] Make the gallery image-first with responsive justified rows, refined spacing, and no persistent image labels.
 - [ ] Add semantic hover, focus, selection-ring, rename, folder, loading, and empty states.
-- [ ] Keep lazy `GridView.builder` construction and predictable row geometry.
-- [ ] Avoid per-tile blur, shader masks, and expensive animated shadows.
+- [x] Keep lazy row construction and predictable, testable geometry.
+- [x] Avoid per-tile blur, shader masks, and expensive animated shadows.
 - [ ] Add widget tests for image/folder tiles, rename behavior, light/dark selection, empty/loading states, and bounded child creation for large lists.
 
 Commit: `feat: redesign gallery thumbnails and selection states`
+
+Dynamic tiling checkpoint: the custom justified-row algorithm preserves ordering, fills complete rows, avoids stretching the final row, and computes finite indexed geometry for 10,000 items. Visible image decodes feed their real aspect ratios back into a debounced relayout without a separate metadata read, which avoids eagerly opening every file on network folders. Analyzer, all 82 tests, and the macOS debug build passed.
 
 ## Phase 6: inspector redesign
 

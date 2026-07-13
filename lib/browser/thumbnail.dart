@@ -1,75 +1,68 @@
 import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:macos_ui/macos_ui.dart';
 
+import '../components/theme.dart';
 import '../model/media.dart';
 import '../utils/platform_keyboard.dart';
 import '../utils/utils.dart';
 
 class Thumbnail extends StatefulWidget {
-  static double thumbnailWidth() {
-    return _ThumbnailState.thumbnailWidth;
-  }
-
-  static double thumbnailHeight() {
-    return _ThumbnailState.thumbnailWidth +
-        //_ThumbnailState.labelSpacing +
-        _ThumbnailState.labelHeight +
-        _ThumbnailState.thumbnailPadding;
-  }
-
-  final MediaItem media;
-  final bool selected;
-  final bool rename;
-  final Function onRenamed;
-
   const Thumbnail({
     super.key,
     required this.media,
     required this.selected,
     required this.rename,
     required this.onRenamed,
+    this.onAspectRatioChanged,
   });
 
+  final MediaItem media;
+  final bool selected;
+  final bool rename;
+  final Function onRenamed;
+  final ValueChanged<double>? onAspectRatioChanged;
+
   @override
-  State<StatefulWidget> createState() => _ThumbnailState();
+  State<Thumbnail> createState() => _ThumbnailState();
 }
 
 class _ThumbnailState extends State<Thumbnail> {
-  final FocusNode _focusNode = FocusNode();
-  late TextEditingController _editController;
-
-  static const double thumbnailWidth = 160;
-  static const double thumbnailPadding = 8;
-  static const double highlightRadius = 6;
-  //static const double labelSpacing = 8;
-  static const double labelHeight = 44;
-  static const double labelFontSize = 12;
+  final FocusNode _focusNode = FocusNode(debugLabel: 'thumbnail rename');
+  late final TextEditingController _editController;
+  ImageStream? _imageStream;
+  ImageStreamListener? _imageStreamListener;
+  ImageProvider? _resolvedProvider;
 
   @override
   void initState() {
-    _editController = TextEditingController(text: widget.media.title);
     super.initState();
+    _editController = TextEditingController(text: widget.media.title);
   }
 
   @override
-  void dispose() {
-    _focusNode.dispose();
-    _editController.dispose();
-    super.dispose();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _resolvePreviewRatio();
   }
 
   @override
   void didUpdateWidget(covariant Thumbnail oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.media.path != widget.media.path) {
+      _editController.text = widget.media.title;
+      _resolvedProvider = null;
+      _resolvePreviewRatio();
+    }
+
     if (oldWidget.rename && !widget.rename) {
-      String label = widget.media.title;
-      if (_editController.text != label) {
-        String newFilename = _editController.text;
-        final renamed = widget.onRenamed(widget.media.path, newFilename);
-        if (renamed != true) {
-          _editController.text = label;
-        }
+      final originalLabel = widget.media.title;
+      if (_editController.text != originalLabel) {
+        final renamed = widget.onRenamed(
+          widget.media.path,
+          _editController.text,
+        );
+        if (renamed != true) _editController.text = originalLabel;
       }
       _editController.selection = const TextSelection.collapsed(offset: 0);
     } else if (!oldWidget.rename && widget.rename) {
@@ -80,122 +73,217 @@ class _ThumbnailState extends State<Thumbnail> {
         extentOffset:
             extensionIndex > 0 ? extensionIndex : _editController.text.length,
       );
-      Future.delayed(const Duration(milliseconds: 0), () {
-        if (mounted) {
-          _focusNode.requestFocus();
-        }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _focusNode.requestFocus();
       });
-    } else if (oldWidget.media.path != widget.media.path && !widget.rename) {
-      _editController.text = widget.media.title;
     }
-    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  void dispose() {
+    _removeImageListener();
+    _focusNode.dispose();
+    _editController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget textField = _getTextField();
-    if (widget.rename) {
-      textField = Focus(
-        onKeyEvent: _handleRenameKeyEvent,
-        child: textField,
+    final palette = FotoPalette.of(context);
+    final tooltip = StringBuffer(widget.media.title);
+    if (widget.media.imageSize case final imageSize?) {
+      tooltip.write('\n${imageSize.width} × ${imageSize.height}');
+    }
+    if (widget.media.fileSize case final fileSize?) {
+      tooltip.write('\n${filesize(fileSize)}');
+    }
+
+    return Tooltip(
+      message: tooltip.toString(),
+      child: Semantics(
+        label: widget.media.title,
+        image: widget.media.isFile(),
+        selected: widget.selected,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: palette.elevatedSurface,
+            border: Border.all(
+              color: widget.selected ? palette.selectionRing : palette.divider,
+              width: widget.selected ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(widget.selected ? 2 : 1),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _buildPreview(palette),
+                  if (widget.media.isDir()) _buildFolderLabel(palette),
+                  if (widget.rename) _buildRenameField(palette),
+                  if (widget.selected && !widget.rename)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: palette.selectionRing,
+                          shape: BoxShape.circle,
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x33000000),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.all(4),
+                          child:
+                              Icon(Icons.check, color: Colors.white, size: 12),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPreview(FotoPalette palette) {
+    final thumbnail = widget.media.thumbnail;
+    if (thumbnail == null) {
+      return ColoredBox(color: palette.chromeSurface);
+    }
+    if (widget.media.isDir()) {
+      return ColoredBox(
+        color: palette.chromeSurface,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Image(
+              image: thumbnail.image,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.medium,
+            ),
+          ),
+        ),
       );
     }
-
-    String tooltip = widget.media.title;
-    if (widget.media.imageSize != null) {
-      tooltip +=
-          '\n${widget.media.imageSize!.width} x ${widget.media.imageSize!.height}';
-    }
-    if (widget.media.fileSize != null) {
-      tooltip += '\n${filesize(widget.media.fileSize)}';
-    }
-
-    return SizedBox(
-      width: thumbnailWidth,
-      height: Thumbnail.thumbnailHeight(),
-      child: Column(
-        children: [
-          Tooltip(
-            message: tooltip,
-            waitDuration: const Duration(seconds: 1),
-            padding: const EdgeInsets.symmetric(
-              vertical: 2,
-              horizontal: 4,
-            ),
-            decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 226, 221, 228),
-                border: Border.all(
-                    color: const Color.fromARGB(255, 198, 198, 198), width: 1)),
-            textStyle: const TextStyle(
-              color: Colors.black,
-              fontSize: 11,
-            ),
-            child: _getThumbnailImage(),
-          ),
-          textField,
-        ],
+    return Image(
+      image: thumbnail.image,
+      fit: BoxFit.cover,
+      filterQuality: FilterQuality.medium,
+      gaplessPlayback: true,
+      errorBuilder: (context, error, stackTrace) => ColoredBox(
+        color: palette.chromeSurface,
+        child: Icon(
+          Icons.broken_image_outlined,
+          color: palette.secondaryText,
+          size: 28,
+        ),
       ),
     );
   }
 
-  Widget _getThumbnailImage() {
-    Color highlightColor = MacosTheme.brightnessOf(context) == Brightness.dark
-        ? Colors.black
-        : Colors.grey.shade300;
-
-    return AspectRatio(
-      aspectRatio: 1.0,
-      child: Container(
-        padding: const EdgeInsets.all(thumbnailPadding),
-        decoration: BoxDecoration(
-          color: widget.selected ? highlightColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(highlightRadius),
+  Widget _buildFolderLabel(FotoPalette palette) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.transparent, Color(0xB8000000)],
+          ),
         ),
         child: Padding(
-          padding: EdgeInsets.all(widget.media.isFile() ? 0 : 16),
-          child: widget.media.thumbnail,
+          padding: const EdgeInsets.fromLTRB(10, 24, 10, 9),
+          child: Row(
+            children: [
+              const Icon(Icons.folder_rounded, color: Colors.white, size: 15),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  widget.media.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _getTextField() {
-    return SizedBox(
-      width: thumbnailWidth,
-      child: MacosTextField(
-        focusNode: _focusNode,
-        maxLines: widget.rename ? 1 : 2,
-        enabled: widget.rename,
-        enableSuggestions: false,
-        autocorrect: false,
-        controller: _editController,
-        decoration: BoxDecoration(
-          color: null,
-          boxShadow: null,
-          border: Border.all(
-            color: widget.rename
-                ? const Color.fromARGB(255, 147, 178, 246)
-                : Colors.transparent,
-            width: 2,
+  Widget _buildRenameField(FotoPalette palette) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Focus(
+        onKeyEvent: _handleRenameKeyEvent,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: TextField(
+            focusNode: _focusNode,
+            controller: _editController,
+            maxLines: 1,
+            enableSuggestions: false,
+            autocorrect: false,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: palette.primaryText,
+                ),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: palette.elevatedSurface,
+            ),
           ),
-          borderRadius: BorderRadius.circular(highlightRadius),
-        ),
-        disabledColor: widget.selected
-            ? const Color.fromARGB(255, 48, 105, 202)
-            : Colors.transparent,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: labelFontSize,
-          color: (widget.selected && !widget.rename) ? Colors.white : null,
         ),
       ),
     );
+  }
+
+  void _resolvePreviewRatio() {
+    if (!widget.media.isFile()) return;
+    final provider = widget.media.thumbnail?.image;
+    if (provider == null || identical(provider, _resolvedProvider)) return;
+    _removeImageListener();
+    _resolvedProvider = provider;
+    final stream = provider.resolve(createLocalImageConfiguration(context));
+    final listener = ImageStreamListener((imageInfo, synchronousCall) {
+      final width = imageInfo.image.width;
+      final height = imageInfo.image.height;
+      if (width <= 0 || height <= 0) return;
+      final ratio = width / height;
+      final previous = widget.media.previewAspectRatio;
+      if (previous != null && (previous - ratio).abs() < 0.01) return;
+      widget.media.previewAspectRatio = ratio;
+      widget.onAspectRatioChanged?.call(ratio);
+    });
+    _imageStream = stream;
+    _imageStreamListener = listener;
+    stream.addListener(listener);
+  }
+
+  void _removeImageListener() {
+    final stream = _imageStream;
+    final listener = _imageStreamListener;
+    if (stream != null && listener != null) stream.removeListener(listener);
+    _imageStream = null;
+    _imageStreamListener = null;
   }
 
   KeyEventResult _handleRenameKeyEvent(FocusNode node, KeyEvent event) {
-    if (event is KeyUpEvent) {
-      return KeyEventResult.ignored;
-    }
+    if (event is KeyUpEvent) return KeyEventResult.ignored;
     if (PlatformKeyboard.isEscape(event)) {
       _editController.text = Utils.pathTitle(widget.media.path)!;
       widget.onRenamed(widget.media.path, null);
