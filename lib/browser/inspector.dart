@@ -8,7 +8,6 @@ import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:foto/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
-import 'package:path/path.dart' as p;
 
 import '../components/theme.dart';
 import '../model/selection.dart';
@@ -31,26 +30,14 @@ class InspectorGroup {
   final List<InspectorValue> values;
 }
 
-class InspectorFact {
-  const InspectorFact(this.value);
-
-  final String value;
-}
-
 class InspectorSummary {
   const InspectorSummary({
-    required this.filename,
     required this.dateLabel,
     required this.date,
-    required this.details,
-    required this.facts,
   });
 
-  final String filename;
   final String dateLabel;
   final DateTime? date;
-  final String details;
-  final List<InspectorFact> facts;
 }
 
 typedef InspectorMapSnapshotLoader = Future<Uint8List?> Function(
@@ -188,27 +175,9 @@ class _InspectorState extends State<Inspector> {
 
   InspectorSummary _buildSummary(AppLocalizations t) {
     final captureDate = captureDateFromExif(_exifData ?? const {});
-    final details = <String>[
-      if (_imageSize != null) '${_imageSize!.width} × ${_imageSize!.height}',
-      if (_fileSize != null) filesize(_fileSize),
-      p.extension(_currentFile!).replaceFirst('.', '').toUpperCase(),
-    ].where((value) => value.isNotEmpty).join('  •  ');
-    final facts = <InspectorFact>[
-      InspectorFact(_getExifTag('EXIF ISOSpeedRatings', prefix: 'ISO ')),
-      InspectorFact(
-        _getExifTag('EXIF FocalLength', parseRatio: true, suffix: ' mm'),
-      ),
-      InspectorFact(
-        _getExifTag('EXIF FNumber', parseRatio: true, prefix: 'f/'),
-      ),
-      InspectorFact(_getExifTag('EXIF ExposureTime', suffix: ' s')),
-    ].where((fact) => fact.value.isNotEmpty).toList(growable: false);
     return InspectorSummary(
-      filename: Utils.pathTitle(_currentFile) ?? '',
       dateLabel: captureDate == null ? t.inspectorCreated : t.inspectorCaptured,
       date: captureDate ?? _creationDate,
-      details: details,
-      facts: facts,
     );
   }
 
@@ -460,17 +429,15 @@ class InspectorPanel extends StatelessWidget {
                     const SizedBox(height: 12),
                   ],
                   if (summary != null) ...[
-                    _InspectorSummaryCard(summary: summary!),
-                    const SizedBox(height: 12),
-                    if (!loading) ...[
-                      _InspectorMapCard(
-                        location: location,
-                        noLocationLabel: noLocationLabel,
-                        mapUnavailableLabel: mapUnavailableLabel,
-                        snapshotLoader: mapSnapshotLoader,
-                      ),
-                      const SizedBox(height: 18),
-                    ],
+                    _InspectorCaptureCard(
+                      summary: summary!,
+                      location: location,
+                      noLocationLabel: noLocationLabel,
+                      mapUnavailableLabel: mapUnavailableLabel,
+                      mapSnapshotLoader: mapSnapshotLoader,
+                      showMap: !loading,
+                    ),
+                    const SizedBox(height: 18),
                   ],
                   if (visibleGroups.isNotEmpty) ...[
                     Padding(
@@ -502,10 +469,22 @@ class InspectorPanel extends StatelessWidget {
   }
 }
 
-class _InspectorSummaryCard extends StatelessWidget {
-  const _InspectorSummaryCard({required this.summary});
+class _InspectorCaptureCard extends StatelessWidget {
+  const _InspectorCaptureCard({
+    required this.summary,
+    required this.location,
+    required this.noLocationLabel,
+    required this.mapUnavailableLabel,
+    required this.mapSnapshotLoader,
+    required this.showMap,
+  });
 
   final InspectorSummary summary;
+  final PhotoLocation? location;
+  final String noLocationLabel;
+  final String mapUnavailableLabel;
+  final InspectorMapSnapshotLoader mapSnapshotLoader;
+  final bool showMap;
 
   @override
   Widget build(BuildContext context) {
@@ -536,7 +515,7 @@ class _InspectorSummaryCard extends StatelessWidget {
             ),
             const SizedBox(height: 5),
             Text(
-              formattedDate ?? summary.filename,
+              formattedDate ?? '—',
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -545,60 +524,13 @@ class _InspectorSummaryCard extends StatelessWidget {
                     height: 1.2,
                   ),
             ),
-            if (formattedDate != null) ...[
-              const SizedBox(height: 5),
-              Text(
-                summary.filename,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: palette.secondaryText,
-                    ),
-              ),
-            ],
-            if (summary.details.isNotEmpty) ...[
-              const SizedBox(height: 3),
-              Text(
-                summary.details,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: palette.secondaryText,
-                      height: 1.25,
-                    ),
-              ),
-            ],
-            if (summary.facts.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final fact in summary.facts)
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: palette.selectionFill,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 5,
-                        ),
-                        child: Text(
-                          fact.value,
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: palette.primaryText,
-                            fontWeight: FontWeight.w600,
-                            fontFeatures: const [
-                              FontFeature.tabularFigures(),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+            if (showMap) ...[
+              const SizedBox(height: 14),
+              _InspectorMapCard(
+                location: location,
+                noLocationLabel: noLocationLabel,
+                mapUnavailableLabel: mapUnavailableLabel,
+                snapshotLoader: mapSnapshotLoader,
               ),
             ],
           ],

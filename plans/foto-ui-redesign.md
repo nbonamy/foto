@@ -115,7 +115,7 @@ Commit: `feat: redesign foto metadata inspector`
 
 Inspector checkpoint: the inspector now uses compact grouped cards for file, capture, camera, and image data, filters empty values, and presents explicit empty and loading states. Focused inspector tests, analyzer, all 88 tests, and a macOS debug build passed.
 
-Capture-context checkpoint: the inspector now leads with the capture date, filename, dimensions, size, format, and the most useful exposure facts. Embedded EXIF GPS coordinates produce an on-demand native MapKit snapshot with appearance-aware rendering; missing or invalid GPS data stays a clear, non-failing state. Technical file, capture, camera, and image tables follow under an explicit secondary heading. GPS/date parsing, native-channel arguments, hierarchy, and light/dark rendered output are covered by tests. Analyzer, all 104 tests, and the macOS debug build passed.
+Capture-context checkpoint: the inspector now leads with one user-facing card containing only the capture date and its map. Embedded EXIF GPS coordinates produce an on-demand native MapKit snapshot with appearance-aware rendering; missing or invalid GPS data stays a clear, non-failing state. Filename, dimensions, file size, format, exposure, camera, and image metadata remain available only in the explicitly secondary technical tables. GPS/date parsing, native-channel arguments, hierarchy, and light/dark rendered output are covered by tests. Analyzer, all 104 tests, and the macOS debug build passed.
 
 ## Phase 7: dialogs and remaining controls
 

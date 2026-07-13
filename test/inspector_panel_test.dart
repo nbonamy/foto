@@ -100,16 +100,8 @@ void main() {
           noLocationLabel: 'No location',
           mapUnavailableLabel: 'Map unavailable',
           summary: InspectorSummary(
-            filename: 'iceland.jpg',
             dateLabel: 'Captured',
             date: DateTime(2024, 5, 12, 16, 32, 18),
-            details: '4032 × 5040  •  20.3 MB  •  JPEG',
-            facts: const [
-              InspectorFact('ISO 100'),
-              InspectorFact('50 mm'),
-              InspectorFact('f/2.0'),
-              InspectorFact('1/640 s'),
-            ],
           ),
           location: const PhotoLocation(
             latitude: 64.1466,
@@ -132,7 +124,9 @@ void main() {
 
     expect(find.text('CAPTURED'), findsOneWidget);
     expect(find.textContaining('May 12, 2024'), findsOneWidget);
-    expect(find.text('ISO 100'), findsOneWidget);
+    expect(find.text('iceland.jpg'), findsNothing);
+    expect(find.text('ISO 100'), findsNothing);
+    expect(find.text('4032 × 5040  •  20.3 MB  •  JPEG'), findsNothing);
     expect(find.text('64.1466, -21.9426'), findsOneWidget);
     expect(find.text('TECHNICAL DETAILS'), findsOneWidget);
     expect(find.byType(Image), findsOneWidget);

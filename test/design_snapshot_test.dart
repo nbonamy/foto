@@ -322,16 +322,8 @@ class _PreviewInspector extends StatelessWidget {
       loadingLabel: '',
       loading: false,
       summary: InspectorSummary(
-        filename: 'DSC_4821.jpg',
         dateLabel: 'Captured',
         date: DateTime(2026, 7, 12, 18, 42),
-        details: '6000 × 4000  •  8.4 MB  •  JPEG',
-        facts: const [
-          InspectorFact('ISO 200'),
-          InspectorFact('28 mm'),
-          InspectorFact('f/2.8'),
-          InspectorFact('1/250 s'),
-        ],
       ),
       location: const PhotoLocation(
         latitude: 64.1466,
