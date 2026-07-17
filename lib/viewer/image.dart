@@ -9,12 +9,12 @@ class ImageFile extends FileImage {
 
   final int _version;
 
-  ImageFile(String path)
+  ImageFile(String path, {double scale = 1})
       : _version = Object.hash(
           _generations[path] ?? 0,
           _lastModified(path),
         ),
-        super(File(path));
+        super(File(path), scale: scale);
 
   static int _lastModified(String path) {
     try {
@@ -41,10 +41,11 @@ class ImageFile extends FileImage {
     } else {
       return other is ImageFile &&
           other.file.path == file.path &&
-          other._version == _version;
+          other._version == _version &&
+          other.scale == scale;
     }
   }
 
   @override
-  int get hashCode => Object.hash(file.path, _version);
+  int get hashCode => Object.hash(file.path, _version, scale);
 }

@@ -91,6 +91,16 @@ Add a fast review workflow that finds visually similar photos in the open folder
    - Run formatting, all tests, analyzer, and both debug and release macOS builds.
    - Append durable workflow and design learnings below before committing.
 
+## Progress
+
+- [x] Save the reviewed plan and verify the baseline.
+- [x] Add the instant gallery loupe.
+- [ ] Cache native visual feature prints.
+- [ ] Add folder similarity sessions.
+- [ ] Add similar-photo review.
+- [ ] Add synchronized photo comparison.
+- [ ] Verify the complete workflow and append learnings.
+
 ## Acceptance
 
 - No similarity result can originate outside the open folder snapshot.

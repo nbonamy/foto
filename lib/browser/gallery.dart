@@ -25,6 +25,7 @@ import '../utils/platform_utils.dart';
 import 'gallery_status_view.dart';
 import 'justified_gallery_view.dart';
 import 'justified_layout.dart';
+import 'photo_loupe.dart';
 import 'thumbnail.dart';
 
 class ImageGallery extends StatefulWidget {
@@ -70,6 +71,8 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   final ScrollController _galleryScrollController = ScrollController();
   JustifiedGalleryLayout? _galleryLayout;
   Timer? _aspectRelayoutDebounce;
+  final GlobalKey _gallerySurfaceKey = GlobalKey();
+  final GalleryLoupeController _loupeController = GalleryLoupeController();
 
   FocusNode get _focusNode => widget.focusNode;
 
@@ -168,6 +171,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     cancelMenuSubscription();
     _preferences.removeListener(_onPrefsChange);
     _galleryScrollController.dispose();
+    _loupeController.dispose();
     super.dispose();
   }
 
@@ -299,10 +303,15 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
       focusNode: _focusNode,
       autofocus: true,
       debugLabel: 'gallery',
-      //onFocusChange: (hasFocus) {
-      //  if (hasFocus) debugPrint('gallery');
-      //},
+      onFocusChange: (hasFocus) {
+        if (!hasFocus) _loupeController.setHeld(false);
+      },
       onKeyEvent: (_, event) {
+        if (event.logicalKey == LogicalKeyboardKey.space &&
+            _fileBeingRenamed == null) {
+          _loupeController.setHeld(event is! KeyUpEvent);
+          return KeyEventResult.handled;
+        }
         if (event is KeyUpEvent) {
           _extendSelection =
               PlatformKeyboard.selectionExtensionModifierPressed(event);
@@ -332,6 +341,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
         onPanEnd: _handlePanEnd,
         behavior: HitTestBehavior.translucent,
         child: Stack(
+          key: _gallerySurfaceKey,
           children: [
             FutureBuilder(
               future: _getItems(),
@@ -371,6 +381,17 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
               },
             ),
             _getSelectionRect(),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: ValueListenableBuilder<GalleryLoupeTarget?>(
+                  valueListenable: _loupeController,
+                  builder: (context, target, child) {
+                    if (target == null) return const SizedBox.shrink();
+                    return GalleryLoupeOverlay(target: target);
+                  },
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -383,42 +404,82 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
       builder: (context, selected, child) {
         final isSelected =
             _dragSelection.contains(media.path) ? !selected : selected;
-        return Listener(
-          key: Key(media.path),
-          onPointerDown: (event) {
-            if (event.buttons & kPrimaryMouseButton != 0) {
-              _selectFromPointer(media);
-            }
-          },
-          child: GestureDetector(
-            onTap: () {},
-            onDoubleTap: () {
-              _focusNode.requestFocus();
-              _handleDoubleTap(media);
-            },
-            child: _getContextMenu(
-              context,
-              media: media,
-              child: Selectable(
-                id: media.path,
-                onMountElement: _elements.add,
-                onUnmountElement: _elements.remove,
-                child: ValueListenableBuilder<int>(
-                  valueListenable: media.updateCounter,
-                  builder: (context, value, child) => Thumbnail(
-                    key: media.key,
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final tileSize = constraints.biggest;
+            return MouseRegion(
+              onEnter: media.isFile()
+                  ? (event) => _updateLoupeTarget(media, event, tileSize)
+                  : null,
+              onHover: media.isFile()
+                  ? (event) => _updateLoupeTarget(media, event, tileSize)
+                  : null,
+              onExit: media.isFile()
+                  ? (_) => _loupeController.leave(media.path)
+                  : null,
+              child: Listener(
+                key: Key(media.path),
+                onPointerDown: (event) {
+                  if (event.buttons & kPrimaryMouseButton != 0) {
+                    _selectFromPointer(media);
+                  }
+                },
+                child: GestureDetector(
+                  onTap: () {},
+                  onDoubleTap: () {
+                    _focusNode.requestFocus();
+                    _handleDoubleTap(media);
+                  },
+                  child: _getContextMenu(
+                    context,
                     media: media,
-                    selected: isSelected,
-                    rename: _fileBeingRenamed == media.path,
-                    onRenamed: _onFileRenamed,
-                    onAspectRatioChanged: (_) => _scheduleAspectRelayout(),
+                    child: Selectable(
+                      id: media.path,
+                      onMountElement: _elements.add,
+                      onUnmountElement: _elements.remove,
+                      child: ValueListenableBuilder<int>(
+                        valueListenable: media.updateCounter,
+                        builder: (context, value, child) => Thumbnail(
+                          key: media.key,
+                          media: media,
+                          selected: isSelected,
+                          rename: _fileBeingRenamed == media.path,
+                          onRenamed: _onFileRenamed,
+                          onAspectRatioChanged: (_) =>
+                              _scheduleAspectRelayout(),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
+    );
+  }
+
+  void _updateLoupeTarget(
+    MediaItem media,
+    PointerEvent event,
+    Size tileSize,
+  ) {
+    final preview = media.thumbnail?.image;
+    final surface =
+        _gallerySurfaceKey.currentContext?.findRenderObject() as RenderBox?;
+    if (preview == null || surface == null || !surface.hasSize) return;
+    _loupeController.hover(
+      GalleryLoupeTarget(
+        path: media.path,
+        preview: preview,
+        normalizedPosition: LoupeGeometry.normalizedSourcePosition(
+          localPosition: event.localPosition,
+          tileSize: tileSize,
+          imageAspectRatio: media.aspectRatio,
+        ),
+        surfacePosition: surface.globalToLocal(event.position),
+      ),
     );
   }
 
