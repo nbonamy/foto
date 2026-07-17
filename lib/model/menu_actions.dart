@@ -18,6 +18,8 @@ enum MenuAction {
   editPasteMove,
   editDelete,
   imageView,
+  imageFindSimilar,
+  imageCompare,
   imageRotate90cw,
   imageRotate90ccw,
   imageRotate180,

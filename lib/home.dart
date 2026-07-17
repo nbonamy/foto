@@ -9,6 +9,8 @@ import 'package:foto/l10n/app_localizations.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'browser/browser.dart';
+import 'compare/compare_selection.dart';
+import 'compare/compare_view.dart';
 import 'model/menu_actions.dart';
 import 'model/preferences.dart';
 import 'model/selection.dart';
@@ -36,6 +38,7 @@ class _HomeState extends State<Home> with WindowListener {
       MenuActionController.broadcast();
   StreamSubscription<String>? _fileSubscription;
   PageRoute<void>? _viewerRoute;
+  PageRoute<void>? _compareRoute;
   int _openRequestGeneration = 0;
   bool _instantFullScreenActive = false;
 
@@ -89,6 +92,7 @@ class _HomeState extends State<Home> with WindowListener {
       child: Browser(
         key: _keyBrowser,
         viewImages: viewImages,
+        compareImages: compareImages,
         menuActionStream: _menuActionBrowserStream.stream,
       ),
     );
@@ -185,6 +189,14 @@ class _HomeState extends State<Home> with WindowListener {
                 label: t.menuImageView,
                 shortcut: const SingleActivator(LogicalKeyboardKey.enter),
                 onSelected: () => _onMenu(MenuAction.imageView),
+              ),
+              PlatformMenuItem(
+                label: t.findSimilarPhotos,
+                onSelected: () => _onMenu(MenuAction.imageFindSimilar),
+              ),
+              PlatformMenuItem(
+                label: t.comparePhotos,
+                onSelected: () => _onMenu(MenuAction.imageCompare),
               ),
             ],
           ),
@@ -356,6 +368,42 @@ class _HomeState extends State<Home> with WindowListener {
           setState(() {});
         }
         await _exitInstantFullScreen();
+        _restoreBrowserFocus();
+      }
+    }
+  }
+
+  Future<void> compareImages(List<String> images) async {
+    final normalized = normalizeFolderComparison(images);
+    if (!mounted || normalized == null) return;
+
+    final previousRoute = _compareRoute;
+    final navigator = Navigator.of(context);
+    if (previousRoute?.isActive == true) {
+      navigator.removeRoute(previousRoute!);
+    }
+
+    late final PageRoute<void> route;
+    route = PageRouteBuilder<void>(
+      settings: const RouteSettings(name: '/compare'),
+      pageBuilder: (routeContext, _, __) => CompareView(
+        images: normalized,
+        close: () {
+          if (route.isActive) Navigator.of(routeContext).pop();
+        },
+      ),
+      transitionDuration: const Duration(milliseconds: 160),
+      reverseTransitionDuration: const Duration(milliseconds: 120),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(opacity: animation, child: child);
+      },
+    );
+    _compareRoute = route;
+    try {
+      await navigator.push(route);
+    } finally {
+      if (identical(_compareRoute, route)) {
+        _compareRoute = null;
         _restoreBrowserFocus();
       }
     }

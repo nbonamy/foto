@@ -210,6 +210,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get similarPhotosTitle => 'Similar Photos';
 
   @override
+  String get findSimilarPhotos => 'Find Similar Photos';
+
+  @override
   String get similarPhotosDescription => 'Results from this folder only';
 
   @override
@@ -240,6 +243,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get comparePhotos => 'Compare';
+
+  @override
+  String get compareSyncZoom => 'Synchronize Zoom and Pan';
 
   @override
   String compareSelectionCount(Object count) {

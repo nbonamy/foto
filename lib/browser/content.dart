@@ -8,6 +8,7 @@ import '../components/toolbar.dart';
 import '../components/window_shell.dart';
 import '../model/menu_actions.dart';
 import '../model/preferences.dart';
+import '../model/selection.dart';
 import '../utils/database.dart';
 import '../utils/utils.dart';
 import 'gallery.dart';
@@ -19,6 +20,7 @@ class BrowserContent extends StatefulWidget {
   final bool canNavigateBack;
   final Function navigateToFolder;
   final Function viewImages;
+  final ValueChanged<List<String>> compareImages;
   final MenuActionStream menuActionStream;
   final FocusNode galleryFocusNode;
   final List<String>? initialSelection;
@@ -36,6 +38,7 @@ class BrowserContent extends StatefulWidget {
     required this.toggleSidebar,
     required this.navigateToFolder,
     required this.viewImages,
+    required this.compareImages,
     this.initialSelection,
   });
 
@@ -44,6 +47,8 @@ class BrowserContent extends StatefulWidget {
 }
 
 class _BrowserContentState extends State<BrowserContent> with MenuHandler {
+  final GlobalKey<ImageGalleryState> _galleryKey = GlobalKey();
+
   @override
   void initState() {
     initMenuSubscription(widget.menuActionStream);
@@ -76,6 +81,7 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
                 child: ColoredBox(
                   color: palette.canvas,
                   child: ImageGallery(
+                    key: _galleryKey,
                     path: widget.path,
                     mediaDb: widget.mediaDb,
                     navigatorContext: context,
@@ -111,11 +117,14 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
     String? folder,
     List<String>? images,
     int? index,
+    List<String>? comparison,
   }) {
     if (folder != null) {
       widget.navigateToFolder(folder);
     } else if (images != null && index != null) {
       widget.viewImages(images, index);
+    } else if (comparison != null) {
+      widget.compareImages(comparison);
     }
   }
 
@@ -151,31 +160,57 @@ class _BrowserContentState extends State<BrowserContent> with MenuHandler {
           selected: prefs.showInspector,
         ),
       ],
-      trailing: FotoToolbarMenuButton<_SortAction>(
-        icon: Icons.sort_rounded,
-        label: prefs.sortCriteria == SortCriteria.chronological
-            ? t.sortByDate
-            : t.sortByName,
-        tooltip: t.sortTitle,
-        onSelected: _applySortAction,
-        itemBuilder: (context) => [
-          CheckedPopupMenuItem(
-            value: _SortAction.alphabetical,
-            checked: prefs.sortCriteria == SortCriteria.alphabetical,
-            child: Text(t.sortCriteriaAlphabetical),
-          ),
-          CheckedPopupMenuItem(
-            value: _SortAction.chronological,
-            checked: prefs.sortCriteria == SortCriteria.chronological,
-            child: Text(t.sortCriteriaChronological),
-          ),
-          const PopupMenuDivider(),
-          CheckedPopupMenuItem(
-            value: _SortAction.reverse,
-            checked: prefs.sortReversed,
-            child: Text(t.sortOrderReverse),
-          ),
-        ],
+      trailing: Selector<SelectionModel, String>(
+        selector: (_, selection) => selection.get.join('\u{0}'),
+        builder: (context, selectionKey, child) {
+          final canFindSimilar =
+              _galleryKey.currentState?.canFindSimilar == true;
+          final canCompare = _galleryKey.currentState?.canCompare == true;
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (canFindSimilar)
+                FotoToolbarButton(
+                  icon: Icons.image_search_rounded,
+                  tooltip: t.findSimilarPhotos,
+                  onPressed: () => _galleryKey.currentState?.findSimilar(),
+                )
+              else if (canCompare)
+                FotoToolbarButton(
+                  icon: Icons.compare_rounded,
+                  tooltip: t.comparePhotos,
+                  onPressed: () => _galleryKey.currentState?.compareSelection(),
+                ),
+              if (canFindSimilar || canCompare) const SizedBox(width: 8),
+              FotoToolbarMenuButton<_SortAction>(
+                icon: Icons.sort_rounded,
+                label: prefs.sortCriteria == SortCriteria.chronological
+                    ? t.sortByDate
+                    : t.sortByName,
+                tooltip: t.sortTitle,
+                onSelected: _applySortAction,
+                itemBuilder: (context) => [
+                  CheckedPopupMenuItem(
+                    value: _SortAction.alphabetical,
+                    checked: prefs.sortCriteria == SortCriteria.alphabetical,
+                    child: Text(t.sortCriteriaAlphabetical),
+                  ),
+                  CheckedPopupMenuItem(
+                    value: _SortAction.chronological,
+                    checked: prefs.sortCriteria == SortCriteria.chronological,
+                    child: Text(t.sortCriteriaChronological),
+                  ),
+                  const PopupMenuDivider(),
+                  CheckedPopupMenuItem(
+                    value: _SortAction.reverse,
+                    checked: prefs.sortReversed,
+                    child: Text(t.sortOrderReverse),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }

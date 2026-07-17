@@ -77,6 +77,7 @@
   "galleryLoading": "Loading photos…",
   "galleryEmpty": "No photos in this folder.",
   "similarPhotosTitle": "Similar Photos",
+  "findSimilarPhotos": "Find Similar Photos",
   "similarPhotosDescription": "Results from this folder only",
   "similarPhotosScanning": "Analyzing {processed} of {total}",
   "@similarPhotosScanning": { "placeholders": { "processed": {}, "total": {} } },
@@ -88,6 +89,7 @@
   "similarityNearDuplicate": "Near duplicate",
   "similaritySimilar": "Similar",
   "comparePhotos": "Compare",
+  "compareSyncZoom": "Synchronize Zoom and Pan",
   "compareSelectionCount": "{count} of 4 selected",
   "@compareSelectionCount": { "placeholders": { "count": {} } },
 

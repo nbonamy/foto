@@ -211,6 +211,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get similarPhotosTitle => 'Photos similaires';
 
   @override
+  String get findSimilarPhotos => 'Trouver des photos similaires';
+
+  @override
   String get similarPhotosDescription => 'Résultats de ce dossier uniquement';
 
   @override
@@ -242,6 +245,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get comparePhotos => 'Comparer';
+
+  @override
+  String get compareSyncZoom => 'Synchroniser le zoom et le déplacement';
 
   @override
   String compareSelectionCount(Object count) {

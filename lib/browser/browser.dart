@@ -15,11 +15,13 @@ import 'sidebar.dart';
 
 class Browser extends StatefulWidget {
   final Function viewImages;
+  final ValueChanged<List<String>> compareImages;
   final MenuActionStream menuActionStream;
 
   const Browser({
     super.key,
     required this.viewImages,
+    required this.compareImages,
     required this.menuActionStream,
   });
 
@@ -74,6 +76,7 @@ class BrowserState extends State<Browser> {
         toggleSidebar: _toggleSidebar,
         navigateToFolder: _navigateToFolder,
         viewImages: widget.viewImages,
+        compareImages: widget.compareImages,
       ),
     );
   }

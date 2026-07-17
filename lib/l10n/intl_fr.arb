@@ -73,6 +73,7 @@
   "galleryLoading": "Chargement des photos…",
   "galleryEmpty": "Aucune photo dans ce dossier.",
   "similarPhotosTitle": "Photos similaires",
+  "findSimilarPhotos": "Trouver des photos similaires",
   "similarPhotosDescription": "Résultats de ce dossier uniquement",
   "similarPhotosScanning": "Analyse de {processed} sur {total}",
   "@similarPhotosScanning": { "placeholders": { "processed": {}, "total": {} } },
@@ -84,6 +85,7 @@
   "similarityNearDuplicate": "Quasi identique",
   "similaritySimilar": "Similaire",
   "comparePhotos": "Comparer",
+  "compareSyncZoom": "Synchroniser le zoom et le déplacement",
   "compareSelectionCount": "{count} sur 4 sélectionnées",
   "@compareSelectionCount": { "placeholders": { "count": {} } },
 

@@ -470,6 +470,12 @@ abstract class AppLocalizations {
   /// **'Similar Photos'**
   String get similarPhotosTitle;
 
+  /// No description provided for @findSimilarPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Find Similar Photos'**
+  String get findSimilarPhotos;
+
   /// No description provided for @similarPhotosDescription.
   ///
   /// In en, this message translates to:
@@ -529,6 +535,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Compare'**
   String get comparePhotos;
+
+  /// No description provided for @compareSyncZoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronize Zoom and Pan'**
+  String get compareSyncZoom;
 
   /// No description provided for @compareSelectionCount.
   ///

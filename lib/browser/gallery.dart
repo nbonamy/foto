@@ -26,6 +26,8 @@ import 'gallery_status_view.dart';
 import 'justified_gallery_view.dart';
 import 'justified_layout.dart';
 import 'photo_loupe.dart';
+import 'similar_photo_review.dart';
+import 'similarity_session.dart';
 import 'thumbnail.dart';
 
 class ImageGallery extends StatefulWidget {
@@ -49,15 +51,16 @@ class ImageGallery extends StatefulWidget {
   });
 
   @override
-  State<StatefulWidget> createState() => _ImageGalleryState();
+  ImageGalleryState createState() => ImageGalleryState();
 }
 
-class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
+class ImageGalleryState extends State<ImageGallery> with MenuHandler {
   List<MediaItem>? _items;
   Future<List<MediaItem>>? _itemsFuture;
   int _loadGeneration = 0;
   final Set<String> _pendingModifiedPaths = {};
   String? _fileBeingRenamed;
+  FolderSimilaritySession? _similaritySession;
 
   late Preferences _preferences;
 
@@ -95,6 +98,23 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
 
   Selection get selection {
     return _selectionModel.get;
+  }
+
+  bool get canFindSimilar {
+    if (selection.length != 1) return false;
+    return _items?.any(
+          (item) => item.isFile() && item.path == selection.first,
+        ) ==
+        true;
+  }
+
+  bool get canCompare {
+    if (selection.length < 2 || selection.length > 4) return false;
+    final filePaths = (_items ?? [])
+        .where((item) => item.isFile())
+        .map((item) => item.path)
+        .toSet();
+    return selection.every(filePaths.contains);
   }
 
   @override
@@ -172,6 +192,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
     _preferences.removeListener(_onPrefsChange);
     _galleryScrollController.dispose();
     _loupeController.dispose();
+    _similaritySession?.cancel();
     super.dispose();
   }
 
@@ -194,6 +215,7 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
   }
 
   Future<void> _handleDirectoryEvent(FileSystemEvent event) async {
+    _similaritySession?.cancel();
     // Ignore metadata-only modification events.
     if (event is FileSystemModifyEvent && !event.contentChanged) return;
 
@@ -504,6 +526,17 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
             onClick: (_) => _handleDoubleTap(media),
           ),
           ctxm.MenuItem(
+            label: t.findSimilarPhotos,
+            disabled: !canFindSimilar,
+            onClick: (_) => findSimilar(),
+          ),
+          ctxm.MenuItem(
+            label: t.comparePhotos,
+            disabled: !canCompare,
+            onClick: (_) => compareSelection(),
+          ),
+          ctxm.MenuItem.separator(),
+          ctxm.MenuItem(
               label:
                   _photoshopPath == null ? t.edit : t.edit_with(photoshopName!),
               disabled: _photoshopPath == null,
@@ -612,6 +645,12 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
           }
         }
         break;
+      case MenuAction.imageFindSimilar:
+        findSimilar();
+        break;
+      case MenuAction.imageCompare:
+        compareSelection();
+        break;
       case MenuAction.imageRotate90cw:
         _rotateSelection(ImageTransformation.rotate90CW);
         break;
@@ -643,6 +682,49 @@ class _ImageGalleryState extends State<ImageGallery> with MenuHandler {
         _fileBeingRenamed = null;
       });
     }
+  }
+
+  void findSimilar() {
+    unawaited(_findSimilar());
+  }
+
+  Future<void> _findSimilar() async {
+    if (!canFindSimilar || _similaritySession != null) return;
+    final items = _items;
+    if (items == null) return;
+    final sourceMedia = items.firstWhere(
+      (item) => item.path == selection.first && item.isFile(),
+    );
+    SimilarityItem toSimilarityItem(MediaItem item) => SimilarityItem(
+          path: item.path,
+          modificationDate: item.modificationDate,
+          fileSize: item.fileSize,
+        );
+    final session = FolderSimilaritySession(
+      folderPath: widget.path,
+      source: toSimilarityItem(sourceMedia),
+      candidates: items.where((item) => item.isFile()).map(toSimilarityItem),
+    );
+    _similaritySession = session;
+    List<String>? comparison;
+    try {
+      comparison = await showSimilarPhotoReview(
+        widget.navigatorContext,
+        session: session,
+      );
+    } finally {
+      if (identical(_similaritySession, session)) {
+        _similaritySession = null;
+      }
+      session.dispose();
+    }
+    if (!mounted || comparison == null) return;
+    widget.executeItem(comparison: comparison);
+  }
+
+  void compareSelection() {
+    if (!canCompare) return;
+    widget.executeItem(comparison: selection.toList(growable: false));
   }
 
   void _selectFromPointer(MediaItem media) {
