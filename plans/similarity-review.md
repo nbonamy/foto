@@ -95,7 +95,7 @@ Add a fast review workflow that finds visually similar photos in the open folder
 
 - [x] Save the reviewed plan and verify the baseline.
 - [x] Add the instant gallery loupe.
-- [ ] Cache native visual feature prints.
+- [x] Cache native visual feature prints.
 - [ ] Add folder similarity sessions.
 - [ ] Add similar-photo review.
 - [ ] Add synchronized photo comparison.

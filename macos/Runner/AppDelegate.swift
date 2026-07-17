@@ -4,6 +4,7 @@ import FlutterMacOS
 import ImageIO
 import MapKit
 import UniformTypeIdentifiers
+import Vision
 
 extension NSBitmapImageRep {
     var png: Data? { representation(using: .png, properties: [:]) }
@@ -37,6 +38,23 @@ private enum ThumbnailCacheError: LocalizedError {
 			return "A thumbnail could not be generated for: \(path)"
 		case .thumbnailEncodingFailed(let path):
 			return "A thumbnail could not be encoded for: \(path)"
+		}
+	}
+}
+
+private enum VisualFeatureCacheError: LocalizedError {
+	case featureGenerationFailed(String)
+	case featureArchiveFailed(String)
+	case incompatibleFeaturePrints
+
+	var errorDescription: String? {
+		switch self {
+		case .featureGenerationFailed(let path):
+			return "A visual feature print could not be generated for: \(path)"
+		case .featureArchiveFailed(let path):
+			return "A visual feature print could not be cached for: \(path)"
+		case .incompatibleFeaturePrints:
+			return "The visual feature prints cannot be compared."
 		}
 	}
 }
@@ -77,16 +95,27 @@ private final class ThumbnailDiskCache {
 		pixelSize: Int,
 		completion: @escaping (Result<URL, Error>) -> Void
 	) {
-		workerQueue.addOperation { [weak self] in
-			guard let self else { return }
-			do {
-				let url = try self.resolveSynchronously(
+		perform(
+			{
+				try self.resolveSynchronously(
 					path: path,
 					modificationMicros: modificationMicros,
 					fileSize: fileSize,
 					pixelSize: pixelSize
 				)
-				DispatchQueue.main.async { completion(.success(url)) }
+			},
+			completion: completion
+		)
+	}
+
+	fileprivate func perform<T>(
+		_ work: @escaping () throws -> T,
+		completion: @escaping (Result<T, Error>) -> Void
+	) {
+		workerQueue.addOperation {
+			do {
+				let value = try work()
+				DispatchQueue.main.async { completion(.success(value)) }
 			} catch {
 				DispatchQueue.main.async { completion(.failure(error)) }
 			}
@@ -108,7 +137,7 @@ private final class ThumbnailDiskCache {
 		}
 	}
 
-	private func resolveSynchronously(
+	fileprivate func resolveSynchronously(
 		path: String,
 		modificationMicros: Int64,
 		fileSize: Int64,
@@ -123,13 +152,12 @@ private final class ThumbnailDiskCache {
 		let preservesAlpha = ["gif", "png", "tif", "tiff", "webp"]
 			.contains(sourceURL.pathExtension.lowercased())
 		let fileExtension = preservesAlpha ? "png" : "jpg"
-		let identity = [
-			cacheVersion,
-			path,
-			String(modificationMicros),
-			String(fileSize),
-			String(pixelSize),
-		].joined(separator: "\u{0}")
+		let identity = cacheIdentity(
+			path: path,
+			modificationMicros: modificationMicros,
+			fileSize: fileSize,
+			pixelSize: pixelSize
+		)
 		let hash = Data(identity.utf8).sha256
 		let cachedURL = directory
 			.appendingPathComponent(hash)
@@ -195,7 +223,22 @@ private final class ThumbnailDiskCache {
 		return cachedURL
 	}
 
-	private func cacheDirectory() throws -> URL {
+	fileprivate func cacheIdentity(
+		path: String,
+		modificationMicros: Int64,
+		fileSize: Int64,
+		pixelSize: Int
+	) -> String {
+		[
+			cacheVersion,
+			path,
+			String(modificationMicros),
+			String(fileSize),
+			String(pixelSize),
+		].joined(separator: "\u{0}")
+	}
+
+	fileprivate func cacheDirectory() throws -> URL {
 		guard let root = fileManager.urls(
 			for: .cachesDirectory,
 			in: .userDomainMask
@@ -209,14 +252,14 @@ private final class ThumbnailDiskCache {
 			.appendingPathComponent(cacheVersion, isDirectory: true)
 	}
 
-	private func touch(_ url: URL) {
+	fileprivate func touch(_ url: URL) {
 		try? fileManager.setAttributes(
 			[.modificationDate: Date()],
 			ofItemAtPath: url.path
 		)
 	}
 
-	private func schedulePrune() {
+	fileprivate func schedulePrune() {
 		pruneLock.lock()
 		guard !pruneScheduled else {
 			pruneLock.unlock()
@@ -276,6 +319,121 @@ private final class ThumbnailDiskCache {
 	}
 }
 
+private final class VisualFeatureDiskCache {
+	private let featureVersion = "vision-v1-revision1"
+	private let fileManager = FileManager.default
+	private let thumbnailCache: ThumbnailDiskCache
+
+	init(thumbnailCache: ThumbnailDiskCache) {
+		self.thumbnailCache = thumbnailCache
+	}
+
+	func distance(
+		source: VisualFeatureSource,
+		candidate: VisualFeatureSource,
+		completion: @escaping (Result<Double, Error>) -> Void
+	) {
+		thumbnailCache.perform({
+			let sourceFeature = try self.resolveSynchronously(source)
+			let candidateFeature = try self.resolveSynchronously(candidate)
+			var distance: Float = 0
+			try sourceFeature.computeDistance(
+				&distance,
+				to: candidateFeature
+			)
+			guard distance.isFinite else {
+				throw VisualFeatureCacheError.incompatibleFeaturePrints
+			}
+			return Double(distance)
+		}, completion: completion)
+	}
+
+	private func resolveSynchronously(
+		_ source: VisualFeatureSource
+	) throws -> VNFeaturePrintObservation {
+		let directory = try thumbnailCache.cacheDirectory()
+		try fileManager.createDirectory(
+			at: directory,
+			withIntermediateDirectories: true
+		)
+		let thumbnailIdentity = thumbnailCache.cacheIdentity(
+			path: source.path,
+			modificationMicros: source.modificationMicros,
+			fileSize: source.fileSize,
+			pixelSize: source.pixelSize
+		)
+		let featureIdentity = [featureVersion, thumbnailIdentity]
+			.joined(separator: "\u{0}")
+		let featureURL = directory
+			.appendingPathComponent(Data(featureIdentity.utf8).sha256)
+			.appendingPathExtension("vision")
+
+		if let cached = load(featureURL) {
+			thumbnailCache.touch(featureURL)
+			return cached
+		}
+
+		let thumbnailURL = try thumbnailCache.resolveSynchronously(
+			path: source.path,
+			modificationMicros: source.modificationMicros,
+			fileSize: source.fileSize,
+			pixelSize: source.pixelSize
+		)
+		let request = VNGenerateImageFeaturePrintRequest()
+		request.revision = VNGenerateImageFeaturePrintRequestRevision1
+		let handler = VNImageRequestHandler(url: thumbnailURL, options: [:])
+		try handler.perform([request])
+		guard let observation = request.results?.first else {
+			throw VisualFeatureCacheError.featureGenerationFailed(source.path)
+		}
+
+		do {
+			let archive = try NSKeyedArchiver.archivedData(
+				withRootObject: observation,
+				requiringSecureCoding: true
+			)
+			try archive.write(to: featureURL, options: .atomic)
+		} catch {
+			throw VisualFeatureCacheError.featureArchiveFailed(source.path)
+		}
+		thumbnailCache.touch(featureURL)
+		thumbnailCache.schedulePrune()
+		return observation
+	}
+
+	private func load(_ url: URL) -> VNFeaturePrintObservation? {
+		guard let data = try? Data(contentsOf: url),
+			  let observation = try? NSKeyedUnarchiver.unarchivedObject(
+				ofClass: VNFeaturePrintObservation.self,
+				from: data
+			  ) else {
+			return nil
+		}
+		return observation
+	}
+}
+
+private struct VisualFeatureSource {
+	let path: String
+	let modificationMicros: Int64
+	let fileSize: Int64
+	let pixelSize: Int
+
+	init?(arguments: Any?) {
+		guard let values = arguments as? [String: Any],
+			  let path = values["path"] as? String,
+			  let modificationMicros = values["modificationMicros"] as? NSNumber,
+			  let fileSize = values["fileSize"] as? NSNumber,
+			  let pixelSize = values["pixelSize"] as? NSNumber else {
+			return nil
+		}
+		self.path = path
+		self.modificationMicros = modificationMicros.int64Value
+		self.fileSize = fileSize.int64Value
+		self.pixelSize = pixelSize.intValue
+	}
+}
+
 @main
 class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 	
@@ -285,6 +443,9 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 	var _cachedIcons:Set<String> = [];
 	var _clipboardCopyGeneration: UInt64 = 0;
 	private let _thumbnailCache = ThumbnailDiskCache()
+	private lazy var _visualFeatureCache = VisualFeatureDiskCache(
+		thumbnailCache: _thumbnailCache
+	)
 	
 	override func applicationDidFinishLaunching(_ notification: Notification) {
 		guard let rootController = mainFlutterWindow?.contentViewController else {
@@ -433,6 +594,32 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 						code: "thumbnail_cache_failed",
 						message: error.localizedDescription,
 						details: path
+					))
+				}
+			}
+		} else if ("compareVisualSimilarity" == call.method) {
+			guard let arguments = call.arguments as? [String: Any],
+				  let source = VisualFeatureSource(arguments: arguments["source"]),
+				  let candidate = VisualFeatureSource(arguments: arguments["candidate"]) else {
+				result(FlutterError(
+					code: "invalid_visual_similarity_request",
+					message: "Source and candidate metadata are required.",
+					details: call.arguments
+				))
+				return
+			}
+			_visualFeatureCache.distance(
+				source: source,
+				candidate: candidate
+			) { outcome in
+				switch outcome {
+				case .success(let distance):
+					result(distance)
+				case .failure(let error):
+					result(FlutterError(
+						code: "visual_similarity_failed",
+						message: error.localizedDescription,
+						details: ["source": source.path, "candidate": candidate.path]
 					))
 				}
 			}

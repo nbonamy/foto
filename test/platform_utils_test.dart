@@ -170,6 +170,64 @@ void main() {
     expect(methods, ['clearThumbnailCache']);
   });
 
+  test('visual similarity forwards both metadata identities', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+      expect(call.method, 'compareVisualSimilarity');
+      expect(call.arguments, {
+        'source': {
+          'path': '/network/source.jpg',
+          'modificationMicros': 1752422400123456,
+          'fileSize': 120,
+          'pixelSize': 960,
+        },
+        'candidate': {
+          'path': '/network/candidate.jpg',
+          'modificationMicros': 1752422400654321,
+          'fileSize': -1,
+          'pixelSize': 960,
+        },
+      });
+      return 0.125;
+    });
+
+    final distance = await PlatformUtils.compareVisualSimilarity(
+      sourcePath: '/network/source.jpg',
+      sourceModificationDate:
+          DateTime.fromMicrosecondsSinceEpoch(1752422400123456),
+      sourceFileSize: 120,
+      candidatePath: '/network/candidate.jpg',
+      candidateModificationDate:
+          DateTime.fromMicrosecondsSinceEpoch(1752422400654321),
+      candidateFileSize: null,
+    );
+
+    expect(distance, 0.125);
+  });
+
+  test('visual similarity rejects invalid native distances', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (_) async => null);
+
+    await expectLater(
+      PlatformUtils.compareVisualSimilarity(
+        sourcePath: '/network/source.jpg',
+        sourceModificationDate: DateTime(2026),
+        sourceFileSize: 120,
+        candidatePath: '/network/candidate.jpg',
+        candidateModificationDate: DateTime(2026),
+        candidateFileSize: 120,
+      ),
+      throwsA(
+        isA<PlatformException>().having(
+          (error) => error.code,
+          'code',
+          'visual_similarity_failed',
+        ),
+      ),
+    );
+  });
+
   test('instant fullscreen reports native failures', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (_) async => false);

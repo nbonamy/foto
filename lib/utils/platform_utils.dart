@@ -112,6 +112,56 @@ class PlatformUtils {
     }
   }
 
+  static Future<double> compareVisualSimilarity({
+    required String sourcePath,
+    required DateTime sourceModificationDate,
+    required int? sourceFileSize,
+    required String candidatePath,
+    required DateTime candidateModificationDate,
+    required int? candidateFileSize,
+    int pixelSize = 960,
+  }) async {
+    final distance = await _mChannel.invokeMethod<double>(
+      'compareVisualSimilarity',
+      {
+        'source': _visualFeatureSource(
+          path: sourcePath,
+          modificationDate: sourceModificationDate,
+          fileSize: sourceFileSize,
+          pixelSize: pixelSize,
+        ),
+        'candidate': _visualFeatureSource(
+          path: candidatePath,
+          modificationDate: candidateModificationDate,
+          fileSize: candidateFileSize,
+          pixelSize: pixelSize,
+        ),
+      },
+    );
+    if (distance == null || !distance.isFinite || distance < 0) {
+      throw PlatformException(
+        code: 'visual_similarity_failed',
+        message: 'The visual similarity service returned no valid distance.',
+        details: {'source': sourcePath, 'candidate': candidatePath},
+      );
+    }
+    return distance;
+  }
+
+  static Map<String, Object> _visualFeatureSource({
+    required String path,
+    required DateTime modificationDate,
+    required int? fileSize,
+    required int pixelSize,
+  }) {
+    return {
+      'path': path,
+      'modificationMicros': modificationDate.microsecondsSinceEpoch,
+      'fileSize': fileSize ?? -1,
+      'pixelSize': pixelSize,
+    };
+  }
+
   static Future<void> _invokeInstantFullScreen(String method) async {
     final changed = await _mChannel.invokeMethod<bool>(method) ?? false;
     if (!changed) {
