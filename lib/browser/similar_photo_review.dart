@@ -27,11 +27,14 @@ class SimilarPhotoReview extends StatefulWidget {
     required this.session,
     required this.onClose,
     required this.onCompare,
+    this.imageProviderBuilder,
   });
 
   final FolderSimilaritySession session;
   final VoidCallback onClose;
   final ValueChanged<List<String>> onCompare;
+  final ImageProvider<Object> Function(SimilarityItem item)?
+      imageProviderBuilder;
 
   @override
   State<SimilarPhotoReview> createState() => _SimilarPhotoReviewState();
@@ -139,6 +142,7 @@ class _SimilarPhotoReviewState extends State<SimilarPhotoReview> {
               key: const ValueKey('similarity-source-preview'),
               item: session.source,
               borderRadius: 13,
+              imageProviderBuilder: widget.imageProviderBuilder,
             ),
           ),
           const SizedBox(width: 16),
@@ -258,6 +262,7 @@ class _SimilarPhotoReviewState extends State<SimilarPhotoReview> {
           match: match,
           selected: selected,
           onPressed: () => _toggleCandidate(match.item.path),
+          imageProviderBuilder: widget.imageProviderBuilder,
         );
       },
     );
@@ -326,11 +331,14 @@ class _SimilarityResultCard extends StatelessWidget {
     required this.match,
     required this.selected,
     required this.onPressed,
+    this.imageProviderBuilder,
   });
 
   final SimilarityMatch match;
   final bool selected;
   final VoidCallback onPressed;
+  final ImageProvider<Object> Function(SimilarityItem item)?
+      imageProviderBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -365,7 +373,10 @@ class _SimilarityResultCard extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    _ReviewImage(item: match.item),
+                    _ReviewImage(
+                      item: match.item,
+                      imageProviderBuilder: imageProviderBuilder,
+                    ),
                     Positioned(
                       left: 9,
                       top: 9,
@@ -427,10 +438,13 @@ class _ReviewImage extends StatelessWidget {
     super.key,
     required this.item,
     this.borderRadius = 0,
+    this.imageProviderBuilder,
   });
 
   final SimilarityItem item;
   final double borderRadius;
+  final ImageProvider<Object> Function(SimilarityItem item)?
+      imageProviderBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -438,11 +452,12 @@ class _ReviewImage extends StatelessWidget {
       image: ResizeImage.resizeIfNeeded(
         null,
         480,
-        CachedThumbnailImageProvider(
-          path: item.path,
-          modificationDate: item.modificationDate,
-          fileSize: item.fileSize,
-        ),
+        imageProviderBuilder?.call(item) ??
+            CachedThumbnailImageProvider(
+              path: item.path,
+              modificationDate: item.modificationDate,
+              fileSize: item.fileSize,
+            ),
       ),
       fit: BoxFit.cover,
       filterQuality: FilterQuality.medium,

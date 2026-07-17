@@ -19,10 +19,12 @@ class CompareView extends StatefulWidget {
     super.key,
     required this.images,
     required this.close,
+    this.imageProviderBuilder,
   }) : assert(images.length >= 2 && images.length <= 4);
 
   final List<String> images;
   final VoidCallback close;
+  final ImageProvider<Object> Function(String path)? imageProviderBuilder;
 
   @override
   State<CompareView> createState() => _CompareViewState();
@@ -187,6 +189,7 @@ class _CompareViewState extends State<CompareView> {
                 id: index,
                 path: widget.images[index],
                 syncController: _syncController,
+                imageProviderBuilder: widget.imageProviderBuilder,
                 onActivated: () {
                   _focusNode.requestFocus();
                   if (_activePane != index) setState(() => _activePane = index);
@@ -254,12 +257,14 @@ class _ComparePane extends StatefulWidget {
     required this.path,
     required this.syncController,
     required this.onActivated,
+    this.imageProviderBuilder,
   });
 
   final int id;
   final String path;
   final CompareSyncController syncController;
   final VoidCallback onActivated;
+  final ImageProvider<Object> Function(String path)? imageProviderBuilder;
 
   @override
   State<_ComparePane> createState() => _ComparePaneState();
@@ -359,7 +364,8 @@ class _ComparePaneState extends State<_ComparePane> {
           child: PhotoView(
             key: ValueKey('compare-image-${widget.id}'),
             controller: _photoController,
-            imageProvider: ImageFile(widget.path),
+            imageProvider: widget.imageProviderBuilder?.call(widget.path) ??
+                ImageFile(widget.path),
             backgroundDecoration: const BoxDecoration(color: Colors.black),
             initialScale: PhotoViewComputedScale.contained,
             minScale: PhotoViewComputedScale.contained,

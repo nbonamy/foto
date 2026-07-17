@@ -97,9 +97,9 @@ Add a fast review workflow that finds visually similar photos in the open folder
 - [x] Add the instant gallery loupe.
 - [x] Cache native visual feature prints.
 - [x] Add folder similarity sessions.
-- [ ] Add similar-photo review. The tested review surface is complete; folder entry points wait for the Compare route.
-- [ ] Add synchronized photo comparison.
-- [ ] Verify the complete workflow and append learnings.
+- [x] Add similar-photo review.
+- [x] Add synchronized photo comparison.
+- [x] Verify the complete workflow and append learnings.
 
 ## Acceptance
 
@@ -113,4 +113,7 @@ Add a fast review workflow that finds visually similar photos in the open folder
 
 ## Learnings
 
-_Append durable workflow and design learnings after implementation._
+- Treat the loaded gallery snapshot as the product boundary, then enforce the exact parent folder again at route entry. The second check keeps later UI changes from silently widening scope.
+- Deriving Vision features from the persistent thumbnail cache avoids a second network read while preserving the source identity and invalidation rules of the existing cache.
+- Synchronized viewports should propagate only user-originated controller changes. Programmatic transforms must not become new broadcasts after their immediate call stack finishes.
+- Golden tests for image-heavy widgets need injectable deterministic providers and time for asynchronous decoding before capture; otherwise they freeze transient loading states instead of the designed UI.

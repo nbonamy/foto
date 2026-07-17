@@ -15,6 +15,9 @@ A fast, focused photo browser for macOS, built with Flutter.
 - Capture-focused inspector with date, GPS location, and native MapKit snapshot
 - Detailed file, exposure, camera, and image metadata
 - Full-screen photo viewer with zoom, rotation, and clipboard actions
+- Instant 100% loupe while holding Space over a gallery photo
+- Folder-scoped visual similarity review powered by native macOS Vision
+- Synchronized side-by-side comparison for two to four photos
 - File copy, move, rename, and delete plus folder copy, move, and delete
 - Custom light and dark appearances that follow the macOS system setting
 
