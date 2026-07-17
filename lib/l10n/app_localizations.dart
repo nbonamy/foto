@@ -464,6 +464,78 @@ abstract class AppLocalizations {
   /// **'No photos in this folder.'**
   String get galleryEmpty;
 
+  /// No description provided for @similarPhotosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Similar Photos'**
+  String get similarPhotosTitle;
+
+  /// No description provided for @similarPhotosDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Results from this folder only'**
+  String get similarPhotosDescription;
+
+  /// No description provided for @similarPhotosScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing {processed} of {total}'**
+  String similarPhotosScanning(Object processed, Object total);
+
+  /// No description provided for @similarPhotosEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No similar photos found in this folder.'**
+  String get similarPhotosEmpty;
+
+  /// No description provided for @similarPhotosFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Foto could not analyze this folder.'**
+  String get similarPhotosFailed;
+
+  /// No description provided for @similarPhotosCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis cancelled.'**
+  String get similarPhotosCancelled;
+
+  /// No description provided for @similarPhotosCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Analysis'**
+  String get similarPhotosCancel;
+
+  /// No description provided for @similarPhotosRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze Again'**
+  String get similarPhotosRetry;
+
+  /// No description provided for @similarityNearDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Near duplicate'**
+  String get similarityNearDuplicate;
+
+  /// No description provided for @similaritySimilar.
+  ///
+  /// In en, this message translates to:
+  /// **'Similar'**
+  String get similaritySimilar;
+
+  /// No description provided for @comparePhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare'**
+  String get comparePhotos;
+
+  /// No description provided for @compareSelectionCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of 4 selected'**
+  String compareSelectionCount(Object count);
+
   /// No description provided for @exifFileName.
   ///
   /// In en, this message translates to:

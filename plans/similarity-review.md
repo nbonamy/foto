@@ -97,7 +97,7 @@ Add a fast review workflow that finds visually similar photos in the open folder
 - [x] Add the instant gallery loupe.
 - [x] Cache native visual feature prints.
 - [x] Add folder similarity sessions.
-- [ ] Add similar-photo review.
+- [ ] Add similar-photo review. The tested review surface is complete; folder entry points wait for the Compare route.
 - [ ] Add synchronized photo comparison.
 - [ ] Verify the complete workflow and append learnings.
 

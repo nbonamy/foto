@@ -208,6 +208,47 @@ class AppLocalizationsFr extends AppLocalizations {
   String get galleryEmpty => 'Aucune photo dans ce dossier.';
 
   @override
+  String get similarPhotosTitle => 'Photos similaires';
+
+  @override
+  String get similarPhotosDescription => 'Résultats de ce dossier uniquement';
+
+  @override
+  String similarPhotosScanning(Object processed, Object total) {
+    return 'Analyse de $processed sur $total';
+  }
+
+  @override
+  String get similarPhotosEmpty =>
+      'Aucune photo similaire trouvée dans ce dossier.';
+
+  @override
+  String get similarPhotosFailed => 'Foto n’a pas pu analyser ce dossier.';
+
+  @override
+  String get similarPhotosCancelled => 'Analyse annulée.';
+
+  @override
+  String get similarPhotosCancel => 'Annuler l’analyse';
+
+  @override
+  String get similarPhotosRetry => 'Analyser à nouveau';
+
+  @override
+  String get similarityNearDuplicate => 'Quasi identique';
+
+  @override
+  String get similaritySimilar => 'Similaire';
+
+  @override
+  String get comparePhotos => 'Comparer';
+
+  @override
+  String compareSelectionCount(Object count) {
+    return '$count sur 4 sélectionnées';
+  }
+
+  @override
   String get exifFileName => 'Nom du fichier';
 
   @override
